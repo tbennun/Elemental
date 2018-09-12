@@ -12,6 +12,9 @@
    which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
+
+//#define HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
 #include <El-lite.hpp>
 #include "mpi_utils.hpp"
 

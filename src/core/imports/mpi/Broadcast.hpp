@@ -47,6 +47,13 @@ void Broadcast(T* buffer, int count, int root, Comm comm,
     if (Size(comm) == 1 || count == 0)
         return;
 
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto rank = Rank(comm);
+    auto host_buf =
+        internal::MakeManagedHostBuffer(buffer, count, syncInfo, root == rank);
+    buffer = host_buf.data();
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
     Synchronize(syncInfo);// NOOP on CPU,
                           // cudaStreamSynchronize on GPU.
     CheckMpi(MPI_Bcast(buffer, count, TypeMap<T>(), root, comm.comm));
@@ -62,6 +69,13 @@ void Broadcast(Complex<T>* buffer, int count, int root, Comm comm,
     EL_DEBUG_CSE
     if (Size(comm) == 1 || count == 0)
         return;
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto rank = Rank(comm);
+    auto host_buf =
+        internal::MakeManagedHostBuffer(buffer, count, syncInfo, root == rank);
+    buffer = host_buf.data();
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
     Synchronize(syncInfo);
 
@@ -83,6 +97,13 @@ void Broadcast(T* buffer, int count, int root, Comm comm,
     EL_DEBUG_CSE
     if (Size(comm) == 1 || count == 0)
         return;
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto rank = Rank(comm);
+    auto host_buf =
+        internal::MakeManagedHostBuffer(buffer, count, syncInfo, root == rank);
+    buffer = host_buf.data();
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
     Synchronize(syncInfo);
 

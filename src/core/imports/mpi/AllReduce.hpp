@@ -58,6 +58,11 @@ void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
     if (count == 0)
         return;
 
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_SEND_BUFFER(sbuf, count, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, count, syncInfo);
+#endif
+
     Synchronize(syncInfo);
 
     CheckMpi(
@@ -76,6 +81,11 @@ void AllReduce(Complex<T> const* sbuf, T* rbuf, int count, Op op, Comm comm,
     EL_DEBUG_CSE
     if (count == 0)
         return;
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_SEND_BUFFER(sbuf, count, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, count, syncInfo);
+#endif
 
     Synchronize(syncInfo);
 
@@ -116,6 +126,11 @@ void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
 
     MPI_Op opC = NativeOp<T>(op);
     std::vector<byte> packedSend, packedRecv;
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_SEND_BUFFER(sbuf, count, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, count, syncInfo);
+#endif
 
     Serialize(count, sbuf, packedSend);
 
@@ -189,6 +204,10 @@ void AllReduce(T* buf, int count, Op op, Comm comm,
     if (count == 0 || Size(comm) == 1)
         return;
 
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_INPLACE_BUFFER_ALL_XFER(buf, count, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
     Synchronize(syncInfo);
 
     CheckMpi(
@@ -207,6 +226,10 @@ void AllReduce(Complex<T>* buf, int count, Op op, Comm comm,
     EL_DEBUG_CSE
     if (count == 0 || Size(comm) == 1)
         return;
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_INPLACE_BUFFER_ALL_XFER(buf, count, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
     Synchronize(syncInfo);
 
@@ -245,6 +268,10 @@ void AllReduce(T* buf, int count, Op op, Comm comm,
     EL_DEBUG_CSE
     if (count == 0)
         return;
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_INPLACE_BUFFER_ALL_XFER(buf, count, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
     Synchronize(syncInfo);
 
