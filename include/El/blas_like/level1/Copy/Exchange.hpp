@@ -52,10 +52,9 @@ void Exchange_impl
 
     if( contigA && contigB )
     {
-        Synchronize(syncInfoB);
         mpi::SendRecv(
             A.LockedBuffer(), sendSize, sendRank,
-            B.Buffer(),       recvSize, recvRank, comm );
+            B.Buffer(),       recvSize, recvRank, comm, syncInfoB);
     }
     else if( contigB )
     {
@@ -66,23 +65,20 @@ void Exchange_impl
             A.LockedBuffer(), 1, A.LDim(),
             buf.data(),       1, localHeightA, syncInfoB);
 
-        Synchronize(syncInfoB);
-
         // Exchange with the partner
-        mpi::SendRecv
-        ( buf.data(), sendSize, sendRank,
-          B.Buffer(), recvSize, recvRank, comm );
+        mpi::SendRecv(
+            buf.data(), sendSize, sendRank,
+            B.Buffer(), recvSize, recvRank, comm, syncInfoB);
     }
     else if( contigA )
     {
         // Exchange with the partner
         simple_buffer<T,D> buf(recvSize, syncInfoB);
 
-        Synchronize(syncInfoB);
-
         mpi::SendRecv(
             A.LockedBuffer(), sendSize, sendRank,
-            buf.data(),       recvSize, recvRank, comm );
+            buf.data(),       recvSize, recvRank, comm,
+            syncInfoB);
 
         // Unpack
         copy::util::InterleaveMatrix(
@@ -102,10 +98,9 @@ void Exchange_impl
         // Exchange with the partner
         simple_buffer<T,D> recvBuf(recvSize, syncInfoB);
 
-        Synchronize(syncInfoB);
         mpi::SendRecv(
             sendBuf.data(), sendSize, sendRank,
-            recvBuf.data(), recvSize, recvRank, comm );
+            recvBuf.data(), recvSize, recvRank, comm, syncInfoB);
 
         // Unpack
         copy::util::InterleaveMatrix(

@@ -114,12 +114,11 @@ void ColAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
                         sendBuf, 1, A.LockedBuffer(), A.LDim(), localWidth,
                         syncInfoB);
 
-                    Synchronize(syncInfoB);
-
                     // Communicate
                     mpi::SendRecv(
                         sendBuf,  localWidth,  sendRowRank,
-                        bcastBuf, localWidthB, recvRowRank, A.RowComm());
+                        bcastBuf, localWidthB, recvRowRank, A.RowComm(),
+                        syncInfoB);
                 }
                 else
                 {
@@ -155,12 +154,11 @@ void ColAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
                     secondBuf,        1, A.LocalHeight(),
                     syncInfoB);
 
-                Synchronize(syncInfoB);
-
                 // Realign
-                mpi::SendRecv
-                (secondBuf, portionSize, sendRowRank,
-                  firstBuf,  portionSize, recvRowRank, A.RowComm());
+                mpi::SendRecv(
+                    secondBuf, portionSize, sendRowRank,
+                    firstBuf,  portionSize, recvRowRank, A.RowComm(),
+                    syncInfoB);
 
                 // AllGather the aligned data
                 mpi::AllGather(
@@ -332,7 +330,8 @@ void ColAllGather
                 // Realign
                 mpi::SendRecv(
                     secondBuf, portionSize, sendRowRank,
-                    firstBuf,  portionSize, recvRowRank, A.RowComm());
+                    firstBuf,  portionSize, recvRowRank, A.RowComm(),
+                    SyncInfo<Device::CPU>{});
 
                 // Perform the column AllGather
                 mpi::AllGather(

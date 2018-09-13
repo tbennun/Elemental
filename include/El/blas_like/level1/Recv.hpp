@@ -19,21 +19,24 @@ void Recv( Matrix<T>& A, mpi::Comm comm, int source )
     const Int height = A.Height();
     const Int width = A.Width();
     const Int size = height*width;
+
+    SyncInfo<Device::CPU> syncInfoA{A};
+
     if( height == A.LDim() )
     {
-        mpi::Recv( A.Buffer(), size, source, comm );
+        mpi::Recv( A.Buffer(), size, source, comm, syncInfoA );
     }
     else
     {
         vector<T> buf;
         FastResize( buf, size );
-        mpi::Recv( buf.data(), size, source, comm );
+        mpi::Recv( buf.data(), size, source, comm, syncInfoA );
 
         // Unpack
         copy::util::InterleaveMatrix(
             height,        width,
             buf.data(), 1, height,
-            A.Buffer(), 1, A.LDim(), SyncInfo<Device::CPU>{});
+            A.Buffer(), 1, A.LDim(), syncInfoA);
     }
 }
 

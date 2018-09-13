@@ -73,22 +73,21 @@ void Scatter
             A.LockedBuffer(), A.LDim(),
             sendBuf,          pkgSize, syncInfoB);
 
-        Synchronize(syncInfoB);
-
         // Scatter from the root
         mpi::Scatter(
-            sendBuf, pkgSize, recvBuf, pkgSize, target, B.DistComm());
+            sendBuf, pkgSize, recvBuf, pkgSize, target, B.DistComm(),
+            syncInfoB);
     }
     else
     {
         buffer.allocate(recvSize);
         recvBuf = buffer.data();
 
-        Synchronize(syncInfoB);
         // Perform the receiving portion of the scatter from the non-root
         mpi::Scatter(
             static_cast<T*>(0), pkgSize,
-            recvBuf,            pkgSize, target, B.DistComm());
+            recvBuf,            pkgSize, target, B.DistComm(),
+            syncInfoB);
     }
 
     // Unpack

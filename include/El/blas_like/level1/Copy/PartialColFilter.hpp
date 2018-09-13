@@ -82,15 +82,12 @@ void PartialColFilter_impl
         util::InterleaveMatrix(
             localHeightSend, width,
             A.LockedBuffer(sendColOffset,0), colStrideUnion, A.LDim(),
-            sendBuf,                         1,              localHeightSend,
-            syncInfoB);
-
-        Synchronize(syncInfoB);
+            sendBuf, 1, localHeightSend, syncInfoB);
 
         // Change the column alignment
         mpi::SendRecv(
             sendBuf, sendSize, sendColRankPart,
-            recvBuf, recvSize, recvColRankPart, B.PartialColComm());
+            recvBuf, recvSize, recvColRankPart, B.PartialColComm(), syncInfoB);
 
         // Unpack
         // ------

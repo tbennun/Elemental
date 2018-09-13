@@ -9,7 +9,8 @@
 #ifndef EL_BLAS_SEND_HPP
 #define EL_BLAS_SEND_HPP
 
-namespace El {
+namespace El
+{
 
 template<typename T>
 void Send( const Matrix<T>& A, mpi::Comm comm, int destination )
@@ -18,9 +19,12 @@ void Send( const Matrix<T>& A, mpi::Comm comm, int destination )
     const Int height = A.Height();
     const Int width = A.Width();
     const Int size = height*width;
+
+    SyncInfo<Device::CPU> syncInfoA{A};
+
     if( height == A.LDim() )
     {
-        mpi::Send( A.LockedBuffer(), size, destination, comm );
+        mpi::Send( A.LockedBuffer(), size, destination, comm, syncInfoA );
     }
     else
     {
@@ -31,9 +35,9 @@ void Send( const Matrix<T>& A, mpi::Comm comm, int destination )
         copy::util::InterleaveMatrix(
             height, width,
             A.LockedBuffer(), 1, A.LDim(),
-            buf.data(),       1, height, SyncInfo<Device::CPU>{} );
+            buf.data(),       1, height, syncInfoA );
 
-        mpi::Send( buf.data(), size, destination, comm );
+        mpi::Send( buf.data(), size, destination, comm, syncInfoA );
     }
 }
 

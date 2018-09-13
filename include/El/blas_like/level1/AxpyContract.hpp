@@ -245,16 +245,13 @@ void ColScatter
         mpi::ReduceScatter(secondBuf, firstBuf, recvSize_RS, B.ColComm(),
                            syncInfoB);
 
-        // FIXME: Until we have SendRecv through Aluminum, need to
-        // full sync here!
-        Synchronize(syncInfoB);
-
         // Trade reduced data with the appropriate col
         const Int sendCol = Mod( B.RowRank()+rowDiff, B.RowStride() );
         const Int recvCol = Mod( B.RowRank()-rowDiff, B.RowStride() );
         mpi::SendRecv(
             firstBuf,  localHeight*localWidthA, sendCol,
-            secondBuf, localHeight*localWidth,  recvCol, B.RowComm());
+            secondBuf, localHeight*localWidth,  recvCol, B.RowComm(),
+            syncInfoB);
 
         // Update with our received data
         axpy::util::InterleaveMatrixUpdate(
@@ -370,12 +367,11 @@ void RowScatter
 
             if( B.RowRank() == rowAlign )
             {
-                Synchronize(syncInfoB);
-
                 // Perform the realignment
                 mpi::SendRecv(
                     sendBuf, localHeightA, sendRow,
-                    recvBuf, localHeight,  recvRow, B.ColComm());
+                    recvBuf, localHeight,  recvRow, B.ColComm(),
+                    syncInfoB);
 
                 axpy::util::InterleaveMatrixUpdate(
                     alpha, localHeight, 1,
@@ -411,13 +407,11 @@ void RowScatter
             mpi::ReduceScatter(secondBuf, firstBuf, recvSize_RS, B.RowComm(),
                                syncInfoB);
 
-            // FIXME: Need to full sync here
-            Synchronize(syncInfoB);
-
             // Trade reduced data with the appropriate process row
             mpi::SendRecv(
                 firstBuf,  localHeightA*localWidth, sendRow,
-                secondBuf, localHeight*localWidth,  recvRow, B.ColComm());
+                secondBuf, localHeight*localWidth,  recvRow, B.ColComm(),
+                syncInfoB);
 
             // Update with our received data
             axpy::util::InterleaveMatrixUpdate(
