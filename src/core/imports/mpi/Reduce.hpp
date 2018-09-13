@@ -49,6 +49,14 @@ void Reduce(T const* sbuf, T* rbuf, int count, Op op,
     if (count == 0)
         return;
 
+#ifdef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto const rank = Rank(comm);
+    auto const recvCount = (rank == root ? static_cast<size_t>(count) : 0UL);
+    ENSURE_HOST_SEND_BUFFER(sbuf, count, syncInfo);
+    ENSURE_HOST_BUFFER_PREPOST_XFER(
+        rbuf, count, 0UL, 0UL, 0UL, recvCount, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
     Synchronize(syncInfo);
 
     MPI_Op opC = NativeOp<T>(op);
@@ -67,6 +75,14 @@ void Reduce(const Complex<T>* sbuf, Complex<T>* rbuf, int count, Op op,
     EL_DEBUG_CSE
     if (count == 0)
         return;
+
+#ifdef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto const rank = Rank(comm);
+    auto const recvCount = (rank == root ? static_cast<size_t>(count) : 0UL);
+    ENSURE_HOST_SEND_BUFFER(sbuf, count, syncInfo);
+    ENSURE_HOST_BUFFER_PREPOST_XFER(
+        rbuf, count, 0UL, 0UL, 0UL, recvCount, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
     Synchronize(syncInfo);
 
@@ -104,6 +120,14 @@ void Reduce(T const* sbuf, T* rbuf, int count, Op op,
     EL_DEBUG_CSE
     if (count == 0)
         return;
+
+#ifdef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto const rank = Rank(comm);
+    auto const recvCount = (rank == root ? static_cast<size_t>(count) : 0UL);
+    ENSURE_HOST_SEND_BUFFER(sbuf, count, syncInfo);
+    ENSURE_HOST_BUFFER_PREPOST_XFER(
+        rbuf, count, 0UL, 0UL, 0UL, recvCount, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
     Synchronize(syncInfo);
 
@@ -199,17 +223,22 @@ void Reduce(T* buf, int count, Op op, int root, Comm comm,
     if (count == 0 || Size(comm) == 1)
         return;
 
+    const int commRank = Rank(comm);
+#ifdef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto const recvCount
+        = (commRank == root ? static_cast<size_t>(count) : 0UL);
+    ENSURE_HOST_BUFFER_PREPOST_XFER(
+        buf, count, 0UL, count, 0UL, recvCount, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
     Synchronize(syncInfo);
 
     MPI_Op opC = NativeOp<T>(op);
 
-    const int commRank = Rank(comm);
     if (commRank == root)
-    {
         CheckMpi(
             MPI_Reduce(
                 MPI_IN_PLACE, buf, count, TypeMap<T>(), opC, root, comm.comm));
-    }
     else
         CheckMpi(
             MPI_Reduce(
@@ -227,9 +256,16 @@ void Reduce(Complex<T>* buf, int count, Op op, int root, Comm comm,
     if (Size(comm) == 1 || count == 0)
         return;
 
+    const int commRank = mpi::Rank(comm);
+#ifdef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto const recvCount
+        = (commRank == root ? static_cast<size_t>(count) : 0UL);
+    ENSURE_HOST_BUFFER_PREPOST_XFER(
+        buf, count, 0UL, count, 0UL, recvCount, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
     Synchronize(syncInfo);
 
-    const int commRank = Rank(comm);
 #ifdef EL_AVOID_COMPLEX_MPI
     if (op == SUM)
     {
@@ -290,13 +326,20 @@ void Reduce(T* buf, int count, Op op, int root, Comm comm,
     if (count == 0)
         return;
 
+    const int commRank = mpi::Rank(comm);
+#ifdef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto const recvCount
+        = (commRank == root ? static_cast<size_t>(count) : 0UL);
+    ENSURE_HOST_BUFFER_PREPOST_XFER(
+        buf, count, 0UL, count, 0UL, recvCount, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
     Synchronize(syncInfo);
 
     MPI_Op opC = NativeOp<T>(op);
 
     // TODO(poulson): Use in-place option?
 
-    const int commRank = mpi::Rank(comm);
     std::vector<byte> packedSend, packedRecv;
     Serialize(count, buf, packedSend);
 
