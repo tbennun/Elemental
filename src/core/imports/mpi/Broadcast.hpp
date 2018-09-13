@@ -48,10 +48,13 @@ void Broadcast(T* buffer, int count, int root, Comm comm,
         return;
 
 #ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
-    auto rank = Rank(comm);
-    auto host_buf =
-        internal::MakeManagedHostBuffer(buffer, count, syncInfo, root == rank);
-    buffer = host_buf.data();
+    // I want to pre-transfer if root, I want to post-transfer if not root
+    auto const rank = Rank(comm);
+    auto const pre_xfer_size = (rank == root ? static_cast<size_t>(count) : 0);
+    auto const post_xfer_size = (rank != root ? static_cast<size_t>(count) : 0);
+
+    ENSURE_HOST_BUFFER_PREPOST_XFER(
+        buffer, count, 0UL, pre_xfer_size, 0UL, post_xfer_size, syncInfo);
 #endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
     Synchronize(syncInfo);// NOOP on CPU,
@@ -71,10 +74,13 @@ void Broadcast(Complex<T>* buffer, int count, int root, Comm comm,
         return;
 
 #ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
-    auto rank = Rank(comm);
-    auto host_buf =
-        internal::MakeManagedHostBuffer(buffer, count, syncInfo, root == rank);
-    buffer = host_buf.data();
+    // I want to pre-transfer if root, I want to post-transfer if not root
+    auto const rank = Rank(comm);
+    auto const pre_xfer_size = (rank == root ? static_cast<size_t>(count) : 0);
+    auto const post_xfer_size = (rank != root ? static_cast<size_t>(count) : 0);
+
+    ENSURE_HOST_BUFFER_PREPOST_XFER(
+        buffer, count, 0UL, pre_xfer_size, 0UL, post_xfer_size, syncInfo);
 #endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
     Synchronize(syncInfo);
@@ -99,10 +105,13 @@ void Broadcast(T* buffer, int count, int root, Comm comm,
         return;
 
 #ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
-    auto rank = Rank(comm);
-    auto host_buf =
-        internal::MakeManagedHostBuffer(buffer, count, syncInfo, root == rank);
-    buffer = host_buf.data();
+    // I want to pre-transfer if root, I want to post-transfer if not root
+    auto const rank = Rank(comm);
+    auto const pre_xfer_size = (rank == root ? static_cast<size_t>(count) : 0);
+    auto const post_xfer_size = (rank != root ? static_cast<size_t>(count) : 0);
+
+    ENSURE_HOST_BUFFER_PREPOST_XFER(
+        buffer, count, 0UL, pre_xfer_size, 0UL, post_xfer_size, syncInfo);
 #endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
     Synchronize(syncInfo);

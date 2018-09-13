@@ -100,38 +100,33 @@ class ManagedHostMemoryWrapper<T,Device::GPU>
 {
 public:
 
-    ManagedHostMemoryWrapper(T* buf, size_t size,
-                             SyncInfo<Device::GPU> const& syncInfo,
-                             bool copy_data_to_host = false)
-        : host_data_{size, SyncInfo<Device::CPU>{}, /*mode=*/ 1},
-          syncInfo_{syncInfo},
-          device_data_{buf}
-    {
-        if (copy_data_to_host && (size > 0))
-            InterDeviceCopy<Device::GPU, Device::CPU>::MemCopy1DAsync(
-                host_data_.data(), device_data_, size, syncInfo_.stream_);
-    }
-
-    ManagedHostMemoryWrapper(T* buf, size_t totalsize,
-                             size_t local_offset, size_t local_size,
-                             SyncInfo<Device::GPU> const& syncInfo)
+    ManagedHostMemoryWrapper(
+        T* buf, size_t totalsize,
+        size_t initial_xfer_offset, size_t initial_xfer_size,
+        size_t final_xfer_offset, size_t final_xfer_size,
+        SyncInfo<Device::GPU> const& syncInfo)
         : host_data_{totalsize, SyncInfo<Device::CPU>{}, /*mode=*/1},
           syncInfo_{syncInfo},
-          device_data_{buf}
+          device_data_{buf},
+          final_xfer_offset_{final_xfer_offset},
+          final_xfer_size_{final_xfer_size}
     {
-        InterDeviceCopy<Device::GPU, Device::CPU>::MemCopy1DAsync(
-            host_data_+local_offset, device_data_+local_offset,
-            local_size, syncInfo_.stream_);
+        if ((host_data_.size() > 0) && (initial_xfer_size > 0))
+            InterDeviceCopy<Device::GPU, Device::CPU>::MemCopy1DAsync(
+                host_data_.data()+initial_xfer_offset,
+                device_data_+initial_xfer_offset,
+                initial_xfer_size, syncInfo_.stream_);
     }
 
     ~ManagedHostMemoryWrapper()
     {
         // Transfer stuff back to device
-        if (host_data_.size() > 0)
+        if ((host_data_.size() > 0) && (final_xfer_size_ > 0))
         {
             InterDeviceCopy<Device::CPU, Device::GPU>::MemCopy1DAsync(
-                device_data_, host_data_.data(), host_data_.size(),
-                syncInfo_.stream_);
+                device_data_+final_xfer_offset_,
+                host_data_.data()+final_xfer_offset_,
+                final_xfer_size_, syncInfo_.stream_);
             Synchronize(syncInfo_);
         }
     }
@@ -148,30 +143,24 @@ private:
     simple_buffer<T,Device::CPU> host_data_;
     SyncInfo<Device::GPU> syncInfo_;
     DevicePtr<T> device_data_;
+    size_t final_xfer_offset_;
+    size_t final_xfer_size_;
 };// class ManagedHostMemoryWrapper<T,Device::GPU>
 #endif // HYDROGEN_HAVE_CUDA
+
+template <typename T>
+auto MakeHostBuffer(T* buf, size_t const& size,
+                    SyncInfo<Device::CPU> const& syncInfo)
+    -> PassthroughMemoryWrapper<T>
+{
+    return PassthroughMemoryWrapper<T>(buf);
+}
 
 // Helper functions that make all this stuff useful.
 template <typename T>
 auto
-MakeHostBuffer(T* buf, size_t const& /*size*/, SyncInfo<Device::CPU> const&)
-    -> PassthroughMemoryWrapper<T>
-{
-    return PassthroughMemoryWrapper<T>(buf);
-}
-
-template <typename T>
-auto
-MakeManagedHostBuffer(T* buf, size_t const& /*size*/,
-                      SyncInfo<Device::CPU> const&, bool)
-    -> PassthroughMemoryWrapper<T>
-{
-    return PassthroughMemoryWrapper<T>(buf);
-}
-
-template <typename T>
-auto
-MakeManagedHostBuffer(T* buf, size_t const& , size_t const&, size_t const&,
+MakeManagedHostBuffer(T* buf, size_t const&, size_t const&, size_t const&,
+                      size_t const&, size_t const&,
                       SyncInfo<Device::CPU> const&)
     -> PassthroughMemoryWrapper<T>
 {
@@ -199,44 +188,45 @@ auto MakeHostBuffer(T const* buf, size_t const& size,
 #endif // HYDROGEN_HAVE_CUDA
 
 template <typename T, Device D>
-auto MakeManagedHostBuffer(T* buf, size_t const& size,
-                           SyncInfo<D> const& syncInfo,
-                           bool copy_to_host_on_construction)
-    -> ManagedHostMemoryWrapper<T,D>
-{
-    return ManagedHostMemoryWrapper<T,D>(buf, size, syncInfo,
-                                         copy_to_host_on_construction);
-}
-
-template <typename T, Device D>
-auto MakeManagedHostBuffer(T* buf, size_t const& totalsize,
-                           size_t const& local_offset, size_t const& local_size,
-                           SyncInfo<D> const& syncInfo)
+auto MakeManagedHostBuffer(
+    T* buf, size_t const& totalsize,
+    size_t const& initial_xfer_offset, size_t const& initial_xfer_size,
+    size_t const& final_xfer_offset, size_t const& final_xfer_size,
+    SyncInfo<D> const& syncInfo)
     -> ManagedHostMemoryWrapper<T,D>
 {
     return ManagedHostMemoryWrapper<T,D>(
-        buf, totalsize, local_offset, local_size, syncInfo);
+        buf, totalsize,
+        initial_xfer_offset, initial_xfer_size,
+        final_xfer_offset, final_xfer_size,
+        syncInfo);
 }
 
+// Transfer all on construction; transfer none at end
 #define ENSURE_HOST_SEND_BUFFER(buf, size, syncinfo)                \
     auto host_sbuf = internal::MakeHostBuffer(buf, size, syncinfo); \
     buf = host_sbuf.data()
 
+// No transfer on construction; transfer all at end
 #define ENSURE_HOST_RECV_BUFFER(buf, size, syncinfo)                 \
     auto host_rbuf =                                                 \
-        internal::MakeManagedHostBuffer(buf, size, syncinfo, false); \
+        internal::MakeManagedHostBuffer(                             \
+            buf, size, 0UL, 0UL, 0UL, size, syncinfo);               \
     buf = host_rbuf.data()
 
-#define ENSURE_HOST_INPLACE_BUFFER(buf, totalsize, offset, size, syncinfo) \
+// General case: some transfer at construction, some transfer at end
+#define ENSURE_HOST_BUFFER_PREPOST_XFER(buf, totalsize, preoffset, presize, postoffset, postsize, syncinfo) \
     auto host_buf =                                                     \
         internal::MakeManagedHostBuffer(                                \
-            buf, totalsize, offset, size, syncinfo);                    \
+            buf, totalsize,                                             \
+            preoffset, presize, postoffset, postsize,                   \
+            syncinfo);                                                  \
     buf = host_buf.data()
 
-#define ENSURE_HOST_INPLACE_BUFFER_ALL_XFER(buf, size, syncinfo)     \
-    auto host_buf =                                                  \
-        internal::MakeManagedHostBuffer(buf, size, syncinfo, true);  \
-    buf = host_buf.data()
+// Transfer all at construction and destruction
+#define ENSURE_HOST_INPLACE_BUFFER(buf, size, syncinfo)                 \
+    ENSURE_HOST_BUFFER_PREPOST_XFER(                                    \
+        buf, size, 0UL, size, 0UL, size, syncinfo)
 
 }// namespace internal
 }// namespace mpi

@@ -205,7 +205,7 @@ void AllReduce(T* buf, int count, Op op, Comm comm,
         return;
 
 #ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
-    ENSURE_HOST_INPLACE_BUFFER_ALL_XFER(buf, count, syncInfo);
+    ENSURE_HOST_INPLACE_BUFFER(buf, count, syncInfo);
 #endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
     Synchronize(syncInfo);
@@ -228,7 +228,7 @@ void AllReduce(Complex<T>* buf, int count, Op op, Comm comm,
         return;
 
 #ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
-    ENSURE_HOST_INPLACE_BUFFER_ALL_XFER(buf, count, syncInfo);
+    ENSURE_HOST_INPLACE_BUFFER(buf, count, syncInfo);
 #endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
     Synchronize(syncInfo);
@@ -270,7 +270,7 @@ void AllReduce(T* buf, int count, Op op, Comm comm,
         return;
 
 #ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
-    ENSURE_HOST_INPLACE_BUFFER_ALL_XFER(buf, count, syncInfo);
+    ENSURE_HOST_INPLACE_BUFFER(buf, count, syncInfo);
 #endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
     Synchronize(syncInfo);

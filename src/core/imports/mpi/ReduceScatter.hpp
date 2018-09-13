@@ -54,6 +54,13 @@ void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
     if (count == 0)
         return;
 
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto size_c = Size(comm);
+
+    ENSURE_HOST_SEND_BUFFER(sbuf, count*size_c, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, count, syncInfo);
+#endif
+
     Synchronize(syncInfo);
 
 #ifdef EL_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE
@@ -86,6 +93,13 @@ void ReduceScatter(Complex<T> const* sbuf, Complex<T>* rbuf,
     EL_DEBUG_CSE
     if (count == 0)
         return;
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto size_c = Size(comm);
+
+    ENSURE_HOST_SEND_BUFFER(sbuf, count*size_c, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, count, syncInfo);
+#endif
 
     Synchronize(syncInfo);
 
@@ -128,15 +142,21 @@ void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
     if (count == 0)
         return;
 
-    Synchronize(syncInfo);
-
     const int commSize = mpi::Size(comm);
     const int totalSend = count*commSize;
     const int totalRecv = count;
 
+#if defined(EL_HAVE_MPI_REDUCE_SCATTER_BLOCK)
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_SEND_BUFFER(sbuf, totalSend, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, totalRecv, syncInfo);
+#endif
+
+    Synchronize(syncInfo);
+
     // TODO(poulson): Add AllReduce approach via
     // EL_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE
-#if defined(EL_HAVE_MPI_REDUCE_SCATTER_BLOCK)
     std::vector<byte> packedSend, packedRecv;
     Serialize(totalSend, sbuf, packedSend);
 
