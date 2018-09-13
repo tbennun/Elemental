@@ -12,15 +12,15 @@
 namespace El {
 
 // Recall that A must already be the correct size
-template<typename T>
-void Recv( Matrix<T>& A, mpi::Comm comm, int source )
+template<typename T, Device D>
+void Recv(Matrix<T,D>& A, mpi::Comm comm, int source)
 {
     EL_DEBUG_CSE
     const Int height = A.Height();
     const Int width = A.Width();
     const Int size = height*width;
 
-    SyncInfo<Device::CPU> syncInfoA{A};
+    SyncInfo<D> syncInfoA{A};
 
     if( height == A.LDim() )
     {
@@ -28,8 +28,8 @@ void Recv( Matrix<T>& A, mpi::Comm comm, int source )
     }
     else
     {
-        vector<T> buf;
-        FastResize( buf, size );
+        simple_buffer<T,D> buf(size, syncInfoA);
+
         mpi::Recv( buf.data(), size, source, comm, syncInfoA );
 
         // Unpack
@@ -40,14 +40,33 @@ void Recv( Matrix<T>& A, mpi::Comm comm, int source )
     }
 }
 
+template <typename T>
+void Recv(AbstractMatrix<T>& A, mpi::Comm comm, int source)
+{
+    EL_DEBUG_CSE;
+    switch (A.GetDevice())
+    {
+    case Device::CPU:
+        Recv(static_cast<Matrix<T,Device::CPU>&>(A), std::move(comm), source);
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+        Recv(static_cast<Matrix<T,Device::GPU>&>(A), std::move(comm), source);
+        break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("Recv: Bad device.");
+    }
+}
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
 # define EL_EXTERN
 #else
 # define EL_EXTERN extern
 #endif
 
-#define PROTO(T) \
-  EL_EXTERN template void Recv( Matrix<T>& A, mpi::Comm comm, int source );
+#define PROTO(T)                                                \
+    EL_EXTERN template void Recv(                               \
+        AbstractMatrix<T>& A, mpi::Comm comm, int source );
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE
