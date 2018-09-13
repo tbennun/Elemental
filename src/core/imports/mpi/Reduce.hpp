@@ -49,7 +49,7 @@ void Reduce(T const* sbuf, T* rbuf, int count, Op op,
     if (count == 0)
         return;
 
-#ifdef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
     auto const rank = Rank(comm);
     auto const recvCount = (rank == root ? static_cast<size_t>(count) : 0UL);
     ENSURE_HOST_SEND_BUFFER(sbuf, count, syncInfo);
@@ -76,7 +76,7 @@ void Reduce(const Complex<T>* sbuf, Complex<T>* rbuf, int count, Op op,
     if (count == 0)
         return;
 
-#ifdef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
     auto const rank = Rank(comm);
     auto const recvCount = (rank == root ? static_cast<size_t>(count) : 0UL);
     ENSURE_HOST_SEND_BUFFER(sbuf, count, syncInfo);
@@ -121,7 +121,7 @@ void Reduce(T const* sbuf, T* rbuf, int count, Op op,
     if (count == 0)
         return;
 
-#ifdef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
     auto const rank = Rank(comm);
     auto const recvCount = (rank == root ? static_cast<size_t>(count) : 0UL);
     ENSURE_HOST_SEND_BUFFER(sbuf, count, syncInfo);
@@ -224,7 +224,7 @@ void Reduce(T* buf, int count, Op op, int root, Comm comm,
         return;
 
     const int commRank = Rank(comm);
-#ifdef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
     auto const recvCount
         = (commRank == root ? static_cast<size_t>(count) : 0UL);
     ENSURE_HOST_BUFFER_PREPOST_XFER(
@@ -257,7 +257,7 @@ void Reduce(Complex<T>* buf, int count, Op op, int root, Comm comm,
         return;
 
     const int commRank = mpi::Rank(comm);
-#ifdef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
     auto const recvCount
         = (commRank == root ? static_cast<size_t>(count) : 0UL);
     ENSURE_HOST_BUFFER_PREPOST_XFER(
@@ -327,7 +327,7 @@ void Reduce(T* buf, int count, Op op, int root, Comm comm,
         return;
 
     const int commRank = mpi::Rank(comm);
-#ifdef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
     auto const recvCount
         = (commRank == root ? static_cast<size_t>(count) : 0UL);
     ENSURE_HOST_BUFFER_PREPOST_XFER(
