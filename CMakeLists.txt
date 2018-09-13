@@ -129,6 +129,10 @@ mark_as_advanced(${PROJECT_NAME}_AVOID_OMP_FMA)
 # MPI
 #
 
+# CUDA-aware MPI can provide a benefit, if it works. However, it is
+# often buggy. We can avoid it by setting this to ON
+option(${PROJECT_NAME}_AVOID_CUDA_AWARE_MPI "Avoid CUDA-aware MPI" OFF)
+
 option(${PROJECT_NAME}_USE_CUSTOM_ALLTOALLV "Avoid MPI_Alltoallv for performance reasons" ON)
 mark_as_advanced(${PROJECT_NAME}_USE_CUSTOM_ALLTOALLV)
 
@@ -144,12 +148,6 @@ mark_as_advanced(${PROJECT_NAME}_AVOID_COMPLEX_MPI)
 # performance on most machines.
 option(${PROJECT_NAME}_USE_BYTE_ALLGATHERS "Avoid BG/P allgather performance bug." ON)
 mark_as_advanced(${PROJECT_NAME}_USE_BYTE_ALLGATHERS)
-
-# If MPI_Reduce_scatter_block doesn't exist, perform it by composing
-# MPI_Allreduce and std::memcpy rather than MPI_Reduce and MPI_Scatter
-option(${PROJECT_NAME}_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE
-       "AllReduce based block MPI_Reduce_scatter" OFF)
-mark_as_advanced(${PROJECT_NAME}_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE)
 
 #
 # Runtime warnings
