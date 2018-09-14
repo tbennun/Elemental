@@ -600,6 +600,10 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_SEND_BUFFER(buf, count, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
     Synchronize(syncInfo);
 
     CheckMpi(
@@ -615,6 +619,10 @@ void TaggedSend(
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_SEND_BUFFER(buf, count, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
     Synchronize(syncInfo);
 #ifdef EL_AVOID_COMPLEX_MPI
@@ -635,6 +643,10 @@ void TaggedSend( const T* buf, int count, int to, int tag, Comm comm,
                  SyncInfo<D> const& syncInfo)
 {
     EL_DEBUG_CSE
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_SEND_BUFFER(buf, count, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
     Synchronize(syncInfo);
 
@@ -856,6 +868,10 @@ void TaggedRecv( Real* buf, int count, int from, int tag, Comm comm,
 {
     EL_DEBUG_CSE
 
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_RECV_BUFFER(buf, count, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
     Synchronize(syncInfo);
     Status status;
     CheckMpi(
@@ -870,6 +886,10 @@ void TaggedRecv( Complex<Real>* buf, int count, int from, int tag, Comm comm,
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_RECV_BUFFER(buf, count, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
     Synchronize(syncInfo);
 
@@ -893,6 +913,10 @@ void TaggedRecv( T* buf, int count, int from, int tag, Comm comm,
                  SyncInfo<D> const& syncInfo)
 {
     EL_DEBUG_CSE
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_RECV_BUFFER(buf, count, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
     Synchronize(syncInfo);
 
@@ -1001,6 +1025,11 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, rc, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
     Synchronize(syncInfo);
 
     Status status;
@@ -1008,7 +1037,7 @@ EL_NO_RELEASE_EXCEPT
         MPI_Sendrecv(
             sbuf, sc, TypeMap<Real>(), to,   stag,
             rbuf, rc, TypeMap<Real>(), from, rtag,
-            comm.comm, &status ) );
+            comm.comm, &status));
 }
 
 template <typename Real, Device D,
@@ -1020,6 +1049,11 @@ void TaggedSendRecv(
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, rc, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
     Synchronize(syncInfo);
 
@@ -1048,6 +1082,11 @@ void TaggedSendRecv(
     SyncInfo<D> const& syncInfo)
 {
     EL_DEBUG_CSE
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, rc, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
     Synchronize(syncInfo);
 
@@ -1097,6 +1136,10 @@ EL_NO_RELEASE_EXCEPT
 
     LogicError("SendRecv_replace. Tom want's to know if this is used.");
 
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_INPLACE_BUFFER(buf, count, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
     Synchronize(syncInfo);
 
     Status status;
@@ -1114,6 +1157,10 @@ void TaggedSendRecv(
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_INPLACE_BUFFER(buf, count, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
     Synchronize(syncInfo);
 
@@ -1140,6 +1187,10 @@ void TaggedSendRecv(
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_INPLACE_BUFFER(buf, count, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
     Synchronize(syncInfo);
 
@@ -1233,6 +1284,15 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto const rank = mpi::Rank(comm);
+    auto const size_c = mpi::Size(comm);
+    auto const recvCount
+        = (rank == root ? static_cast<size_t>(rc*size_c) : 0UL);
+    ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, recvCount, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
     Synchronize(syncInfo);
 
     CheckMpi(
@@ -1250,6 +1310,15 @@ void Gather(
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto const rank = mpi::Rank(comm);
+    auto const size_c = mpi::Size(comm);
+    auto const recvCount
+        = (rank == root ? static_cast<size_t>(rc*size_c) : 0UL);
+    ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, recvCount, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
     Synchronize(syncInfo);
 
@@ -1278,11 +1347,18 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
-    Synchronize(syncInfo);
-
     const int commSize = mpi::Size(comm);
     const int commRank = mpi::Rank(comm);
     const int totalRecv = rc*commSize;
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto const recvCount
+        = (commRank == root ? static_cast<size_t>(rc*commSize) : 0UL);
+    ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, recvCount, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
+    Synchronize(syncInfo);
 
     std::vector<byte> packedSend, packedRecv;
     Serialize( sc, sbuf, packedSend );
@@ -1384,6 +1460,17 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto const commRank = Rank(comm);
+    auto const commSize = Size(comm);
+    // FIXME (trb): This is technically just an upper bound on the size
+    auto const recvSize =
+        (commRank == root ?
+         static_cast<size_t>(rds[commSize-1]+rcs[commSize-1]) : 0UL);
+    ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, recvSize, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
     Synchronize(syncInfo);
 
     CheckMpi(
@@ -1402,6 +1489,17 @@ void Gather(
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto const commRank = Rank(comm);
+    auto const commSize = Size(comm);
+    // FIXME (trb): This is technically just an upper bound on the size
+    auto const recvSize =
+        (commRank == root ?
+         static_cast<size_t>(rds[commSize-1]+rcs[commSize-1]) : 0UL);
+    ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, recvSize, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
     Synchronize(syncInfo);
 
@@ -1446,11 +1544,16 @@ EL_NO_RELEASE_EXCEPT
 
     Synchronize(syncInfo);
 
-    const int commSize = mpi::Size(comm);
-    const int commRank = mpi::Rank(comm);
-    int totalRecv=0;
-    if( commRank == root )
-        totalRecv = rcs[commSize-1]+rds[commSize-1];
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto const commRank = Rank(comm);
+    auto const commSize = Size(comm);
+    // FIXME (trb): This is technically just an upper bound on the size
+    auto const totalRecv =
+        (commRank == root ?
+         static_cast<size_t>(rds[commSize-1]+rcs[commSize-1]) : 0UL);
+    ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, totalRecv, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
     std::vector<byte> packedSend, packedRecv;
     Serialize( sc, sbuf, packedSend );
@@ -1476,10 +1579,21 @@ void AllGather(
 {
     EL_DEBUG_CSE
 
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto const commSize = Size(comm);
+    // FIXME (trb): This is technically just an upper bound on the size
+    auto const recvSize =
+        static_cast<size_t>(rds[commSize-1]+rcs[commSize-1]);
+    ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, recvSize, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
     Synchronize(syncInfo);
 
 #ifdef EL_USE_BYTE_ALLGATHERS
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
     const int commSize = Size( comm );
+#endif
     vector<int> byteRcs( commSize ), byteRds( commSize );
     for( int i=0; i<commSize; ++i )
     {
@@ -1511,10 +1625,22 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto const commSize = Size(comm);
+    // FIXME (trb): This is technically just an upper bound on the size
+    auto const recvSize =
+        static_cast<size_t>(rds[commSize-1]+rcs[commSize-1]);
+    ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, recvSize, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
     Synchronize(syncInfo);
 
 #ifdef EL_USE_BYTE_ALLGATHERS
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
     const int commSize = Size( comm );
+#endif
+
     vector<int> byteRcs( commSize ), byteRds( commSize );
     for( int i=0; i<commSize; ++i )
     {
@@ -1562,10 +1688,15 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
-    Synchronize(syncInfo);
-
     const int commSize = mpi::Size(comm);
     const int totalRecv = rcs[commSize-1]+rds[commSize-1];
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, totalRecv, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
+    Synchronize(syncInfo);
 
     std::vector<byte> packedSend, packedRecv;
     Serialize( sc, sbuf, packedSend );
@@ -1587,6 +1718,16 @@ void Scatter(
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto const commSize = Size(comm);
+    auto const commRank = Rank(comm);
+    auto const totalSend =
+        (commRank == root ? static_cast<size_t>(sc*commSize) : 0UL);
+    ENSURE_HOST_SEND_BUFFER(sbuf, totalSend, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, rc, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
     Synchronize(syncInfo);
     CheckMpi(
         MPI_Scatter(
@@ -1603,6 +1744,15 @@ void Scatter(
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto const commSize = Size(comm);
+    auto const commRank = Rank(comm);
+    auto const totalSend =
+        (commRank == root ? static_cast<size_t>(sc*commSize) : 0UL);
+    ENSURE_HOST_SEND_BUFFER(sbuf, totalSend, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, rc, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
     Synchronize(syncInfo);
 
@@ -1630,11 +1780,17 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
-    Synchronize(syncInfo);
+    auto const commSize = Size(comm);
+    auto const commRank = Rank(comm);
+    auto const totalSend =
+        (commRank == root ? static_cast<size_t>(sc*commSize) : 0UL);
 
-    const int commSize = mpi::Size(comm);
-    const int commRank = mpi::Rank(comm);
-    const int totalSend = sc*commSize;
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_SEND_BUFFER(sbuf, totalSend, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, rc, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
+    Synchronize(syncInfo);
 
     std::vector<byte> packedSend, packedRecv;
     if( commRank == root )
@@ -1657,9 +1813,21 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
+    auto const commRank = Rank( comm );
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto const commSize = Size(comm);
+    auto const totalSend =
+        (commRank == root ? static_cast<size_t>(sc*commSize) : 0UL);
+    auto const totalRecv =
+        (commRank == root ? 0UL : static_cast<size_t>(rc));
+    auto const bufSize = std::max(totalSend, totalRecv);
+    ENSURE_HOST_BUFFER_PREPOST_XFER(
+        buf, bufSize, 0, totalSend, 0, totalRecv, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
     Synchronize(syncInfo);
 
-    const int commRank = Rank( comm );
     if( commRank == root )
     {
         CheckMpi(
@@ -1685,9 +1853,21 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
+    auto const commRank = Rank( comm );
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto const commSize = Size(comm);
+    auto const totalSend =
+        (commRank == root ? static_cast<size_t>(sc*commSize) : 0UL);
+    auto const totalRecv =
+        (commRank == root ? 0UL : static_cast<size_t>(rc));
+    auto const bufSize = std::max(totalSend, totalRecv);
+    ENSURE_HOST_BUFFER_PREPOST_XFER(
+        buf, bufSize, 0, totalSend, 0, totalRecv, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
     Synchronize(syncInfo);
 
-    const int commRank = Rank( comm );
     if( commRank == root )
     {
 #ifdef EL_AVOID_COMPLEX_MPI
@@ -1726,9 +1906,18 @@ void Scatter(T* buf, int sc, int rc, int root, Comm comm,
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    const int commSize = mpi::Size(comm);
-    const int commRank = mpi::Rank(comm);
-    const int totalSend = sc*commSize;
+    auto const commSize = mpi::Size(comm);
+    auto const commRank = Rank( comm );
+    auto const totalSend =
+        (commRank == root ? static_cast<size_t>(sc*commSize) : 0UL);
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto const totalRecv =
+        (commRank == root ? 0UL : static_cast<size_t>(rc));
+    auto const bufSize = std::max(totalSend, totalRecv);
+    ENSURE_HOST_BUFFER_PREPOST_XFER(
+        buf, bufSize, 0, totalSend, 0, totalRecv, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
     Synchronize(syncInfo);
 
@@ -1756,6 +1945,16 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto const commSize = Size(comm);
+    auto const totalSend =
+        static_cast<size_t>(sds[commSize-1] + scs[commSize-1]);
+    auto const totalRecv =
+        static_cast<size_t>(rds[commSize-1] + rcs[commSize-1]);
+    ENSURE_HOST_SEND_BUFFER(sbuf, totalSend, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, totalRecv, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
     Synchronize(syncInfo);
 
     CheckMpi(
@@ -1774,6 +1973,16 @@ void AllToAll(
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto const commSize = Size(comm);
+    auto const totalSend =
+        static_cast<size_t>(sds[commSize-1] + scs[commSize-1]);
+    auto const totalRecv =
+        static_cast<size_t>(rds[commSize-1] + rcs[commSize-1]);
+    ENSURE_HOST_SEND_BUFFER(sbuf, totalSend, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, totalRecv, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
     Synchronize(syncInfo);
 
@@ -1814,11 +2023,17 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
-    Synchronize(syncInfo);
+    auto const commSize = Size(comm);
+    auto const totalSend =
+        static_cast<size_t>(sds[commSize-1] + scs[commSize-1]);
+    auto const totalRecv =
+        static_cast<size_t>(rds[commSize-1] + rcs[commSize-1]);
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_SEND_BUFFER(sbuf, totalSend, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, totalRecv, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
-    const int commSize = mpi::Size( comm );
-    const int totalSend = scs[commSize-1]+sds[commSize-1];
-    const int totalRecv = rcs[commSize-1]+rds[commSize-1];
+    Synchronize(syncInfo);
 
     std::vector<byte> packedSend, packedRecv;
     Serialize( totalSend, sbuf, packedSend );
@@ -1867,6 +2082,15 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto const commRank = mpi::Rank(comm);
+    auto const commSize = mpi::Size(comm);
+    auto const totalSend = std::accumulate(rcs,rcs+commSize,0UL);
+    auto const totalRecv = static_cast<size_t>(rcs[commRank]);
+    ENSURE_HOST_SEND_BUFFER(sbuf, totalSend, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, totalRecv, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
     Synchronize(syncInfo);
 
     MPI_Op opC = NativeOp<Real>( op );
@@ -1883,6 +2107,15 @@ void ReduceScatter(
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    auto const commRank = mpi::Rank(comm);
+    auto const commSize = mpi::Size(comm);
+    auto const totalSend = std::accumulate(rcs,rcs+commSize,0UL);
+    auto const totalRecv = static_cast<size_t>(rcs[commRank]);
+    ENSURE_HOST_SEND_BUFFER(sbuf, totalSend, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, totalRecv, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
 
     Synchronize(syncInfo);
 
@@ -1927,12 +2160,16 @@ EL_NO_RELEASE_EXCEPT
 
     Synchronize(syncInfo);
 
-    const int commRank = mpi::Rank(comm);
-    const int commSize = mpi::Size(comm);
-    int totalSend=0;
-    for( int q=0; q<commSize; ++q )
-        totalSend += rcs[q];
-    const int totalRecv = rcs[commRank];
+    auto const commRank = mpi::Rank(comm);
+    auto const commSize = mpi::Size(comm);
+    auto const totalSend = std::accumulate(rcs,rcs+commSize,0UL);
+    auto const totalRecv = static_cast<size_t>(rcs[commRank]);
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_SEND_BUFFER(sbuf, totalSend, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, totalRecv, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
+    Synchronize(syncInfo);
 
     MPI_Op opC = NativeOp<T>( op );
     std::vector<byte> packedSend, packedRecv;
@@ -1979,15 +2216,20 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
+    if (count == 0)
+        return;
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_SEND_BUFFER(sbuf, count, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, count, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
     Synchronize(syncInfo);
 
-    if( count != 0 )
-    {
-        MPI_Op opC = NativeOp<Real>( op );
-        CheckMpi(
-            MPI_Scan(
-                sbuf, rbuf, count, TypeMap<Real>(), opC, comm.comm));
-    }
+    MPI_Op opC = NativeOp<Real>( op );
+    CheckMpi(
+        MPI_Scan(
+            sbuf, rbuf, count, TypeMap<Real>(), opC, comm.comm));
 }
 
 template <typename Real, Device D,
@@ -1999,33 +2241,38 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
+    if (count == 0)
+        return;
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_SEND_BUFFER(sbuf, count, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, count, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
     Synchronize(syncInfo);
 
-    if( count != 0 )
-    {
 #ifdef EL_AVOID_COMPLEX_MPI
-        if( op == SUM )
-        {
-            MPI_Op opC = NativeOp<Real>( op );
-            CheckMpi(
-                MPI_Scan(
-                    sbuf, rbuf, 2*count, TypeMap<Real>(), opC, comm.comm));
-        }
-        else
-        {
-            MPI_Op opC = NativeOp<Complex<Real>>( op );
-            CheckMpi(
-                MPI_Scan(
-                    sbuf, rbuf, count, TypeMap<Complex<Real>>(), opC,
-                    comm.comm));
-        }
-#else
+    if( op == SUM )
+    {
+        MPI_Op opC = NativeOp<Real>( op );
+        CheckMpi(
+            MPI_Scan(
+                sbuf, rbuf, 2*count, TypeMap<Real>(), opC, comm.comm));
+    }
+    else
+    {
         MPI_Op opC = NativeOp<Complex<Real>>( op );
         CheckMpi(
             MPI_Scan(
-                sbuf, rbuf, count, TypeMap<Complex<Real>>(), opC, comm.comm));
-#endif
+                sbuf, rbuf, count, TypeMap<Complex<Real>>(), opC,
+                comm.comm));
     }
+#else
+    MPI_Op opC = NativeOp<Complex<Real>>( op );
+    CheckMpi(
+        MPI_Scan(
+            sbuf, rbuf, count, TypeMap<Complex<Real>>(), opC, comm.comm));
+#endif
 }
 
 template <typename T, Device D,
@@ -2038,11 +2285,15 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
-    Synchronize(syncInfo);
-
-
-    if( count == 0 )
+    if (count == 0)
         return;
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_SEND_BUFFER(sbuf, count, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, count, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
+    Synchronize(syncInfo);
 
     MPI_Op opC = NativeOp<T>( op );
     std::vector<byte> packedSend, packedRecv;
@@ -2087,15 +2338,19 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
+    if (count == 0)
+        return;
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_INPLACE_BUFFER(buf, count, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
     Synchronize(syncInfo);
 
-    if( count != 0 )
-    {
-        MPI_Op opC = NativeOp<Real>( op );
-        CheckMpi(
-            MPI_Scan(
-                MPI_IN_PLACE, buf, count, TypeMap<Real>(), opC, comm.comm));
-    }
+    MPI_Op opC = NativeOp<Real>( op );
+    CheckMpi(
+        MPI_Scan(
+            MPI_IN_PLACE, buf, count, TypeMap<Real>(), opC, comm.comm));
 }
 
 template <typename Real, Device D,
@@ -2106,35 +2361,39 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
+    if( count == 0 )
+        return;
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_INPLACE_BUFFER(buf, count, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
     Synchronize(syncInfo);
 
-    if( count != 0 )
-    {
 #ifdef EL_AVOID_COMPLEX_MPI
-        if( op == SUM )
-        {
-            MPI_Op opC = NativeOp<Real>( op );
-            CheckMpi(
-                MPI_Scan(
-                    MPI_IN_PLACE, buf, 2*count, TypeMap<Real>(), opC,
-                    comm.comm));
-        }
-        else
-        {
-            MPI_Op opC = NativeOp<Complex<Real>>( op );
-            CheckMpi(
-                MPI_Scan(
-                    MPI_IN_PLACE, buf, count, TypeMap<Complex<Real>>(), opC,
-                    comm.comm));
-        }
-#else
+    if( op == SUM )
+    {
+        MPI_Op opC = NativeOp<Real>( op );
+        CheckMpi(
+            MPI_Scan(
+                MPI_IN_PLACE, buf, 2*count, TypeMap<Real>(), opC,
+                comm.comm));
+    }
+    else
+    {
         MPI_Op opC = NativeOp<Complex<Real>>( op );
         CheckMpi(
             MPI_Scan(
                 MPI_IN_PLACE, buf, count, TypeMap<Complex<Real>>(), opC,
                 comm.comm));
-#endif
     }
+#else
+    MPI_Op opC = NativeOp<Complex<Real>>( op );
+    CheckMpi(
+        MPI_Scan(
+            MPI_IN_PLACE, buf, count, TypeMap<Complex<Real>>(), opC,
+            comm.comm));
+#endif
 }
 
 template <typename T, Device D,
@@ -2145,10 +2404,14 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
-    Synchronize(syncInfo);
-
     if( count == 0 )
         return;
+
+#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+    ENSURE_HOST_INPLACE_BUFFER(buf, count, syncInfo);
+#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+
+    Synchronize(syncInfo);
 
     MPI_Op opC = NativeOp<T>( op );
     std::vector<byte> packedSend, packedRecv;
