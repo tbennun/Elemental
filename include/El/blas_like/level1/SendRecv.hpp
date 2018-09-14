@@ -59,19 +59,17 @@ void SendRecv
 
     if (heightA == A.LDim() && heightB == B.LDim())
     {
-        Synchronize(syncInfoB);
         mpi::SendRecv(
             A.LockedBuffer(), sizeA, sendRank,
-            B.Buffer(),       sizeB, recvRank, comm);
+            B.Buffer(),       sizeB, recvRank, comm, syncInfoB);
     }
     else if( heightA == A.LDim() )
     {
         simple_buffer<T,D> recvBuf(sizeB, syncInfoB);
 
-        Synchronize(syncInfoB);
         mpi::SendRecv(
              A.LockedBuffer(), sizeA, sendRank,
-             recvBuf.data(),   sizeB, recvRank, comm);
+             recvBuf.data(),   sizeB, recvRank, comm, syncInfoB);
 
         copy::util::InterleaveMatrix(
             heightB, widthB,
@@ -89,11 +87,9 @@ void SendRecv
 
         simple_buffer<T,D> recvBuf(sizeB, syncInfoB);
 
-        Synchronize(syncInfoB);
-
         mpi::SendRecv(
             sendBuf.data(), sizeA, sendRank,
-            recvBuf.data(), sizeB, recvRank, comm);
+            recvBuf.data(), sizeB, recvRank, comm, syncInfoB);
         copy::util::InterleaveMatrix(
             heightB, widthB,
             recvBuf.data(), 1, heightB,

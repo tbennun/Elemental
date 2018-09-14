@@ -94,7 +94,7 @@ void DistMap::Translate
     mpi::AllToAll(
         requests.data(), requestSizes.data(), requestOffs.data(),
         fulfills.data(), fulfillSizes.data(), fulfillOffs.data(),
-        grid_->Comm());
+        grid_->Comm(), SyncInfo<Device::CPU>{});
 
     // Map all of the indices in 'fulfills'
     for( int s=0; s<numFulfills; ++s )
@@ -114,7 +114,7 @@ void DistMap::Translate
     mpi::AllToAll(
         fulfills.data(), fulfillSizes.data(), fulfillOffs.data(),
         requests.data(), requestSizes.data(), requestOffs.data(),
-        grid_->Comm());
+        grid_->Comm(), SyncInfo<Device::CPU>{});
 
     // Unpack in the same way we originally packed
     // Avoid unncessary branching within the loop by avoiding RowToProcess
@@ -300,7 +300,8 @@ void InvertMap( const DistMap& map, DistMap& inverseMap )
     vector<int> recvs( numRecvs );
     mpi::AllToAll
     ( sends.data(), sendSizes.data(), sendOffs.data(),
-      recvs.data(), recvSizes.data(), recvOffs.data(), comm );
+      recvs.data(), recvSizes.data(), recvOffs.data(), comm,
+      SyncInfo<Device::CPU>{} );
 
     // Form our part of the inverse map
     inverseMap.SetGrid( grid );

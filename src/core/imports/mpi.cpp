@@ -447,7 +447,7 @@ void Barrier( Comm comm ) EL_NO_RELEASE_EXCEPT
 }
 
 // Test for completion
-template<typename T>
+template <typename T>
 bool Test( Request<T>& request ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
@@ -458,7 +458,7 @@ bool Test( Request<T>& request ) EL_NO_RELEASE_EXCEPT
 }
 
 // Ensure that the request finishes before continuing
-template<typename T>
+template <typename T>
 void Wait( Request<T>& request ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
@@ -467,7 +467,7 @@ void Wait( Request<T>& request ) EL_NO_RELEASE_EXCEPT
 }
 
 // Ensure that the request finishes before continuing
-template<typename T,
+template <typename T,
          typename/*=EnableIf<IsPacked<T>>*/>
 void Wait( Request<T>& request, Status& status ) EL_NO_RELEASE_EXCEPT
 {
@@ -476,7 +476,7 @@ void Wait( Request<T>& request, Status& status ) EL_NO_RELEASE_EXCEPT
 }
 
 // Ensure that several requests finish before continuing
-template<typename T>
+template <typename T>
 void WaitAll( int numRequests, Request<T>* requests ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
@@ -485,7 +485,7 @@ void WaitAll( int numRequests, Request<T>* requests ) EL_NO_RELEASE_EXCEPT
 }
 
 // Ensure that several requests finish before continuing
-template<typename T,
+template <typename T,
          typename/*=EnableIf<IsPacked<T>>*/>
 void WaitAll( int numRequests, Request<T>* requests, Status* statuses )
 EL_NO_RELEASE_EXCEPT
@@ -513,7 +513,7 @@ EL_NO_RELEASE_EXCEPT
 #endif
 }
 
-template<typename T,
+template <typename T,
          typename/*=DisableIf<IsPacked<T>>*/,
          typename/*=void*/>
 void Wait( Request<T>& request, Status& status ) EL_NO_RELEASE_EXCEPT
@@ -529,7 +529,7 @@ void Wait( Request<T>& request, Status& status ) EL_NO_RELEASE_EXCEPT
     request.buffer.clear();
 }
 
-template<typename T,
+template <typename T,
          typename/*=DisableIf<IsPacked<T>>*/,
          typename/*=void*/>
 void WaitAll( int numRequests, Request<T>* requests, Status* statuses )
@@ -583,7 +583,7 @@ EL_NO_RELEASE_EXCEPT
 bool IProbe( int source, Comm comm, Status& status ) EL_NO_RELEASE_EXCEPT
 { return IProbe( source, 0, comm, status ); }
 
-template<typename T>
+template <typename T>
 int GetCount( Status& status ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
@@ -592,62 +592,75 @@ int GetCount( Status& status ) EL_NO_RELEASE_EXCEPT
     return count;
 }
 
-template<typename Real,
+template <typename Real, Device D,
          typename/*=EnableIf<IsPacked<Real>>*/>
-void TaggedSend( const Real* buf, int count, int to, int tag, Comm comm )
+void TaggedSend(const Real* buf, int count, int to, int tag, Comm comm,
+                SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_CHECK_MPI
-    ( MPI_Send
-      ( const_cast<Real*>(buf), count, TypeMap<Real>(), to, tag, comm.comm ) );
+
+    Synchronize(syncInfo);
+
+    CheckMpi(
+        MPI_Send(
+            buf, count, TypeMap<Real>(), to, tag, comm.comm));
 }
 
-template<typename Real,
+template <typename Real, Device D,
          typename/*=EnableIf<IsPacked<Real>>*/>
-void TaggedSend
-( const Complex<Real>* buf, int count, int to, int tag, Comm comm )
+void TaggedSend(
+    const Complex<Real>* buf, int count, int to, int tag, Comm comm,
+    SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
 #ifdef EL_AVOID_COMPLEX_MPI
-    EL_CHECK_MPI
-    ( MPI_Send
-      ( const_cast<Complex<Real>*>(buf), 2*count, TypeMap<Real>(), to,
-        tag, comm.comm ) );
+    CheckMpi(
+        MPI_Send(
+            buf, 2*count, TypeMap<Real>(), to, tag, comm.comm));
 #else
-    EL_CHECK_MPI
-    ( MPI_Send
-      ( const_cast<Complex<Real>*>(buf), count,
-        TypeMap<Complex<Real>>(), to, tag, comm.comm ) );
+    CheckMpi(
+        MPI_Send(
+            buf, count, TypeMap<Complex<Real>>(), to, tag, comm.comm));
 #endif
 }
 
-template<typename T,
+template <typename T, Device D,
          typename/*=DisableIf<IsPacked<T>>*/,
          typename/*=void*/>
-void TaggedSend( const T* buf, int count, int to, int tag, Comm comm )
+void TaggedSend( const T* buf, int count, int to, int tag, Comm comm,
+                 SyncInfo<D> const& syncInfo)
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
     std::vector<byte> packedBuf;
-    Serialize( count, buf, packedBuf );
-    EL_CHECK_MPI
-    ( MPI_Send( packedBuf.data(), count, TypeMap<T>(), to, tag, comm.comm ) );
+    Serialize(count, buf, packedBuf);
+    CheckMpi(
+        MPI_Send(
+            packedBuf.data(), count, TypeMap<T>(), to, tag, comm.comm));
 }
 
-template<typename T>
-void Send( const T* buf, int count, int to, Comm comm ) EL_NO_RELEASE_EXCEPT
-{ TaggedSend( buf, count, to, 0, comm ); }
+template <typename T, Device D>
+void Send( const T* buf, int count, int to, Comm comm,
+           SyncInfo<D> const& syncInfo) EL_NO_RELEASE_EXCEPT
+{ TaggedSend( buf, count, to, 0, comm, syncInfo ); }
 
-template<typename T>
-void TaggedSend( T b, int to, int tag, Comm comm ) EL_NO_RELEASE_EXCEPT
-{ TaggedSend( &b, 1, to, tag, comm ); }
+template <typename T>
+void TaggedSend( T b, int to, int tag, Comm comm )
+    EL_NO_RELEASE_EXCEPT
+{ TaggedSend( &b, 1, to, tag, comm, SyncInfo<Device::CPU>{}); }
 
-template<typename T>
-void Send( T b, int to, Comm comm ) EL_NO_RELEASE_EXCEPT
+template <typename T>
+void Send( T b, int to, Comm comm )
+    EL_NO_RELEASE_EXCEPT
 { TaggedSend( b, to, 0, comm ); }
 
-template<typename Real,
+template <typename Real,
          typename/*=EnableIf<IsPacked<Real>>*/>
 void TaggedISend
 ( const Real* buf, int count, int to, int tag, Comm comm,
@@ -661,7 +674,7 @@ EL_NO_RELEASE_EXCEPT
         tag, comm.comm, &request.backend ) );
 }
 
-template<typename Real,
+template <typename Real,
          typename/*=EnableIf<IsPacked<Real>>*/>
 void TaggedISend
 ( const Complex<Real>* buf, int count, int to, int tag, Comm comm,
@@ -681,7 +694,7 @@ void TaggedISend
 #endif
 }
 
-template<typename T,
+template <typename T,
          typename/*=DisableIf<IsPacked<T>>*/,
          typename/*=void*/>
 void TaggedISend
@@ -696,23 +709,23 @@ EL_NO_RELEASE_EXCEPT
         &request.backend ) );
 }
 
-template<typename T>
+template <typename T>
 void ISend
 ( const T* buf, int count, int to, Comm comm, Request<T>& request )
 EL_NO_RELEASE_EXCEPT
 { TaggedISend( buf, count, to, 0, comm, request ); }
 
-template<typename T>
+template <typename T>
 void TaggedISend( T b, int to, int tag, Comm comm, Request<T>& request )
 EL_NO_RELEASE_EXCEPT
 { TaggedISend( &b, 1, to, tag, comm, request ); }
 
-template<typename T>
+template <typename T>
 void ISend( T b, int to, Comm comm, Request<T>& request )
 EL_NO_RELEASE_EXCEPT
 { TaggedISend( b, to, 0, comm, request ); }
 
-template<typename Real,
+template <typename Real,
          typename/*=EnableIf<IsPacked<Real>>*/>
 void TaggedIRSend
 ( const Real* buf, int count, int to, int tag, Comm comm,
@@ -726,7 +739,7 @@ EL_NO_RELEASE_EXCEPT
         tag, comm.comm, &request.backend ) );
 }
 
-template<typename Real,
+template <typename Real,
          typename/*=EnableIf<IsPacked<Real>>*/>
 void TaggedIRSend
 ( const Complex<Real>* buf, int count, int to, int tag, Comm comm,
@@ -746,7 +759,7 @@ void TaggedIRSend
 #endif
 }
 
-template<typename T,
+template <typename T,
          typename/*=DisableIf<IsPacked<T>>*/,
          typename/*=void*/>
 void TaggedIRSend
@@ -762,23 +775,23 @@ EL_NO_RELEASE_EXCEPT
         tag, comm.comm, &request.backend ) );
 }
 
-template<typename T>
+template <typename T>
 void IRSend
 ( const T* buf, int count, int to, Comm comm, Request<T>& request )
 EL_NO_RELEASE_EXCEPT
 { TaggedIRSend( buf, count, to, 0, comm, request ); }
 
-template<typename T>
+template <typename T>
 void TaggedIRSend( T b, int to, int tag, Comm comm, Request<T>& request )
 EL_NO_RELEASE_EXCEPT
 { TaggedIRSend( &b, 1, to, tag, comm, request ); }
 
-template<typename T>
+template <typename T>
 void IRSend( T b, int to, Comm comm, Request<T>& request )
 EL_NO_RELEASE_EXCEPT
 { TaggedIRSend( b, to, 0, comm, request ); }
 
-template<typename Real,
+template <typename Real,
          typename/*=EnableIf<IsPacked<Real>>*/>
 void TaggedISSend
 ( const Real* buf, int count, int to, int tag, Comm comm,
@@ -791,7 +804,7 @@ void TaggedISSend
         tag, comm.comm, &request.backend ) );
 }
 
-template<typename Real,
+template <typename Real,
          typename/*=EnableIf<IsPacked<Real>>*/>
 void TaggedISSend
 ( const Complex<Real>* buf, int count, int to, int tag, Comm comm,
@@ -811,7 +824,7 @@ void TaggedISSend
 #endif
 }
 
-template<typename T,
+template <typename T,
          typename/*=DisableIf<IsPacked<T>>*/,
          typename/*=void*/>
 void TaggedISSend
@@ -826,76 +839,93 @@ EL_NO_RELEASE_EXCEPT
         tag, comm.comm, &request.backend ) );
 }
 
-template<typename T>
+template <typename T>
 void ISSend( const T* buf, int count, int to, Comm comm, Request<T>& request )
 EL_NO_RELEASE_EXCEPT
 { TaggedISSend( buf, count, to, 0, comm, request ); }
 
-template<typename T>
+template <typename T>
 void TaggedISSend( T b, int to, int tag, Comm comm, Request<T>& request )
 EL_NO_RELEASE_EXCEPT
 { TaggedISSend( &b, 1, to, tag, comm, request ); }
 
-template<typename Real,
+template <typename Real, Device D,
          typename/*=EnableIf<IsPacked<Real>>*/>
-void TaggedRecv( Real* buf, int count, int from, int tag, Comm comm )
-EL_NO_RELEASE_EXCEPT
+void TaggedRecv( Real* buf, int count, int from, int tag, Comm comm,
+                 SyncInfo<D> const& syncInfo ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
     Status status;
-    EL_CHECK_MPI
-    ( MPI_Recv( buf, count, TypeMap<Real>(), from, tag, comm.comm, &status ) );
+    CheckMpi(
+        MPI_Recv(
+            buf, count, TypeMap<Real>(), from, tag, comm.comm, &status));
 }
 
-template<typename Real,
+template <typename Real, Device D,
          typename/*=EnableIf<IsPacked<Real>>*/>
-void TaggedRecv( Complex<Real>* buf, int count, int from, int tag, Comm comm )
+void TaggedRecv( Complex<Real>* buf, int count, int from, int tag, Comm comm,
+                 SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
     Status status;
 #ifdef EL_AVOID_COMPLEX_MPI
-    EL_CHECK_MPI
-    ( MPI_Recv( buf, 2*count, TypeMap<Real>(), from, tag, comm.comm, &status ) );
+    CheckMpi(
+        MPI_Recv(
+            buf, 2*count, TypeMap<Real>(), from, tag, comm.comm, &status));
 #else
-    EL_CHECK_MPI
-    ( MPI_Recv
-      ( buf, count, TypeMap<Complex<Real>>(), from, tag, comm.comm, &status ) );
+    CheckMpi(
+        MPI_Recv(
+            buf, count, TypeMap<Complex<Real>>(),
+            from, tag, comm.comm, &status));
 #endif
 }
 
-template<typename T,
+template <typename T, Device D,
          typename/*=DisableIf<IsPacked<T>>*/,
          typename/*=void*/>
-void TaggedRecv( T* buf, int count, int from, int tag, Comm comm )
+void TaggedRecv( T* buf, int count, int from, int tag, Comm comm,
+                 SyncInfo<D> const& syncInfo)
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
     std::vector<byte> packedBuf;
     ReserveSerialized( count, buf, packedBuf );
     Status status;
-    EL_CHECK_MPI
-    ( MPI_Recv
-      ( packedBuf.data(), count, TypeMap<T>(), from, tag,
-        comm.comm, &status ) );
+    CheckMpi(
+        MPI_Recv(
+            packedBuf.data(), count, TypeMap<T>(), from, tag,
+            comm.comm, &status));
     Deserialize( count, packedBuf, buf );
 }
 
-template<typename T>
-void Recv( T* buf, int count, int from, Comm comm )
+template <typename T, Device D>
+void Recv(T* buf, int count, int from, Comm comm, SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
-{ TaggedRecv( buf, count, from, ANY_TAG, comm ); }
+{ TaggedRecv( buf, count, from, ANY_TAG, comm, syncInfo ); }
 
-template<typename T>
+template <typename T>
 T TaggedRecv( int from, int tag, Comm comm )
 EL_NO_RELEASE_EXCEPT
-{ T b; TaggedRecv( &b, 1, from, tag, comm ); return b; }
+{
+    T b;
+    TaggedRecv(&b, 1, from, tag, comm, SyncInfo<Device::CPU>{});
+    return b;
+}
 
-template<typename T>
-T Recv( int from, Comm comm )
+template <typename T>
+T Recv(int from, Comm comm)
 EL_NO_RELEASE_EXCEPT
 { return TaggedRecv<T>( from, ANY_TAG, comm ); }
 
-template<typename Real,
+template <typename Real,
          typename/*=EnableIf<IsPacked<Real>>*/>
 void TaggedIRecv
 ( Real* buf, int count, int from, int tag, Comm comm, Request<Real>& request )
@@ -907,7 +937,7 @@ EL_NO_RELEASE_EXCEPT
       ( buf, count, TypeMap<Real>(), from, tag, comm.comm, &request.backend ) );
 }
 
-template<typename Real,
+template <typename Real,
          typename/*=EnableIf<IsPacked<Real>>*/>
 void TaggedIRecv
 ( Complex<Real>* buf, int count, int from, int tag, Comm comm,
@@ -928,7 +958,7 @@ EL_NO_RELEASE_EXCEPT
 #endif
 }
 
-template<typename T,
+template <typename T,
          typename/*=DisableIf<IsPacked<T>>*/,
          typename/*=void*/>
 void TaggedIRecv
@@ -946,70 +976,81 @@ EL_NO_RELEASE_EXCEPT
         &request.backend ) );
 }
 
-template<typename T>
+template <typename T>
 void IRecv( T* buf, int count, int from, Comm comm, Request<T>& request )
 EL_NO_RELEASE_EXCEPT
 { TaggedIRecv( buf, count, from, ANY_TAG, comm, request ); }
 
-template<typename T>
+template <typename T>
 T TaggedIRecv( int from, int tag, Comm comm, Request<T>& request )
 EL_NO_RELEASE_EXCEPT
 { T b; TaggedIRecv( &b, 1, from, tag, comm, request ); return b; }
 
-template<typename T>
+template <typename T>
 T IRecv( int from, Comm comm, Request<T>& request )
 EL_NO_RELEASE_EXCEPT
 { return TaggedIRecv<T>( from, ANY_TAG, comm, request ); }
 
-template<typename Real,
+template <typename Real, Device D,
          typename/*=EnableIf<IsPacked<Real>>*/>
-void TaggedSendRecv
-( const Real* sbuf, int sc, int to,   int stag,
-        Real* rbuf, int rc, int from, int rtag, Comm comm )
+void TaggedSendRecv(
+    const Real* sbuf, int sc, int to,   int stag,
+    Real* rbuf, int rc, int from, int rtag, Comm comm,
+    SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
     Status status;
-    EL_CHECK_MPI
-    ( MPI_Sendrecv
-      ( const_cast<Real*>(sbuf), sc, TypeMap<Real>(), to,   stag,
-        rbuf,                    rc, TypeMap<Real>(), from, rtag,
-        comm.comm, &status ) );
+    CheckMpi(
+        MPI_Sendrecv(
+            sbuf, sc, TypeMap<Real>(), to,   stag,
+            rbuf, rc, TypeMap<Real>(), from, rtag,
+            comm.comm, &status ) );
 }
 
-template<typename Real,
+template <typename Real, Device D,
          typename/*=EnableIf<IsPacked<Real>>*/>
-void TaggedSendRecv
-( const Complex<Real>* sbuf, int sc, int to,   int stag,
-        Complex<Real>* rbuf, int rc, int from, int rtag, Comm comm )
+void TaggedSendRecv(
+    const Complex<Real>* sbuf, int sc, int to, int stag,
+    Complex<Real>* rbuf, int rc, int from, int rtag, Comm comm,
+    SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
     Status status;
 #ifdef EL_AVOID_COMPLEX_MPI
-    EL_CHECK_MPI
-    ( MPI_Sendrecv
-      ( const_cast<Complex<Real>*>(sbuf), 2*sc, TypeMap<Real>(), to,   stag,
-        rbuf,                             2*rc, TypeMap<Real>(), from, rtag,
-        comm.comm, &status ) );
+    CheckMpi(
+        MPI_Sendrecv(
+            sbuf, 2*sc, TypeMap<Real>(), to,   stag,
+            rbuf, 2*rc, TypeMap<Real>(), from, rtag,
+            comm.comm, &status));
 #else
-    EL_CHECK_MPI
-    ( MPI_Sendrecv
-      ( const_cast<Complex<Real>*>(sbuf),
-        sc, TypeMap<Complex<Real>>(), to,   stag,
-        rbuf,
-        rc, TypeMap<Complex<Real>>(), from, rtag, comm.comm, &status ) );
+    CheckMpi(
+        MPI_Sendrecv(
+          sbuf, sc, TypeMap<Complex<Real>>(), to,   stag,
+          rbuf, rc, TypeMap<Complex<Real>>(), from, rtag,
+          comm.comm, &status));
 #endif
 }
 
-template<typename T,
+template <typename T, Device D,
          typename/*=DisableIf<IsPacked<T>>*/,
          typename/*=void*/>
-void TaggedSendRecv
-( const T* sbuf, int sc, int to,   int stag,
-        T* rbuf, int rc, int from, int rtag, Comm comm )
+void TaggedSendRecv(
+    const T* sbuf, int sc, int to,   int stag,
+    T* rbuf, int rc, int from, int rtag, Comm comm,
+    SyncInfo<D> const& syncInfo)
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
     Status status;
     std::vector<byte> packedSend, packedRecv;
     Serialize( sc, sbuf, packedSend );
@@ -1022,88 +1063,104 @@ void TaggedSendRecv
     Deserialize( rc, packedRecv, rbuf );
 }
 
-template<typename T>
-void SendRecv
-( const T* sbuf, int sc, int to,
-        T* rbuf, int rc, int from, Comm comm )
+template <typename T, Device D>
+void SendRecv(
+    const T* sbuf, int sc, int to,
+    T* rbuf, int rc, int from, Comm comm,
+    SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
-{ TaggedSendRecv( sbuf, sc, to, 0, rbuf, rc, from, ANY_TAG, comm ); }
+{ TaggedSendRecv( sbuf, sc, to, 0, rbuf, rc, from, ANY_TAG, comm, syncInfo ); }
 
-template<typename T>
-T TaggedSendRecv( T sb, int to, int stag, int from, int rtag, Comm comm )
+template <typename T, Device D>
+T TaggedSendRecv( T sb, int to, int stag, int from, int rtag, Comm comm,
+                  SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
 {
     T rb;
-    TaggedSendRecv( &sb, 1, to, stag, &rb, 1, from, rtag, comm );
+    TaggedSendRecv( &sb, 1, to, stag, &rb, 1, from, rtag, comm, syncInfo );
     return rb;
 }
 
-template<typename T>
-T SendRecv( T sb, int to, int from, Comm comm )
+template <typename T, Device D>
+T SendRecv( T sb, int to, int from, Comm comm, SyncInfo<D> const& syncInfo )
 EL_NO_RELEASE_EXCEPT
-{ return TaggedSendRecv( sb, to, 0, from, ANY_TAG, comm ); }
+{ return TaggedSendRecv( sb, to, 0, from, ANY_TAG, comm, syncInfo ); }
 
-template<typename Real,
+template <typename Real, Device D,
          typename/*=EnableIf<IsPacked<Real>>*/>
-void TaggedSendRecv
-( Real* buf, int count, int to, int stag, int from, int rtag, Comm comm )
+void TaggedSendRecv(
+    Real* buf, int count, int to, int stag, int from, int rtag, Comm comm,
+    SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    LogicError("SendRecv_replace. Tom want's to know if this is used.");
+
+    Synchronize(syncInfo);
+
     Status status;
-    EL_CHECK_MPI
-    ( MPI_Sendrecv_replace
-      ( buf, count, TypeMap<Real>(), to, stag, from, rtag, comm.comm,
-        &status ) );
+    CheckMpi(
+        MPI_Sendrecv_replace(
+            buf, count, TypeMap<Real>(), to, stag, from, rtag, comm.comm,
+            &status));
 }
 
-template<typename Real,
+template <typename Real, Device D,
          typename/*=EnableIf<IsPacked<Real>>*/>
-void TaggedSendRecv
-( Complex<Real>* buf, int count, int to, int stag, int from, int rtag,
-  Comm comm )
+void TaggedSendRecv(
+    Complex<Real>* buf, int count, int to, int stag, int from, int rtag,
+    Comm comm, SyncInfo<D> const& syncInfo )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
     Status status;
 #ifdef EL_AVOID_COMPLEX_MPI
-    EL_CHECK_MPI
-    ( MPI_Sendrecv_replace
-      ( buf, 2*count, TypeMap<Real>(), to, stag, from, rtag, comm.comm,
-        &status ) );
+    CheckMpi(
+        MPI_Sendrecv_replace(
+            buf, 2*count, TypeMap<Real>(), to, stag, from, rtag, comm.comm,
+            &status));
 #else
-    EL_CHECK_MPI
-    ( MPI_Sendrecv_replace
-      ( buf, count, TypeMap<Complex<Real>>(),
-        to, stag, from, rtag, comm.comm, &status ) );
+    CheckMpi(
+        MPI_Sendrecv_replace(
+            buf, count, TypeMap<Complex<Real>>(),
+            to, stag, from, rtag, comm.comm, &status));
 #endif
 }
 
-template<typename T,
+template <typename T, Device D,
          typename/*=DisableIf<IsPacked<T>>*/,
          typename/*=void*/>
-void TaggedSendRecv
-( T* buf, int count, int to, int stag, int from, int rtag, Comm comm )
+void TaggedSendRecv(
+    T* buf, int count, int to, int stag, int from, int rtag, Comm comm,
+    SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
     std::vector<byte> packedBuf;
     ReserveSerialized( count, buf, packedBuf );
     Serialize( count, buf, packedBuf );
     Status status;
-    EL_CHECK_MPI
-    ( MPI_Sendrecv_replace
-      ( packedBuf.data(), count, TypeMap<T>(), to, stag, from, rtag,
-        comm.comm, &status ) );
+    CheckMpi(
+        MPI_Sendrecv_replace(
+            packedBuf.data(), count, TypeMap<T>(), to, stag, from, rtag,
+            comm.comm, &status));
     Deserialize( count, packedBuf, buf );
 }
 
-template<typename T>
-void SendRecv( T* buf, int count, int to, int from, Comm comm )
+template <typename T, Device D>
+void SendRecv( T* buf, int count, int to, int from, Comm comm,
+               SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
-{ TaggedSendRecv( buf, count, to, 0, from, ANY_TAG, comm ); }
+{ TaggedSendRecv(buf, count, to, 0, from, ANY_TAG, comm, syncInfo); }
 
-template<typename Real,
+template <typename Real,
          typename/*=EnableIf<IsPacked<Real>>*/>
 void IBroadcast
 ( Real* buf, int count, int root, Comm comm, Request<Real>& request )
@@ -1118,7 +1175,7 @@ void IBroadcast
 #endif
 }
 
-template<typename Real,
+template <typename Real,
          typename/*=EnableIf<IsPacked<Real>>*/>
 void IBroadcast
 ( Complex<Real>* buf, int count, int root, Comm comm,
@@ -1141,7 +1198,7 @@ void IBroadcast
 #endif
 }
 
-template<typename T,
+template <typename T,
          typename/*=DisableIf<IsPacked<T>>*/,
          typename/*=void*/>
 void IBroadcast
@@ -1162,56 +1219,67 @@ void IBroadcast
 #endif
 }
 
-template<typename T>
+template <typename T>
 void IBroadcast( T& b, int root, Comm comm, Request<T>& request )
 { IBroadcast( &b, 1, root, comm, request ); }
 
-template<typename Real,
+template <typename Real, Device D,
          typename/*=EnableIf<IsPacked<Real>>*/>
-void Gather
-( const Real* sbuf, int sc,
-        Real* rbuf, int rc, int root, Comm comm )
+void Gather(
+    const Real* sbuf, int sc,
+    Real* rbuf, int rc, int root, Comm comm,
+    SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_CHECK_MPI
-    ( MPI_Gather
-      ( const_cast<Real*>(sbuf), sc, TypeMap<Real>(),
-        rbuf,                    rc, TypeMap<Real>(), root, comm.comm ) );
+
+    Synchronize(syncInfo);
+
+    CheckMpi(
+        MPI_Gather(
+            sbuf, sc, TypeMap<Real>(),
+            rbuf, rc, TypeMap<Real>(), root, comm.comm));
 }
 
-template<typename Real,
+template <typename Real, Device D,
          typename/*=EnableIf<IsPacked<Real>>*/>
-void Gather
-( const Complex<Real>* sbuf, int sc,
-        Complex<Real>* rbuf, int rc, int root, Comm comm )
+void Gather(
+    const Complex<Real>* sbuf, int sc,
+    Complex<Real>* rbuf, int rc, int root, Comm comm,
+    SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
 #ifdef EL_AVOID_COMPLEX_MPI
-    EL_CHECK_MPI
-    ( MPI_Gather
-      ( const_cast<Complex<Real>*>(sbuf), 2*sc, TypeMap<Real>(),
-        rbuf,                             2*rc, TypeMap<Real>(),
-        root, comm.comm ) );
+    CheckMpi(
+        MPI_Gather(
+            sbuf, 2*sc, TypeMap<Real>(),
+            rbuf, 2*rc, TypeMap<Real>(),
+            root, comm.comm));
 #else
-    EL_CHECK_MPI
-    ( MPI_Gather
-      ( const_cast<Complex<Real>*>(sbuf), sc, TypeMap<Complex<Real>>(),
-        rbuf,                             rc, TypeMap<Complex<Real>>(),
-        root, comm.comm ) );
+    CheckMpi(
+        MPI_Gather(
+            sbuf, sc, TypeMap<Complex<Real>>(),
+            rbuf, rc, TypeMap<Complex<Real>>(),
+            root, comm.comm));
 #endif
 }
 
-template<typename T,
+template <typename T, Device D,
          typename/*=DisableIf<IsPacked<T>>*/,
          typename/*=void*/>
-void Gather
-( const T* sbuf, int sc,
-        T* rbuf, int rc, int root, Comm comm )
+void Gather(
+    const T* sbuf, int sc,
+    T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& syncInfo )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
     const int commSize = mpi::Size(comm);
     const int commRank = mpi::Rank(comm);
     const int totalRecv = rc*commSize;
@@ -1221,15 +1289,15 @@ EL_NO_RELEASE_EXCEPT
 
     if( commRank == root )
         ReserveSerialized( totalRecv, rbuf, packedRecv );
-    EL_CHECK_MPI
-    ( MPI_Gather
-      ( packedSend.data(), sc, TypeMap<T>(),
-        packedRecv.data(), rc, TypeMap<T>(), root, comm.comm ) );
+    CheckMpi(
+        MPI_Gather(
+            packedSend.data(), sc, TypeMap<T>(),
+            packedRecv.data(), rc, TypeMap<T>(), root, comm.comm ) );
     if( commRank == root )
         Deserialize( totalRecv, packedRecv, rbuf );
 }
 
-template<typename Real,
+template <typename Real,
          typename/*=EnableIf<IsPacked<Real>>*/>
 void IGather
 ( const Real* sbuf, int sc,
@@ -1249,7 +1317,7 @@ void IGather
 #endif
 }
 
-template<typename Real,
+template <typename Real,
          typename/*=EnableIf<IsPacked<Real>>*/>
 void IGather
 ( const Complex<Real>* sbuf, int sc,
@@ -1277,7 +1345,7 @@ void IGather
 #endif
 }
 
-template<typename T,
+template <typename T,
          typename/*=DisableIf<IsPacked<T>>*/,
          typename/*=void*/>
 void IGather
@@ -1306,37 +1374,37 @@ void IGather
 #endif
 }
 
-template<typename Real,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void Gather
-( const Real* sbuf, int sc,
-        Real* rbuf, const int* rcs, const int* rds,
-  int root, Comm comm )
+template <typename Real, Device D,
+          typename/*=EnableIf<IsPacked<Real>>*/>
+void Gather(
+    const Real* sbuf, int sc,
+    Real* rbuf, const int* rcs, const int* rds,
+    int root, Comm comm, SyncInfo<D> const& syncInfo )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_CHECK_MPI
-    ( MPI_Gatherv
-      ( const_cast<Real*>(sbuf),
-        sc,
-        TypeMap<Real>(),
-        rbuf,
-        const_cast<int*>(rcs),
-        const_cast<int*>(rds),
-        TypeMap<Real>(),
-        root,
-        comm.comm ) );
+
+    Synchronize(syncInfo);
+
+    CheckMpi(
+        MPI_Gatherv(
+            sbuf, sc, TypeMap<Real>(),
+            rbuf, rcs, rds, TypeMap<Real>(),
+            root, comm.comm));
 }
 
-template<typename Real,
+template <typename Real, Device D,
          typename/*=EnableIf<IsPacked<Real>>*/>
-void Gather
-( const Complex<Real>* sbuf, int sc,
-        Complex<Real>* rbuf, const int* rcs, const int* rds, int root,
-  Comm comm )
+void Gather(
+    const Complex<Real>* sbuf, int sc,
+    Complex<Real>* rbuf, const int* rcs, const int* rds, int root,
+    Comm comm, SyncInfo<D> const& syncInfo )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
 #ifdef EL_AVOID_COMPLEX_MPI
     const int commRank = Rank( comm );
     const int commSize = Size( comm );
@@ -1351,36 +1419,33 @@ EL_NO_RELEASE_EXCEPT
             rdsDouble[i] = 2*rds[i];
         }
     }
-    EL_CHECK_MPI
-    ( MPI_Gatherv
-      ( const_cast<Complex<Real>*>(sbuf), 2*sc, TypeMap<Real>(),
-        rbuf, rcsDouble.data(), rdsDouble.data(), TypeMap<Real>(),
-        root, comm.comm ) );
+    CheckMpi(
+        MPI_Gatherv(
+            sbuf, 2*sc, TypeMap<Real>(),
+            rbuf, rcsDouble.data(), rdsDouble.data(), TypeMap<Real>(),
+            root, comm.comm ) );
 #else
-    EL_CHECK_MPI
-    ( MPI_Gatherv
-      ( const_cast<Complex<Real>*>(sbuf),
-        sc,
-        TypeMap<Complex<Real>>(),
-        rbuf,
-        const_cast<int*>(rcs),
-        const_cast<int*>(rds),
-        TypeMap<Complex<Real>>(),
-        root,
-        comm.comm ) );
+    EL_CHECK_MPI(
+        MPI_Gatherv(
+            sbuf, sc, TypeMap<Complex<Real>>(),
+            rbuf, rcs, rds, TypeMap<Complex<Real>>(),
+            root, comm.comm));
 #endif
 }
 
-template<typename T,
+template <typename T, Device D,
          typename/*=DisableIf<IsPacked<T>>*/,
          typename/*=void*/>
-void Gather
-( const T* sbuf, int sc,
-        T* rbuf, const int* rcs, const int* rds,
-  int root, Comm comm )
+void Gather(
+    const T* sbuf, int sc,
+    T* rbuf, const int* rcs, const int* rds,
+    int root, Comm comm, SyncInfo<D> const& syncInfo )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
     const int commSize = mpi::Size(comm);
     const int commRank = mpi::Rank(comm);
     int totalRecv=0;
@@ -1392,29 +1457,27 @@ EL_NO_RELEASE_EXCEPT
 
     if( commRank == root )
         ReserveSerialized( totalRecv, rbuf, packedRecv );
-    EL_CHECK_MPI
-    ( MPI_Gatherv
-      ( packedSend.data(),
-        sc,
-        TypeMap<T>(),
-        packedRecv.data(),
-        const_cast<int*>(rcs),
-        const_cast<int*>(rds),
-        TypeMap<T>(),
-        root,
-        comm.comm ) );
+    CheckMpi(
+        MPI_Gatherv(
+             packedSend.data(), sc, TypeMap<T>(),
+             packedRecv.data(), rcs, rds, TypeMap<T>(),
+             root, comm.comm));
     if( commRank == root )
         Deserialize( totalRecv, packedRecv, rbuf );
 }
 
-template<typename Real,
+template <typename Real, Device D,
          typename/*=EnableIf<IsPacked<Real>>*/>
-void AllGather
-( const Real* sbuf, int sc,
-        Real* rbuf, const int* rcs, const int* rds, Comm comm )
-EL_NO_RELEASE_EXCEPT
+void AllGather(
+    const Real* sbuf, int sc,
+    Real* rbuf, const int* rcs, const int* rds, Comm comm,
+    SyncInfo<D> const& syncInfo)
+    EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
 #ifdef EL_USE_BYTE_ALLGATHERS
     const int commSize = Size( comm );
     vector<int> byteRcs( commSize ), byteRds( commSize );
@@ -1423,35 +1486,33 @@ EL_NO_RELEASE_EXCEPT
         byteRcs[i] = sizeof(Real)*rcs[i];
         byteRds[i] = sizeof(Real)*rds[i];
     }
-    EL_CHECK_MPI
-    ( MPI_Allgatherv
-      ( reinterpret_cast<UCP>(const_cast<Real*>(sbuf)),
-        sizeof(Real)*sc, MPI_UNSIGNED_CHAR,
-        reinterpret_cast<UCP>(rbuf),
-        byteRcs.data(), byteRds.data(), MPI_UNSIGNED_CHAR,
-        comm.comm ) );
+    CheckMpi(
+        MPI_Allgatherv(
+            reinterpret_cast<UCP>(const_cast<Real*>(sbuf)),
+            sizeof(Real)*sc, MPI_UNSIGNED_CHAR,
+            reinterpret_cast<UCP>(rbuf),
+            byteRcs.data(), byteRds.data(), MPI_UNSIGNED_CHAR,
+            comm.comm ) );
 #else
-    EL_CHECK_MPI
-    ( MPI_Allgatherv
-      ( const_cast<Real*>(sbuf),
-        sc,
-        TypeMap<Real>(),
-        rbuf,
-        const_cast<int*>(rcs),
-        const_cast<int*>(rds),
-        TypeMap<Real>(),
-        comm.comm ) );
+    CheckMpi(
+        MPI_Allgatherv(
+            sbuf, sc, TypeMap<Real>(),
+            rbuf, rcs, rds, TypeMap<Real>(), comm.comm));
 #endif
 }
 
-template<typename Real,
+template <typename Real, Device D,
          typename/*=EnableIf<IsPacked<Real>>*/>
-void AllGather
-( const Complex<Real>* sbuf, int sc,
-        Complex<Real>* rbuf, const int* rcs, const int* rds, Comm comm )
+void AllGather(
+    const Complex<Real>* sbuf, int sc,
+    Complex<Real>* rbuf, const int* rcs, const int* rds, Comm comm,
+    SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
 #ifdef EL_USE_BYTE_ALLGATHERS
     const int commSize = Size( comm );
     vector<int> byteRcs( commSize ), byteRds( commSize );
@@ -1460,15 +1521,15 @@ EL_NO_RELEASE_EXCEPT
         byteRcs[i] = 2*sizeof(Real)*rcs[i];
         byteRds[i] = 2*sizeof(Real)*rds[i];
     }
-    EL_CHECK_MPI
-    ( MPI_Allgatherv
-      ( reinterpret_cast<UCP>(const_cast<Complex<Real>*>(sbuf)),
-        2*sizeof(Real)*sc, MPI_UNSIGNED_CHAR,
-        reinterpret_cast<UCP>(rbuf),
-        byteRcs.data(), byteRds.data(), MPI_UNSIGNED_CHAR,
-        comm.comm ) );
+    CheckMpi(
+        MPI_Allgatherv(
+            reinterpret_cast<UCP>(const_cast<Complex<Real>*>(sbuf)),
+            2*sizeof(Real)*sc, MPI_UNSIGNED_CHAR,
+            reinterpret_cast<UCP>(rbuf),
+            byteRcs.data(), byteRds.data(), MPI_UNSIGNED_CHAR,
+            comm.comm));
 #else
- #ifdef EL_AVOID_COMPLEX_MPI
+#ifdef EL_AVOID_COMPLEX_MPI
     const int commSize = Size( comm );
     vector<int> realRcs( commSize ), realRds( commSize );
     for( int i=0; i<commSize; ++i )
@@ -1476,34 +1537,33 @@ EL_NO_RELEASE_EXCEPT
         realRcs[i] = 2*rcs[i];
         realRds[i] = 2*rds[i];
     }
-    EL_CHECK_MPI
-    ( MPI_Allgatherv
-      ( const_cast<Complex<Real>*>(sbuf), 2*sc, TypeMap<Real>(),
-        rbuf, realRcs.data(), realRds.data(), TypeMap<Real>(), comm.comm ) );
- #else
-    EL_CHECK_MPI
-    ( MPI_Allgatherv
-      ( const_cast<Complex<Real>*>(sbuf),
-        sc,
-        TypeMap<Complex<Real>>(),
-        rbuf,
-        const_cast<int*>(rcs),
-        const_cast<int*>(rds),
-        TypeMap<Complex<Real>>(),
-        comm.comm ) );
- #endif
+    CheckMpi(
+        MPI_Allgatherv(
+            sbuf, 2*sc, TypeMap<Real>(),
+            rbuf, realRcs.data(), realRds.data(),
+            TypeMap<Real>(), comm.comm));
+#else
+    CheckMpi(
+        MPI_Allgatherv(
+            sbuf, sc, TypeMap<Complex<Real>>(),
+            rbuf, rcs, rds, TypeMap<Complex<Real>>(), comm.comm));
+#endif
 #endif
 }
 
-template<typename T,
+template <typename T, Device D,
          typename/*=DisableIf<IsPacked<T>>*/,
          typename/*=void*/>
-void AllGather
-( const T* sbuf, int sc,
-        T* rbuf, const int* rcs, const int* rds, Comm comm )
+void AllGather(
+    const T* sbuf, int sc,
+    T* rbuf, const int* rcs, const int* rds, Comm comm,
+    SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
     const int commSize = mpi::Size(comm);
     const int totalRecv = rcs[commSize-1]+rds[commSize-1];
 
@@ -1511,65 +1571,67 @@ EL_NO_RELEASE_EXCEPT
     Serialize( sc, sbuf, packedSend );
 
     ReserveSerialized( totalRecv, rbuf, packedRecv );
-    EL_CHECK_MPI
-    ( MPI_Allgatherv
-      ( packedSend.data(),
-        sc,
-        TypeMap<T>(),
-        packedRecv.data(),
-        const_cast<int*>(rcs),
-        const_cast<int*>(rds),
-        TypeMap<T>(),
-        comm.comm ) );
+    CheckMpi(
+        MPI_Allgatherv(
+            packedSend.data(), sc, TypeMap<T>(),
+        packedRecv.data(), rcs, rds, TypeMap<T>(), comm.comm));
     Deserialize( totalRecv, packedRecv, rbuf );
 }
 
-template<typename Real,
+template <typename Real, Device D,
          typename/*=EnableIf<IsPacked<Real>>*/>
-void Scatter
-( const Real* sbuf, int sc,
-        Real* rbuf, int rc, int root, Comm comm )
+void Scatter(
+    const Real* sbuf, int sc,
+    Real* rbuf, int rc, int root, Comm comm,
+    SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_CHECK_MPI
-    ( MPI_Scatter
-      ( const_cast<Real*>(sbuf), sc, TypeMap<Real>(),
-        rbuf,                    rc, TypeMap<Real>(), root, comm.comm ) );
+    Synchronize(syncInfo);
+    CheckMpi(
+        MPI_Scatter(
+            sbuf, sc, TypeMap<Real>(),
+            rbuf, rc, TypeMap<Real>(), root, comm.comm));
 }
 
-template<typename Real,
+template <typename Real, Device D,
          typename/*=EnableIf<IsPacked<Real>>*/>
-void Scatter
-( const Complex<Real>* sbuf, int sc,
-        Complex<Real>* rbuf, int rc, int root, Comm comm )
+void Scatter(
+    const Complex<Real>* sbuf, int sc,
+    Complex<Real>* rbuf, int rc, int root, Comm comm,
+    SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
 #ifdef EL_AVOID_COMPLEX_MPI
-    EL_CHECK_MPI
-    ( MPI_Scatter
-      ( const_cast<Complex<Real>*>(sbuf), 2*sc, TypeMap<Real>(),
-        rbuf,                             2*rc, TypeMap<Real>(), root,
-        comm.comm ) );
+    CheckMpi(
+        MPI_Scatter(
+            sbuf, 2*sc, TypeMap<Real>(),
+            rbuf, 2*rc, TypeMap<Real>(), root, comm.comm));
 #else
-    EL_CHECK_MPI
-    ( MPI_Scatter
-      ( const_cast<Complex<Real>*>(sbuf), sc, TypeMap<Complex<Real>>(),
-        rbuf,                             rc, TypeMap<Complex<Real>>(),
-        root, comm.comm ) );
+    CheckMpi(
+        MPI_Scatter(
+            sbuf, sc, TypeMap<Complex<Real>>(),
+            rbuf,rc, TypeMap<Complex<Real>>(),
+            root, comm.comm));
 #endif
 }
 
-template<typename T,
+template <typename T, Device D,
          typename/*=DisableIf<IsPacked<T>>*/,
          typename/*=void*/>
-void Scatter
-( const T* sbuf, int sc,
-        T* rbuf, int rc, int root, Comm comm )
+void Scatter(
+    const T* sbuf, int sc,
+    T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
     const int commSize = mpi::Size(comm);
     const int commRank = mpi::Rank(comm);
     const int totalSend = sc*commSize;
@@ -1579,83 +1641,96 @@ EL_NO_RELEASE_EXCEPT
         Serialize( totalSend, sbuf, packedSend );
 
     ReserveSerialized( rc, rbuf, packedRecv );
-    EL_CHECK_MPI
-    ( MPI_Scatter
-      ( packedSend.data(), sc, TypeMap<T>(),
-        packedRecv.data(), rc, TypeMap<T>(), root, comm.comm ) );
+    CheckMpi(
+        MPI_Scatter(
+            packedSend.data(), sc, TypeMap<T>(),
+            packedRecv.data(), rc, TypeMap<T>(), root, comm.comm));
     Deserialize( rc, packedRecv, rbuf );
 }
 
-template<typename Real,
+template <typename Real, Device D,
          typename/*=EnableIf<IsPacked<Real>>*/>
-void Scatter( Real* buf, int sc, int rc, int root, Comm comm )
+void Scatter(
+    Real* buf, int sc, int rc, int root, Comm comm,
+    SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
     const int commRank = Rank( comm );
     if( commRank == root )
     {
-        EL_CHECK_MPI
-        ( MPI_Scatter
-          ( buf,          sc, TypeMap<Real>(),
-            MPI_IN_PLACE, rc, TypeMap<Real>(), root, comm.comm ) );
+        CheckMpi(
+            MPI_Scatter(
+                buf,          sc, TypeMap<Real>(),
+                MPI_IN_PLACE, rc, TypeMap<Real>(), root, comm.comm));
     }
     else
     {
-        EL_CHECK_MPI
-        ( MPI_Scatter
-          ( 0,   sc, TypeMap<Real>(),
-            buf, rc, TypeMap<Real>(), root, comm.comm ) );
+        CheckMpi(
+            MPI_Scatter(
+                0,   sc, TypeMap<Real>(),
+                buf, rc, TypeMap<Real>(), root, comm.comm));
     }
 }
 
-template<typename Real,
+template <typename Real, Device D,
          typename/*=EnableIf<IsPacked<Real>>*/>
-void Scatter( Complex<Real>* buf, int sc, int rc, int root, Comm comm )
+void Scatter(
+    Complex<Real>* buf, int sc, int rc, int root, Comm comm,
+    SyncInfo<D> const& syncInfo )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
     const int commRank = Rank( comm );
     if( commRank == root )
     {
 #ifdef EL_AVOID_COMPLEX_MPI
-        EL_CHECK_MPI
-        ( MPI_Scatter
-          ( buf,          2*sc, TypeMap<Real>(),
-            MPI_IN_PLACE, 2*rc, TypeMap<Real>(), root, comm.comm ) );
+        CheckMpi(
+            MPI_Scatter(
+                buf,          2*sc, TypeMap<Real>(),
+                MPI_IN_PLACE, 2*rc, TypeMap<Real>(), root, comm.comm ) );
 #else
-        EL_CHECK_MPI
-        ( MPI_Scatter
-          ( buf,          sc, TypeMap<Complex<Real>>(),
-            MPI_IN_PLACE, rc, TypeMap<Complex<Real>>(), root, comm.comm ) );
+        CheckMpi(
+            MPI_Scatter(
+                buf,          sc, TypeMap<Complex<Real>>(),
+                MPI_IN_PLACE, rc, TypeMap<Complex<Real>>(), root, comm.comm ) );
 #endif
     }
     else
     {
 #ifdef EL_AVOID_COMPLEX_MPI
-        EL_CHECK_MPI
-        ( MPI_Scatter
-          ( 0,   2*sc, TypeMap<Real>(),
-            buf, 2*rc, TypeMap<Real>(), root, comm.comm ) );
+        CheckMpi(
+            MPI_Scatter(
+                0,   2*sc, TypeMap<Real>(),
+                buf, 2*rc, TypeMap<Real>(), root, comm.comm ) );
 #else
-        EL_CHECK_MPI
-        ( MPI_Scatter
-          ( 0,   sc, TypeMap<Complex<Real>>(),
-            buf, rc, TypeMap<Complex<Real>>(), root, comm.comm ) );
+        CheckMpi(
+            MPI_Scatter(
+                0,   sc, TypeMap<Complex<Real>>(),
+                buf, rc, TypeMap<Complex<Real>>(), root, comm.comm ) );
 #endif
     }
 }
 
-template<typename T,
+template <typename T, Device D,
          typename/*=DisableIf<IsPacked<T>>*/,
          typename/*=void*/>
-void Scatter( T* buf, int sc, int rc, int root, Comm comm )
+void Scatter(T* buf, int sc, int rc, int root, Comm comm,
+             SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
     const int commSize = mpi::Size(comm);
     const int commRank = mpi::Rank(comm);
     const int totalSend = sc*commSize;
+
+    Synchronize(syncInfo);
 
     // TODO(poulson): Use in-place option?
 
@@ -1664,43 +1739,44 @@ EL_NO_RELEASE_EXCEPT
         Serialize( totalSend, buf, packedSend );
 
     ReserveSerialized( rc, buf, packedRecv );
-    EL_CHECK_MPI
-    ( MPI_Scatter
-      ( packedSend.data(), sc, TypeMap<T>(),
-        packedRecv.data(), rc, TypeMap<T>(), root, comm.comm ) );
+    CheckMpi(
+        MPI_Scatter(
+            packedSend.data(), sc, TypeMap<T>(),
+            packedRecv.data(), rc, TypeMap<T>(), root, comm.comm ) );
     Deserialize( rc, packedRecv, buf );
 }
 
 
-template<typename Real,
+template <typename Real, Device D,
          typename/*=EnableIf<IsPacked<Real>>*/>
-void AllToAll
-( const Real* sbuf, const int* scs, const int* sds,
-        Real* rbuf, const int* rcs, const int* rds, Comm comm )
+void AllToAll(
+    const Real* sbuf, const int* scs, const int* sds,
+    Real* rbuf, const int* rcs, const int* rds, Comm comm, SyncInfo<D> const& syncInfo )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-    EL_CHECK_MPI
-    ( MPI_Alltoallv
-      ( const_cast<Real*>(sbuf),
-        const_cast<int*>(scs),
-        const_cast<int*>(sds),
-        TypeMap<Real>(),
-        rbuf,
-        const_cast<int*>(rcs),
-        const_cast<int*>(rds),
-        TypeMap<Real>(),
-        comm.comm ) );
+
+    Synchronize(syncInfo);
+
+    CheckMpi(
+        MPI_Alltoallv(
+            sbuf, scs, sds, TypeMap<Real>(),
+            rbuf, rcs, rds, TypeMap<Real>(),
+            comm.comm));
 }
 
-template<typename Real,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void AllToAll
-( const Complex<Real>* sbuf, const int* scs, const int* sds,
-        Complex<Real>* rbuf, const int* rcs, const int* rds, Comm comm )
+template <typename Real, Device D,
+          typename/*=EnableIf<IsPacked<Real>>*/>
+void AllToAll(
+    const Complex<Real>* sbuf, const int* scs, const int* sds,
+    Complex<Real>* rbuf, const int* rcs, const int* rds, Comm comm,
+    SyncInfo<D> const& syncInfo )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
 #ifdef EL_AVOID_COMPLEX_MPI
     int p;
     MPI_Comm_size( comm.comm, &p );
@@ -1713,35 +1789,33 @@ EL_NO_RELEASE_EXCEPT
         rcsDoubled[i] = 2*rcs[i];
         rdsDoubled[i] = 2*rds[i];
     }
-    EL_CHECK_MPI
-    ( MPI_Alltoallv
-      ( const_cast<Complex<Real>*>(sbuf),
-              scsDoubled.data(), sdsDoubled.data(), TypeMap<Real>(),
+    CheckMpi(
+    MPI_Alltoallv(
+        const_cast<Complex<Real>*>(sbuf),
+        scsDoubled.data(), sdsDoubled.data(), TypeMap<Real>(),
         rbuf, rcsDoubled.data(), rdsDoubled.data(), TypeMap<Real>(), comm.comm ) );
 #else
-    EL_CHECK_MPI
-    ( MPI_Alltoallv
-      ( const_cast<Complex<Real>*>(sbuf),
-        const_cast<int*>(scs),
-        const_cast<int*>(sds),
-        TypeMap<Complex<Real>>(),
-        rbuf,
-        const_cast<int*>(rcs),
-        const_cast<int*>(rds),
-        TypeMap<Complex<Real>>(),
-        comm.comm ) );
+    CheckMpi(
+    MPI_Alltoallv(
+        sbuf, scs, sds, TypeMap<Complex<Real>>(),
+        rbuf, rcs, rds, TypeMap<Complex<Real>>(),
+        comm.comm));
 #endif
 }
 
-template<typename T,
+template <typename T, Device D,
          typename/*=DisableIf<IsPacked<T>>*/,
          typename/*=void*/>
-void AllToAll
-( const T* sbuf, const int* scs, const int* sds,
-        T* rbuf, const int* rcs, const int* rds, Comm comm )
+void AllToAll(
+    const T* sbuf, const int* scs, const int* sds,
+    T* rbuf, const int* rcs, const int* rds, Comm comm,
+    SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
     const int commSize = mpi::Size( comm );
     const int totalSend = scs[commSize-1]+sds[commSize-1];
     const int totalRecv = rcs[commSize-1]+rds[commSize-1];
@@ -1749,22 +1823,22 @@ EL_NO_RELEASE_EXCEPT
     std::vector<byte> packedSend, packedRecv;
     Serialize( totalSend, sbuf, packedSend );
     ReserveSerialized( totalRecv, rbuf, packedRecv );
-    EL_CHECK_MPI
-    ( MPI_Alltoallv
-      ( packedSend.data(),
-        const_cast<int*>(scs), const_cast<int*>(sds), TypeMap<T>(),
+    CheckMpi(
+    MPI_Alltoallv(
+        packedSend.data(),
+        scs, sds, TypeMap<T>(),
         packedRecv.data(),
-        const_cast<int*>(rcs), const_cast<int*>(rds), TypeMap<T>(),
+        rcs, rds, TypeMap<T>(),
         comm.comm ) );
     Deserialize( totalRecv, packedRecv, rbuf );
 }
 
-template<typename T>
-vector<T> AllToAll
-( const vector<T>& sendBuf,
-  const vector<int>& sendCounts,
-  const vector<int>& sendOffs,
-  Comm comm )
+template <typename T>
+vector<T> AllToAll(
+    const vector<T>& sendBuf,
+    const vector<int>& sendCounts,
+    const vector<int>& sendOffs,
+    Comm comm )
 EL_NO_RELEASE_EXCEPT
 {
     LogicError("AllToAll: Is this used? Tell Tom if so.");
@@ -1776,35 +1850,42 @@ EL_NO_RELEASE_EXCEPT
     vector<int> recvOffs;
     const int totalRecv = El::Scan( recvCounts, recvOffs );
     vector<T> recvBuf(totalRecv);
-    AllToAll
-    ( sendBuf.data(), sendCounts.data(), sendOffs.data(),
-      recvBuf.data(), recvCounts.data(), recvOffs.data(), comm );
+    AllToAll(
+        sendBuf.data(), sendCounts.data(), sendOffs.data(),
+        recvBuf.data(), recvCounts.data(), recvOffs.data(), comm,
+        syncInfo);
     return recvBuf;
 }
 
 
-template<typename Real,
+template <typename Real, Device D,
          typename/*=EnableIf<IsPacked<Real>>*/>
-void ReduceScatter
-( const Real* sbuf, Real* rbuf, const int* rcs, Op op, Comm comm )
+void ReduceScatter(
+    const Real* sbuf, Real* rbuf, const int* rcs, Op op, Comm comm,
+    SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
     MPI_Op opC = NativeOp<Real>( op );
-    EL_CHECK_MPI
-    ( MPI_Reduce_scatter
-      ( const_cast<Real*>(sbuf),
-        rbuf, const_cast<int*>(rcs), TypeMap<Real>(), opC, comm.comm ) );
+    CheckMpi(
+        MPI_Reduce_scatter(
+            sbuf, rbuf, rcs, TypeMap<Real>(), opC, comm.comm));
 }
 
-template<typename Real,
+template <typename Real, Device D,
          typename/*=EnableIf<IsPacked<Real>>*/>
-void ReduceScatter
-( const Complex<Real>* sbuf, Complex<Real>* rbuf, const int* rcs,
-  Op op, Comm comm )
+void ReduceScatter(
+    const Complex<Real>* sbuf, Complex<Real>* rbuf, const int* rcs,
+    Op op, Comm comm, SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
 #ifdef EL_AVOID_COMPLEX_MPI
     if( op == SUM )
     {
@@ -1814,38 +1895,38 @@ EL_NO_RELEASE_EXCEPT
         vector<int> rcsDoubled(p);
         for( int i=0; i<p; ++i )
             rcsDoubled[i] = 2*rcs[i];
-        EL_CHECK_MPI
-        ( MPI_Reduce_scatter
-          ( const_cast<Complex<Real>*>(sbuf),
-            rbuf, rcsDoubled.data(), TypeMap<Real>(), opC, comm.comm ) );
+        CheckMpi(
+            MPI_Reduce_scatter(
+                sbuf, rbuf, rcsDoubled.data(), TypeMap<Real>(), opC,
+                comm.comm));
     }
     else
     {
         MPI_Op opC = NativeOp<Complex<Real>>( op );
-        EL_CHECK_MPI
-        ( MPI_Reduce_scatter
-          ( const_cast<Complex<Real>*>(sbuf),
-            rbuf, const_cast<int*>(rcs), TypeMap<Complex<Real>>(),
-            opC, comm.comm ) );
+        CheckMpi(
+        MPI_Reduce_scatter(
+            sbuf, rbuf, rcs, TypeMap<Complex<Real>>(), opC, comm.comm));
     }
 #else
     MPI_Op opC = NativeOp<Complex<Real>>( op );
-    EL_CHECK_MPI
-    ( MPI_Reduce_scatter
-      ( const_cast<Complex<Real>*>(sbuf),
-        rbuf, const_cast<int*>(rcs), TypeMap<Complex<Real>>(), opC,
-        comm.comm ) );
+    CheckMpi(
+        MPI_Reduce_scatter(
+            sbuf, rbuf, rcs, TypeMap<Complex<Real>>(), opC, comm.comm));
 #endif
 }
 
-template<typename T,
+template <typename T, Device D,
          typename/*=DisableIf<IsPacked<T>>*/,
          typename/*=void*/>
-void ReduceScatter
-( const T* sbuf, T* rbuf, const int* rcs, Op op, Comm comm )
+void ReduceScatter(
+    const T* sbuf, T* rbuf, const int* rcs, Op op, Comm comm,
+    SyncInfo<D> const& syncInfo )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
     const int commRank = mpi::Rank(comm);
     const int commSize = mpi::Size(comm);
     int totalSend=0;
@@ -1857,96 +1938,109 @@ EL_NO_RELEASE_EXCEPT
     std::vector<byte> packedSend, packedRecv;
     Serialize( totalSend, sbuf, packedSend );
     ReserveSerialized( totalRecv, rbuf, packedRecv );
-    EL_CHECK_MPI
-    ( MPI_Reduce_scatter
-      ( packedSend.data(), packedRecv.data(), const_cast<int*>(rcs),
-        TypeMap<T>(), opC, comm.comm ) );
+    CheckMpi(
+        MPI_Reduce_scatter(
+            packedSend.data(), packedRecv.data(), rcs,
+            TypeMap<T>(), opC, comm.comm ) );
     Deserialize( totalRecv, packedRecv, rbuf );
 }
 
-template<typename T>
-void ReduceScatter( const T* sbuf, T* rbuf, const int* rcs, Comm comm )
+template <typename T, Device D>
+void ReduceScatter(
+    const T* sbuf, T* rbuf, const int* rcs, Comm comm,
+    SyncInfo<D> const& syncInfo )
 EL_NO_RELEASE_EXCEPT
-{ ReduceScatter( sbuf, rbuf, rcs, SUM, comm ); }
+{ ReduceScatter( sbuf, rbuf, rcs, SUM, comm, syncInfo ); }
 
-void VerifySendsAndRecvs
-( const vector<int>& sendCounts,
-  const vector<int>& recvCounts, Comm comm )
+void VerifySendsAndRecvs(
+    const vector<int>& sendCounts,
+    const vector<int>& recvCounts, Comm comm )
 {
     EL_DEBUG_CSE
+
     LogicError("VerifySendsAndRecvs: Is this used? Tell Tom if so.");
     const int commSize = Size( comm );
     vector<int> actualRecvCounts(commSize);
-    AllToAll
-    ( sendCounts.data(),       1,
-      actualRecvCounts.data(), 1, comm, SyncInfo<Device::CPU>{} );
+    AllToAll(
+        sendCounts.data(),       1,
+        actualRecvCounts.data(), 1, comm, SyncInfo<Device::CPU>{} );
     for( int q=0; q<commSize; ++q )
         if( actualRecvCounts[q] != recvCounts[q] )
-            LogicError
-            ("Expected recv count of ",recvCounts[q],
-             " but recv'd ",actualRecvCounts[q]," from process ",q);
+            LogicError(
+                "Expected recv count of ",recvCounts[q],
+                " but recv'd ",actualRecvCounts[q]," from process ",q);
 }
 
-template<typename Real,
+template <typename Real, Device D,
          typename/*=EnableIf<IsPacked<Real>>*/>
-void Scan( const Real* sbuf, Real* rbuf, int count, Op op, Comm comm )
+void Scan(const Real* sbuf, Real* rbuf, int count, Op op, Comm comm,
+          SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
     if( count != 0 )
     {
         MPI_Op opC = NativeOp<Real>( op );
-        EL_CHECK_MPI
-        ( MPI_Scan
-          ( const_cast<Real*>(sbuf), rbuf, count, TypeMap<Real>(),
-            opC, comm.comm ) );
+        CheckMpi(
+            MPI_Scan(
+                sbuf, rbuf, count, TypeMap<Real>(), opC, comm.comm));
     }
 }
 
-template<typename Real,
+template <typename Real, Device D,
          typename/*=EnableIf<IsPacked<Real>>*/>
-void Scan
-( const Complex<Real>* sbuf,
-        Complex<Real>* rbuf, int count, Op op, Comm comm )
+void Scan(
+    const Complex<Real>* sbuf, Complex<Real>* rbuf, int count, Op op,
+    Comm comm, SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
     if( count != 0 )
     {
 #ifdef EL_AVOID_COMPLEX_MPI
         if( op == SUM )
         {
             MPI_Op opC = NativeOp<Real>( op );
-            EL_CHECK_MPI
-            ( MPI_Scan
-              ( const_cast<Complex<Real>*>(sbuf),
-                rbuf, 2*count, TypeMap<Real>(), opC, comm.comm ) );
+            CheckMpi(
+                MPI_Scan(
+                    sbuf, rbuf, 2*count, TypeMap<Real>(), opC, comm.comm));
         }
         else
         {
             MPI_Op opC = NativeOp<Complex<Real>>( op );
-            EL_CHECK_MPI
-            ( MPI_Scan
-              ( const_cast<Complex<Real>*>(sbuf),
-                rbuf, count, TypeMap<Complex<Real>>(), opC, comm.comm ) );
+            CheckMpi(
+                MPI_Scan(
+                    sbuf, rbuf, count, TypeMap<Complex<Real>>(), opC,
+                    comm.comm));
         }
 #else
         MPI_Op opC = NativeOp<Complex<Real>>( op );
-        EL_CHECK_MPI
-        ( MPI_Scan
-          ( const_cast<Complex<Real>*>(sbuf),
-            rbuf, count, TypeMap<Complex<Real>>(), opC, comm.comm ) );
+        CheckMpi(
+            MPI_Scan(
+                sbuf, rbuf, count, TypeMap<Complex<Real>>(), opC, comm.comm));
 #endif
     }
 }
 
-template<typename T,
-         typename/*=DisableIf<IsPacked<T>>*/,
-         typename/*=void*/>
-void Scan( const T* sbuf, T* rbuf, int count, Op op, Comm comm )
+template <typename T, Device D,
+          typename/*=DisableIf<IsPacked<T>>*/,
+          typename/*=void*/>
+void Scan(
+    const T* sbuf, T* rbuf, int count, Op op, Comm comm,
+    SyncInfo<D> const& syncInfo )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
+
     if( count == 0 )
         return;
 
@@ -1954,92 +2048,105 @@ EL_NO_RELEASE_EXCEPT
     std::vector<byte> packedSend, packedRecv;
     Serialize( count, sbuf, packedSend );
     ReserveSerialized( count, rbuf, packedRecv );
-    EL_CHECK_MPI
-    ( MPI_Scan
-      ( packedSend.data(), packedRecv.data(), count, TypeMap<T>(),
-        opC, comm.comm ) );
+    CheckMpi(
+        MPI_Scan(
+            packedSend.data(), packedRecv.data(), count, TypeMap<T>(),
+            opC, comm.comm));
     Deserialize( count, packedRecv, rbuf );
 }
 
-template<typename T>
-void Scan( const T* sbuf, T* rbuf, int count, Comm comm )
+template <typename T, Device D>
+void Scan(
+    const T* sbuf, T* rbuf, int count, Comm comm, SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
-{ Scan( sbuf, rbuf, count, SUM, comm ); }
+{ Scan(sbuf, rbuf, count, SUM, comm, syncInfo); }
 
-template<typename T>
+template <typename T>
 T Scan( T sb, Op op, Comm comm )
 EL_NO_RELEASE_EXCEPT
 {
     T rb;
-    Scan( &sb, &rb, 1, op, comm );
+    Scan( &sb, &rb, 1, op, comm, SyncInfo<Device::CPU>{} );
     return rb;
 }
 
-template<typename T>
-T Scan( T sb, Comm comm )
+template <typename T>
+T Scan(T sb, Comm comm)
 EL_NO_RELEASE_EXCEPT
 {
     T rb;
-    Scan( &sb, &rb, 1, SUM, comm );
+    Scan( &sb, &rb, 1, SUM, comm, SyncInfo<Device::CPU>{} );
     return rb;
 }
 
-template<typename Real,
+template <typename Real, Device D,
          typename/*=EnableIf<IsPacked<Real>>*/>
-void Scan( Real* buf, int count, Op op, Comm comm )
+void Scan( Real* buf, int count, Op op, Comm comm,
+           SyncInfo<D> const& syncInfo )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
     if( count != 0 )
     {
         MPI_Op opC = NativeOp<Real>( op );
-        EL_CHECK_MPI
-        ( MPI_Scan
-          ( MPI_IN_PLACE, buf, count, TypeMap<Real>(), opC, comm.comm ) );
+        CheckMpi(
+            MPI_Scan(
+                MPI_IN_PLACE, buf, count, TypeMap<Real>(), opC, comm.comm));
     }
 }
 
-template<typename Real,
+template <typename Real, Device D,
          typename/*=EnableIf<IsPacked<Real>>*/>
-void Scan( Complex<Real>* buf, int count, Op op, Comm comm )
+void Scan( Complex<Real>* buf, int count, Op op, Comm comm,
+           SyncInfo<D> const& syncInfo )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
     if( count != 0 )
     {
 #ifdef EL_AVOID_COMPLEX_MPI
         if( op == SUM )
         {
             MPI_Op opC = NativeOp<Real>( op );
-            EL_CHECK_MPI
-            ( MPI_Scan
-              ( MPI_IN_PLACE, buf, 2*count, TypeMap<Real>(), opC, comm.comm ) );
+            CheckMpi(
+                MPI_Scan(
+                    MPI_IN_PLACE, buf, 2*count, TypeMap<Real>(), opC,
+                    comm.comm));
         }
         else
         {
             MPI_Op opC = NativeOp<Complex<Real>>( op );
-            EL_CHECK_MPI
-            ( MPI_Scan
-              ( MPI_IN_PLACE, buf, count, TypeMap<Complex<Real>>(), opC,
-                comm.comm ) );
+            CheckMpi(
+                MPI_Scan(
+                    MPI_IN_PLACE, buf, count, TypeMap<Complex<Real>>(), opC,
+                    comm.comm));
         }
 #else
         MPI_Op opC = NativeOp<Complex<Real>>( op );
-        EL_CHECK_MPI
-        ( MPI_Scan
-          ( MPI_IN_PLACE, buf, count, TypeMap<Complex<Real>>(), opC,
-            comm.comm ) );
+        CheckMpi(
+            MPI_Scan(
+                MPI_IN_PLACE, buf, count, TypeMap<Complex<Real>>(), opC,
+                comm.comm));
 #endif
     }
 }
 
-template<typename T,
+template <typename T, Device D,
          typename/*=DisableIf<IsPacked<T>>*/,
          typename/*=void*/>
-void Scan( T* buf, int count, Op op, Comm comm )
+void Scan( T* buf, int count, Op op, Comm comm, SyncInfo<D> const& syncInfo )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
+
+    Synchronize(syncInfo);
+
     if( count == 0 )
         return;
 
@@ -2047,19 +2154,19 @@ EL_NO_RELEASE_EXCEPT
     std::vector<byte> packedSend, packedRecv;
     Serialize( count, buf, packedSend );
     ReserveSerialized( count, buf, packedRecv );
-    EL_CHECK_MPI
-    ( MPI_Scan
-      ( packedSend.data(), packedRecv.data(), count, TypeMap<T>(),
-        opC, comm.comm ) );
+    CheckMpi(
+        MPI_Scan(
+            packedSend.data(), packedRecv.data(), count, TypeMap<T>(),
+            opC, comm.comm ) );
     Deserialize( count, packedRecv, buf );
 }
 
-template<typename T>
-void Scan( T* buf, int count, Comm comm )
+template <typename T, Device D>
+void Scan( T* buf, int count, Comm comm, SyncInfo<D> const& syncInfo )
 EL_NO_RELEASE_EXCEPT
-{ Scan( buf, count, SUM, comm ); }
+{ Scan( buf, count, SUM, comm, syncInfo ); }
 
-template<typename T>
+template <typename T>
 void SparseAllToAll
 ( const vector<T>& sendBuffer,
   const vector<int>& sendCounts,
@@ -2106,139 +2213,189 @@ EL_NO_RELEASE_EXCEPT
     }
     WaitAll( numSends+numRecvs, requests.data(), statuses.data() );
 #else
-    AllToAll
-    ( sendBuffer.data(), sendCounts.data(), sendDispls.data(),
-      recvBuffer.data(), recvCounts.data(), recvDispls.data(), comm );
+    AllToAll(
+        sendBuffer.data(), sendCounts.data(), sendDispls.data(),
+        recvBuffer.data(), recvCounts.data(), recvDispls.data(), comm,
+        SyncInfo<Device::CPU>{});
 #endif
 }
 
+#define MPI_PROTO_DEVICELESS(T)                                         \
+    template bool Test(Request<T>& request) EL_NO_RELEASE_EXCEPT;       \
+    template void Wait(Request<T>& request) EL_NO_RELEASE_EXCEPT;       \
+    template void Wait(Request<T>& request, Status& status)             \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void WaitAll(int numRequests, Request<T>* requests)        \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void WaitAll(                                              \
+        int numRequests, Request<T>* requests, Status* statuses)        \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template int GetCount<T>(Status& status) EL_NO_RELEASE_EXCEPT;      \
+    template void TaggedSend(T b, int to, int tag, Comm comm)           \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void Send(T b, int to, Comm comm)                          \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void TaggedISend(                                          \
+        const T* buf, int count, int to, int tag, Comm comm,            \
+        Request<T>& request)                                            \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void ISend(                                                \
+        const T* buf, int count, int to, Comm comm,                     \
+        Request<T>& request)                                            \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void TaggedISend(                                          \
+        T buf, int to, int tag, Comm comm, Request<T>& request)         \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void ISend(T buf, int to, Comm comm, Request<T>& request)  \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void TaggedISSend(                                         \
+        const T* buf, int count, int to, int tag, Comm comm,            \
+        Request<T>& request)                                            \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void ISSend(                                               \
+        const T* buf, int count, int to, Comm comm,                     \
+        Request<T>& request)                                            \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void TaggedISSend(                                         \
+        T b, int to, int tag, Comm comm, Request<T>& request)           \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void TaggedIRecv(                                          \
+        T* buf, int count, int from, int tag, Comm comm,                \
+        Request<T>& request)                                            \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template T TaggedRecv<T>(                                           \
+        int from, int tag, Comm comm)                                   \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template T Recv(int from, Comm comm)                                \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void IRecv(                                                \
+        T* buf, int count, int from, Comm comm, Request<T>& request)    \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template T TaggedIRecv<T>(                                          \
+        int from, int tag, Comm comm, Request<T>& request)              \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template T IRecv<T>(int from, Comm comm, Request<T>& request)       \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void IBroadcast(                                           \
+        T* buf, int count, int root, Comm comm, Request<T>& request);   \
+    template void IBroadcast(                                           \
+        T& b, int root, Comm comm, Request<T>& request);                \
+    template void IGather(                                              \
+        const T* sbuf, int sc,                                          \
+        T* rbuf, int rc,                                                \
+        int root, Comm comm, Request<T>& request);                      \
+    template vector<T> AllToAll(                                        \
+        const vector<T>& sendBuf,                                       \
+        const vector<int>& sendCounts,                                  \
+        const vector<int>& sendOffs,                                    \
+        Comm comm)                                                      \
+        EL_NO_RELEASE_EXCEPT;                                           \
+        template T Scan(T sb, Op op, Comm comm)                         \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template T Scan(T sb, Comm comm)                                    \
+        EL_NO_RELEASE_EXCEPT;                                           \
+
+
+#define MPI_PROTO_DEV(T,D)                                              \
+    template void TaggedSend(                                           \
+        const T* buf, int count, int to, int tag, Comm comm,            \
+        SyncInfo<D> const&)                                             \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void Send(                                                 \
+        const T* buf, int count, int to, Comm comm, SyncInfo<D> const&) \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void TaggedRecv(                                           \
+        T* buf, int count, int from, int tag, Comm comm,                \
+        SyncInfo<D> const&)                                             \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void Recv(                                                 \
+        T* buf, int count, int from, Comm comm, SyncInfo<D> const&)     \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void TaggedSendRecv(                                       \
+        const T* sbuf, int sc, int to,   int stag,                      \
+        T* rbuf, int rc, int from, int rtag, Comm comm,                 \
+        SyncInfo<D> const&)                                             \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void SendRecv(                                             \
+        const T* sbuf, int sc, int to,                                  \
+        T* rbuf, int rc, int from, Comm comm, SyncInfo<D> const&)       \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template T TaggedSendRecv(                                          \
+        T sb, int to, int stag, int from, int rtag, Comm comm,          \
+        SyncInfo<D> const&)                                             \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template T SendRecv(                                                \
+        T sb, int to, int from, Comm comm, SyncInfo<D> const&)          \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void TaggedSendRecv(                                       \
+        T* buf, int count, int to, int stag, int from, int rtag,        \
+        Comm comm,                                                      \
+        SyncInfo<D> const&)                                             \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void SendRecv(                                             \
+        T* buf, int count, int to, int from, Comm comm,                 \
+        SyncInfo<D> const&)                                             \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void Gather(                                               \
+        const T* sbuf, int sc, T* rbuf, int rc, int root, Comm comm,    \
+        SyncInfo<D> const&)                                             \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void Gather(                                               \
+        const T* sbuf, int sc,                                          \
+        T* rbuf, const int* rcs, const int* rds, int root, Comm comm,   \
+        SyncInfo<D> const&)                                             \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void AllGather(                                            \
+        const T* sbuf, int sc,                                          \
+        T* rbuf, const int* rcs, const int* rds, Comm comm,             \
+        SyncInfo<D> const&)                                             \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void Scatter(                                              \
+        const T* sbuf, int sc,                                          \
+        T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const&)       \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void Scatter(                                              \
+        T* buf, int sc, int rc, int root, Comm comm,                    \
+        SyncInfo<D> const&)                                             \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void AllToAll(                                             \
+        const T* sbuf, const int* scs, const int* sds,                  \
+        T* rbuf, const int* rcs, const int* rds, Comm comm,             \
+        SyncInfo<D> const&)                                             \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void ReduceScatter(                                        \
+        const T* sbuf, T* rbuf, const int* rcs, Op op, Comm comm,       \
+        SyncInfo<D> const&)                                             \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void ReduceScatter(                                        \
+        const T* sbuf, T* rbuf, const int* rcs, Comm comm,              \
+        SyncInfo<D> const&)                                             \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void Scan(                                                 \
+        const T* sbuf, T* rbuf, int count, Op op, Comm comm,            \
+        SyncInfo<D> const&)                                             \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void Scan(                                                 \
+        const T* sbuf, T* rbuf, int count, Comm comm,                   \
+        SyncInfo<D> const&)                                             \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void Scan(                                                 \
+        T* buf, int count, Op op, Comm comm, SyncInfo<D> const&)        \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void Scan(                                                 \
+        T* buf, int count, Comm comm, SyncInfo<D> const&)               \
+        EL_NO_RELEASE_EXCEPT;
+
+#ifdef HYDROGEN_HAVE_CUDA
 #define MPI_PROTO(T) \
-  template bool Test( Request<T>& request ) EL_NO_RELEASE_EXCEPT; \
-  template void Wait( Request<T>& request ) EL_NO_RELEASE_EXCEPT; \
-  template void Wait( Request<T>& request, Status& status ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void WaitAll( int numRequests, Request<T>* requests ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void WaitAll \
-  ( int numRequests, Request<T>* requests, Status* statuses ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template int GetCount<T>( Status& status ) EL_NO_RELEASE_EXCEPT; \
-  template void TaggedSend \
-  ( const T* buf, int count, int to, int tag, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void Send( const T* buf, int count, int to, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void TaggedSend( T b, int to, int tag, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void Send( T b, int to, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void TaggedISend \
-  ( const T* buf, int count, int to, int tag, Comm comm, Request<T>& request ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void ISend \
-  ( const T* buf, int count, int to, Comm comm, Request<T>& request ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void TaggedISend \
-  ( T buf, int to, int tag, Comm comm, Request<T>& request ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void ISend( T buf, int to, Comm comm, Request<T>& request ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void TaggedISSend \
-  ( const T* buf, int count, int to, int tag, Comm comm, Request<T>& request ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void ISSend \
-  ( const T* buf, int count, int to, Comm comm, Request<T>& request ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void TaggedISSend \
-  ( T b, int to, int tag, Comm comm, Request<T>& request ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void TaggedRecv \
-  ( T* buf, int count, int from, int tag, Comm comm ) EL_NO_RELEASE_EXCEPT; \
-  template void Recv( T* buf, int count, int from, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template T TaggedRecv<T>( int from, int tag, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template T Recv( int from, Comm comm ) EL_NO_RELEASE_EXCEPT; \
-  template void TaggedIRecv \
-  ( T* buf, int count, int from, int tag, Comm comm, Request<T>& request ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void IRecv \
-  ( T* buf, int count, int from, Comm comm, Request<T>& request ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template T TaggedIRecv<T> \
-  ( int from, int tag, Comm comm, Request<T>& request ) EL_NO_RELEASE_EXCEPT; \
-  template T IRecv<T>( int from, Comm comm, Request<T>& request ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void TaggedSendRecv \
-  ( const T* sbuf, int sc, int to,   int stag, \
-          T* rbuf, int rc, int from, int rtag, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void SendRecv \
-  ( const T* sbuf, int sc, int to, \
-          T* rbuf, int rc, int from, Comm comm ) EL_NO_RELEASE_EXCEPT; \
-  template T TaggedSendRecv \
-  ( T sb, int to, int stag, int from, int rtag, Comm comm ); \
-  template T SendRecv( T sb, int to, int from, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void TaggedSendRecv \
-  ( T* buf, int count, int to, int stag, int from, int rtag, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void SendRecv \
-  ( T* buf, int count, int to, int from, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void IBroadcast \
-  ( T* buf, int count, int root, Comm comm, Request<T>& request ); \
-  template void IBroadcast \
-  ( T& b, int root, Comm comm, Request<T>& request ); \
-  template void Gather \
-  ( const T* sbuf, int sc, T* rbuf, int rc, int root, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void IGather \
-  ( const T* sbuf, int sc, \
-          T* rbuf, int rc, \
-    int root, Comm comm, Request<T>& request ); \
-  template void Gather \
-  ( const T* sbuf, int sc, \
-          T* rbuf, const int* rcs, const int* rds, int root, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void AllGather \
-  ( const T* sbuf, int sc, \
-          T* rbuf, const int* rcs, const int* rds, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void Scatter \
-  ( const T* sbuf, int sc, \
-          T* rbuf, int rc, int root, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void Scatter( T* buf, int sc, int rc, int root, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void AllToAll \
-  ( const T* sbuf, const int* scs, const int* sds, \
-          T* rbuf, const int* rcs, const int* rds, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template vector<T> AllToAll \
-  ( const vector<T>& sendBuf, \
-    const vector<int>& sendCounts, \
-    const vector<int>& sendOffs, \
-    Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void ReduceScatter \
-  ( const T* sbuf, T* rbuf, const int* rcs, Op op, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void ReduceScatter \
-  ( const T* sbuf, T* rbuf, const int* rcs, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void Scan( const T* sbuf, T* rbuf, int count, Op op, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void Scan( const T* sbuf, T* rbuf, int count, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template T Scan( T sb, Op op, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template T Scan( T sb, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void Scan( T* buf, int count, Op op, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT; \
-  template void Scan( T* buf, int count, Comm comm ) \
-  EL_NO_RELEASE_EXCEPT;
+    MPI_PROTO_DEVICELESS(T) \
+    MPI_PROTO_DEV(T, Device::CPU) \
+    MPI_PROTO_DEV(T, Device::GPU)
+#else
+#define MPI_PROTO(T) \
+    MPI_PROTO_DEVICELESS(T) \
+    MPI_PROTO_DEV(T, Device::CPU)
+#endif // HYDROGEN_HAVE_CUDA
 
 MPI_PROTO(byte)
 MPI_PROTO(int)
@@ -2297,15 +2454,16 @@ MPI_PROTO(Entry<BigFloat>)
 MPI_PROTO(Entry<Complex<BigFloat>>)
 #endif
 
-#define PROTO(T) \
-  template void SparseAllToAll \
-  ( const vector<T>& sendBuffer, \
-    const vector<int>& sendCounts, \
-    const vector<int>& sendDispls, \
-          vector<T>& recvBuffer, \
-    const vector<int>& recvCounts, \
-    const vector<int>& recvDispls, \
-          Comm comm ) EL_NO_RELEASE_EXCEPT;
+#define PROTO(T)                                \
+    template void SparseAllToAll(               \
+        const vector<T>& sendBuffer,            \
+        const vector<int>& sendCounts,          \
+        const vector<int>& sendDispls,          \
+        vector<T>& recvBuffer,                  \
+        const vector<int>& recvCounts,          \
+        const vector<int>& recvDispls,          \
+        Comm comm)                              \
+        EL_NO_RELEASE_EXCEPT;
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

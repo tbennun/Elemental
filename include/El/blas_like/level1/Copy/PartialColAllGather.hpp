@@ -112,11 +112,10 @@ void PartialColAllGather
         const Int sendColRank = Mod( A.ColRank()+colDiff, A.ColStride() );
         const Int recvColRank = Mod( A.ColRank()-colDiff, A.ColStride() );
 
-        Synchronize(syncInfoB);
-
         mpi::SendRecv(
             secondBuf, portionSize, sendColRank,
-            firstBuf,  portionSize, recvColRank, A.ColComm() );
+            firstBuf,  portionSize, recvColRank, A.ColComm(),
+            syncInfoB);
 
         // Use the SendRecv as an input to the partial union AllGather
         mpi::AllGather(

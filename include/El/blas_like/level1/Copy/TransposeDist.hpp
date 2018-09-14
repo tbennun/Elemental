@@ -31,6 +31,8 @@ void TransposeDist(DistMatrix<T,U,V,ELEMENT,Device::CPU> const& A,
     const Int rowStrideA = A.RowStride();
     const Int distSize = A.DistSize();
 
+    SyncInfo<Device::CPU> syncInfoCPU;
+
     if (A.DistSize() == 1 && B.DistSize() == 1)
     {
         Copy(A.LockedMatrix(), B.Matrix());
@@ -75,19 +77,19 @@ void TransposeDist(DistMatrix<T,U,V,ELEMENT,Device::CPU> const& A,
         }
 
         // (e.g., A[VC,STAR] <- A[MC,MR])
-        mpi::Scatter
-        (recvBuf, portionSize,
-          sendBuf, portionSize, A.RowAlign(), A.RowComm());
+        mpi::Scatter(
+            recvBuf, portionSize,
+            sendBuf, portionSize, A.RowAlign(), A.RowComm(), syncInfoCPU);
 
         // (e.g., A[VR,STAR] <- A[VC,STAR])
-        mpi::SendRecv
-        (sendBuf, portionSize, sendRankB,
-          recvBuf, portionSize, recvRankB, B.DistComm());
+        mpi::SendRecv(
+            sendBuf, portionSize, sendRankB,
+            recvBuf, portionSize, recvRankB, B.DistComm(), syncInfoCPU);
 
         // (e.g., A[MR,MC] <- A[VR,STAR])
-        mpi::Gather
-        (recvBuf, portionSize,
-          sendBuf, portionSize, B.RowAlign(), B.RowComm());
+        mpi::Gather(
+            recvBuf, portionSize,
+            sendBuf, portionSize, B.RowAlign(), B.RowComm(), syncInfoCPU);
 
         if (B.RowRank() == B.RowAlign())
         {
@@ -147,19 +149,19 @@ void TransposeDist(DistMatrix<T,U,V,ELEMENT,Device::CPU> const& A,
         }
 
         // (e.g., A[STAR,VR] <- A[MC,MR])
-        mpi::Scatter
-        (recvBuf, portionSize,
-          sendBuf, portionSize, A.ColAlign(), A.ColComm());
+        mpi::Scatter(
+            recvBuf, portionSize,
+            sendBuf, portionSize, A.ColAlign(), A.ColComm(), syncInfoCPU);
 
         // A[STAR,VC] <- A[STAR,VR]
-        mpi::SendRecv
-        (sendBuf, portionSize, sendRankA,
-          recvBuf, portionSize, recvRankA, A.DistComm());
+        mpi::SendRecv(
+            sendBuf, portionSize, sendRankA,
+            recvBuf, portionSize, recvRankA, A.DistComm(), syncInfoCPU);
 
         // A[MR,MC] <- A[STAR,VC]
-        mpi::Gather
-        (recvBuf, portionSize,
-          sendBuf, portionSize, B.ColAlign(), B.ColComm());
+        mpi::Gather(
+            recvBuf, portionSize,
+            sendBuf, portionSize, B.ColAlign(), B.ColComm(), syncInfoCPU);
 
         if (B.ColRank() == B.ColAlign())
         {

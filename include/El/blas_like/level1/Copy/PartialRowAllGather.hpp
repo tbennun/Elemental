@@ -90,11 +90,9 @@ void PartialRowAllGather_impl
         const Int sendRowRank = Mod( A.RowRank()+rowDiff, rowStride );
         const Int recvRowRank = Mod( A.RowRank()-rowDiff, rowStride );
 
-        Synchronize(syncInfoA);
-
         mpi::SendRecv(
             secondBuf, portionSize, sendRowRank,
-            firstBuf,  portionSize, recvRowRank, A.RowComm());
+            firstBuf,  portionSize, recvRowRank, A.RowComm(), syncInfoB);
 
         // Use the SendRecv as an input to the partial union AllGather
         mpi::AllGather(
