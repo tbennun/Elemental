@@ -384,7 +384,7 @@ check_cxx_source_compiles("${MPI_IS_MVAPICH2_VARIANT_CODE}"
   HYDROGEN_MPI_IS_MVAPICH2)
 
 # Check for CUDA-aware MPI
-set(HYDROGEN_ASSUME_CUDA_AWARE_MPI OFF)
+set(HYDROGEN_ENSURE_HOST_MPI_BUFFERS ON)
 if (HYDROGEN_HAVE_CUDA
     AND (HYDROGEN_MPI_IS_OPENMPI OR HYDROGEN_MPI_IS_MVAPICH2))
 
@@ -424,7 +424,7 @@ if (HYDROGEN_HAVE_CUDA
   else()
     if (NOT Hydrogen_AVOID_CUDA_AWARE_MPI)
       message(STATUS "Assuming CUDA-aware MPI.")
-      set(HYDROGEN_ASSUME_CUDA_AWARE_MPI ON)
+      set(HYDROGEN_ENSURE_HOST_MPI_BUFFERS OFF)
     else ()
       message(STATUS "CUDA-aware MPI detected but not used.")
     endif ()

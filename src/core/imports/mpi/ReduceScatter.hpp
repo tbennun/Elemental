@@ -56,7 +56,7 @@ void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
     if (count == 0)
         return;
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto size_c = Size(comm);
 
     ENSURE_HOST_SEND_BUFFER(sbuf, count*size_c, syncInfo);
@@ -89,7 +89,7 @@ void ReduceScatter(Complex<T> const* sbuf, Complex<T>* rbuf,
     if (count == 0)
         return;
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto size_c = Size(comm);
 
     ENSURE_HOST_SEND_BUFFER(sbuf, count*size_c, syncInfo);
@@ -137,7 +137,7 @@ void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
 
 #if defined(EL_HAVE_MPI_REDUCE_SCATTER_BLOCK)
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_SEND_BUFFER(sbuf, totalSend, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, totalRecv, syncInfo);
 #endif
@@ -226,7 +226,7 @@ void ReduceScatter(T* buf, int count, Op op, Comm comm,
     if (count == 0 || Size(comm) == 1)
         return;
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto const size_c = Size(comm);
     ENSURE_HOST_BUFFER_PREPOST_XFER(
         buf, count*size_c, 0, count*size_c, 0, count, syncInfo);
@@ -258,7 +258,7 @@ void ReduceScatter(Complex<T>* buf, int count, Op op, Comm comm,
     if (count == 0 || Size(comm) == 1)
         return;
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto const size_c = Size(comm);
     ENSURE_HOST_BUFFER_PREPOST_XFER(
         buf, count*size_c, 0, count*size_c, 0, count, syncInfo);
@@ -302,7 +302,7 @@ void ReduceScatter(T* buf, int count, Op op, Comm comm,
     const int totalSend = count*commSize;
     const int totalRecv = count;
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_BUFFER_PREPOST_XFER(
         buf, totalSend, 0, totalSend, 0, totalRecv, syncInfo);
 #endif

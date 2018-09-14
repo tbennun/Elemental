@@ -68,7 +68,7 @@ MPI_Op NativeOp( const El::mpi::Op& op )
 }// namespace <anon>
 
 // This is for handling the host-blocking host-transfer stuff
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 namespace El
 {
 namespace mpi
@@ -231,6 +231,6 @@ auto MakeManagedHostBuffer(
 }// namespace internal
 }// namespace mpi
 }// namespace El
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
 #endif // ifndef EL_IMPORTS_MPIUTILS_HPP

@@ -49,13 +49,13 @@ void Reduce(T const* sbuf, T* rbuf, int count, Op op,
     if (count == 0)
         return;
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto const rank = Rank(comm);
     auto const recvCount = (rank == root ? static_cast<size_t>(count) : 0UL);
     ENSURE_HOST_SEND_BUFFER(sbuf, count, syncInfo);
     ENSURE_HOST_BUFFER_PREPOST_XFER(
         rbuf, count, 0UL, 0UL, 0UL, recvCount, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -76,13 +76,13 @@ void Reduce(const Complex<T>* sbuf, Complex<T>* rbuf, int count, Op op,
     if (count == 0)
         return;
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto const rank = Rank(comm);
     auto const recvCount = (rank == root ? static_cast<size_t>(count) : 0UL);
     ENSURE_HOST_SEND_BUFFER(sbuf, count, syncInfo);
     ENSURE_HOST_BUFFER_PREPOST_XFER(
         rbuf, count, 0UL, 0UL, 0UL, recvCount, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -121,13 +121,13 @@ void Reduce(T const* sbuf, T* rbuf, int count, Op op,
     if (count == 0)
         return;
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto const rank = Rank(comm);
     auto const recvCount = (rank == root ? static_cast<size_t>(count) : 0UL);
     ENSURE_HOST_SEND_BUFFER(sbuf, count, syncInfo);
     ENSURE_HOST_BUFFER_PREPOST_XFER(
         rbuf, count, 0UL, 0UL, 0UL, recvCount, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -224,12 +224,12 @@ void Reduce(T* buf, int count, Op op, int root, Comm comm,
         return;
 
     const int commRank = Rank(comm);
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto const recvCount
         = (commRank == root ? static_cast<size_t>(count) : 0UL);
     ENSURE_HOST_BUFFER_PREPOST_XFER(
         buf, count, 0UL, count, 0UL, recvCount, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -257,12 +257,12 @@ void Reduce(Complex<T>* buf, int count, Op op, int root, Comm comm,
         return;
 
     const int commRank = mpi::Rank(comm);
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto const recvCount
         = (commRank == root ? static_cast<size_t>(count) : 0UL);
     ENSURE_HOST_BUFFER_PREPOST_XFER(
         buf, count, 0UL, count, 0UL, recvCount, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -327,12 +327,12 @@ void Reduce(T* buf, int count, Op op, int root, Comm comm,
         return;
 
     const int commRank = mpi::Rank(comm);
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto const recvCount
         = (commRank == root ? static_cast<size_t>(count) : 0UL);
     ENSURE_HOST_BUFFER_PREPOST_XFER(
         buf, count, 0UL, count, 0UL, recvCount, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 

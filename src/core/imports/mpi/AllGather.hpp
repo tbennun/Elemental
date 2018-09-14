@@ -47,7 +47,7 @@ void AllGather(
 {
     EL_DEBUG_CSE
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto size_c = Size(comm);
 
     ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
@@ -83,7 +83,7 @@ void AllGather(
 {
     EL_DEBUG_CSE
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto size_c = Size(comm);
 
     ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
@@ -128,7 +128,7 @@ void AllGather(
     const int commSize = mpi::Size(comm);
     const int totalRecv = rc*commSize;
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, totalRecv, syncInfo);
 #endif

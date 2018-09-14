@@ -58,7 +58,7 @@ void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
     if (count == 0)
         return;
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_SEND_BUFFER(sbuf, count, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, count, syncInfo);
 #endif
@@ -82,7 +82,7 @@ void AllReduce(Complex<T> const* sbuf, T* rbuf, int count, Op op, Comm comm,
     if (count == 0)
         return;
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_SEND_BUFFER(sbuf, count, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, count, syncInfo);
 #endif
@@ -127,7 +127,7 @@ void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
     MPI_Op opC = NativeOp<T>(op);
     std::vector<byte> packedSend, packedRecv;
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_SEND_BUFFER(sbuf, count, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, count, syncInfo);
 #endif
@@ -204,9 +204,9 @@ void AllReduce(T* buf, int count, Op op, Comm comm,
     if (count == 0 || Size(comm) == 1)
         return;
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_INPLACE_BUFFER(buf, count, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -227,9 +227,9 @@ void AllReduce(Complex<T>* buf, int count, Op op, Comm comm,
     if (count == 0 || Size(comm) == 1)
         return;
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_INPLACE_BUFFER(buf, count, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -269,9 +269,9 @@ void AllReduce(T* buf, int count, Op op, Comm comm,
     if (count == 0)
         return;
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_INPLACE_BUFFER(buf, count, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 

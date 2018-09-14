@@ -37,7 +37,7 @@ void AllToAll(T const* sbuf, int sc, T* rbuf, int rc, Comm comm,
 {
     EL_DEBUG_CSE
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto size_c = Size(comm);
 
     ENSURE_HOST_SEND_BUFFER(sbuf, sc*size_c, syncInfo);
@@ -61,7 +61,7 @@ void AllToAll(Complex<T> const* sbuf,
 {
     EL_DEBUG_CSE
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto size_c = Size(comm);
 
     ENSURE_HOST_SEND_BUFFER(sbuf, sc*size_c, syncInfo);
@@ -101,7 +101,7 @@ void AllToAll(T const* sbuf, int sc, T* rbuf, int rc, Comm comm,
     const int totalSend = sc*commSize;
     const int totalRecv = rc*commSize;
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_SEND_BUFFER(sbuf, totalSend, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, totalRecv, syncInfo);
 #endif

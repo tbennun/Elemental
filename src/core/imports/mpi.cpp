@@ -600,9 +600,9 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_SEND_BUFFER(buf, count, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -620,9 +620,9 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_SEND_BUFFER(buf, count, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 #ifdef EL_AVOID_COMPLEX_MPI
@@ -644,9 +644,9 @@ void TaggedSend( const T* buf, int count, int to, int tag, Comm comm,
 {
     EL_DEBUG_CSE
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_SEND_BUFFER(buf, count, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -868,9 +868,9 @@ void TaggedRecv( Real* buf, int count, int from, int tag, Comm comm,
 {
     EL_DEBUG_CSE
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_RECV_BUFFER(buf, count, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
     Status status;
@@ -887,9 +887,9 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_RECV_BUFFER(buf, count, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -914,9 +914,9 @@ void TaggedRecv( T* buf, int count, int from, int tag, Comm comm,
 {
     EL_DEBUG_CSE
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_RECV_BUFFER(buf, count, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -1025,10 +1025,10 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, rc, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -1050,10 +1050,10 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, rc, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -1083,10 +1083,10 @@ void TaggedSendRecv(
 {
     EL_DEBUG_CSE
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, rc, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -1136,9 +1136,9 @@ EL_NO_RELEASE_EXCEPT
 
     LogicError("SendRecv_replace. Tom want's to know if this is used.");
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_INPLACE_BUFFER(buf, count, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -1158,9 +1158,9 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_INPLACE_BUFFER(buf, count, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -1188,9 +1188,9 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_INPLACE_BUFFER(buf, count, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -1284,14 +1284,14 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto const rank = mpi::Rank(comm);
     auto const size_c = mpi::Size(comm);
     auto const recvCount
         = (rank == root ? static_cast<size_t>(rc*size_c) : 0UL);
     ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, recvCount, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -1311,14 +1311,14 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto const rank = mpi::Rank(comm);
     auto const size_c = mpi::Size(comm);
     auto const recvCount
         = (rank == root ? static_cast<size_t>(rc*size_c) : 0UL);
     ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, recvCount, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -1351,12 +1351,12 @@ EL_NO_RELEASE_EXCEPT
     const int commRank = mpi::Rank(comm);
     const int totalRecv = rc*commSize;
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto const recvCount
         = (commRank == root ? static_cast<size_t>(rc*commSize) : 0UL);
     ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, recvCount, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -1460,7 +1460,7 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto const commRank = Rank(comm);
     auto const commSize = Size(comm);
     // FIXME (trb): This is technically just an upper bound on the size
@@ -1469,7 +1469,7 @@ EL_NO_RELEASE_EXCEPT
          static_cast<size_t>(rds[commSize-1]+rcs[commSize-1]) : 0UL);
     ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, recvSize, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -1490,7 +1490,7 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto const commRank = Rank(comm);
     auto const commSize = Size(comm);
     // FIXME (trb): This is technically just an upper bound on the size
@@ -1499,7 +1499,7 @@ EL_NO_RELEASE_EXCEPT
          static_cast<size_t>(rds[commSize-1]+rcs[commSize-1]) : 0UL);
     ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, recvSize, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -1544,16 +1544,17 @@ EL_NO_RELEASE_EXCEPT
 
     Synchronize(syncInfo);
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
     auto const commRank = Rank(comm);
     auto const commSize = Size(comm);
     // FIXME (trb): This is technically just an upper bound on the size
     auto const totalRecv =
         (commRank == root ?
          static_cast<size_t>(rds[commSize-1]+rcs[commSize-1]) : 0UL);
+
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, totalRecv, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     std::vector<byte> packedSend, packedRecv;
     Serialize( sc, sbuf, packedSend );
@@ -1579,19 +1580,19 @@ void AllGather(
 {
     EL_DEBUG_CSE
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto const commSize = Size(comm);
     // FIXME (trb): This is technically just an upper bound on the size
     auto const recvSize =
         static_cast<size_t>(rds[commSize-1]+rcs[commSize-1]);
     ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, recvSize, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
 #ifdef EL_USE_BYTE_ALLGATHERS
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     const int commSize = Size( comm );
 #endif
     vector<int> byteRcs( commSize ), byteRds( commSize );
@@ -1625,19 +1626,19 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto const commSize = Size(comm);
     // FIXME (trb): This is technically just an upper bound on the size
     auto const recvSize =
         static_cast<size_t>(rds[commSize-1]+rcs[commSize-1]);
     ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, recvSize, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
 #ifdef EL_USE_BYTE_ALLGATHERS
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     const int commSize = Size( comm );
 #endif
 
@@ -1691,10 +1692,10 @@ EL_NO_RELEASE_EXCEPT
     const int commSize = mpi::Size(comm);
     const int totalRecv = rcs[commSize-1]+rds[commSize-1];
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, totalRecv, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -1719,14 +1720,14 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto const commSize = Size(comm);
     auto const commRank = Rank(comm);
     auto const totalSend =
         (commRank == root ? static_cast<size_t>(sc*commSize) : 0UL);
     ENSURE_HOST_SEND_BUFFER(sbuf, totalSend, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, rc, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
     CheckMpi(
@@ -1745,14 +1746,14 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto const commSize = Size(comm);
     auto const commRank = Rank(comm);
     auto const totalSend =
         (commRank == root ? static_cast<size_t>(sc*commSize) : 0UL);
     ENSURE_HOST_SEND_BUFFER(sbuf, totalSend, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, rc, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -1785,10 +1786,10 @@ EL_NO_RELEASE_EXCEPT
     auto const totalSend =
         (commRank == root ? static_cast<size_t>(sc*commSize) : 0UL);
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_SEND_BUFFER(sbuf, totalSend, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, rc, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -1815,7 +1816,7 @@ EL_NO_RELEASE_EXCEPT
 
     auto const commRank = Rank( comm );
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto const commSize = Size(comm);
     auto const totalSend =
         (commRank == root ? static_cast<size_t>(sc*commSize) : 0UL);
@@ -1824,7 +1825,7 @@ EL_NO_RELEASE_EXCEPT
     auto const bufSize = std::max(totalSend, totalRecv);
     ENSURE_HOST_BUFFER_PREPOST_XFER(
         buf, bufSize, 0, totalSend, 0, totalRecv, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -1855,7 +1856,7 @@ EL_NO_RELEASE_EXCEPT
 
     auto const commRank = Rank( comm );
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto const commSize = Size(comm);
     auto const totalSend =
         (commRank == root ? static_cast<size_t>(sc*commSize) : 0UL);
@@ -1864,7 +1865,7 @@ EL_NO_RELEASE_EXCEPT
     auto const bufSize = std::max(totalSend, totalRecv);
     ENSURE_HOST_BUFFER_PREPOST_XFER(
         buf, bufSize, 0, totalSend, 0, totalRecv, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -1911,13 +1912,13 @@ EL_NO_RELEASE_EXCEPT
     auto const totalSend =
         (commRank == root ? static_cast<size_t>(sc*commSize) : 0UL);
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto const totalRecv =
         (commRank == root ? 0UL : static_cast<size_t>(rc));
     auto const bufSize = std::max(totalSend, totalRecv);
     ENSURE_HOST_BUFFER_PREPOST_XFER(
         buf, bufSize, 0, totalSend, 0, totalRecv, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -1945,7 +1946,7 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto const commSize = Size(comm);
     auto const totalSend =
         static_cast<size_t>(sds[commSize-1] + scs[commSize-1]);
@@ -1953,7 +1954,7 @@ EL_NO_RELEASE_EXCEPT
         static_cast<size_t>(rds[commSize-1] + rcs[commSize-1]);
     ENSURE_HOST_SEND_BUFFER(sbuf, totalSend, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, totalRecv, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -1974,7 +1975,7 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto const commSize = Size(comm);
     auto const totalSend =
         static_cast<size_t>(sds[commSize-1] + scs[commSize-1]);
@@ -1982,7 +1983,7 @@ EL_NO_RELEASE_EXCEPT
         static_cast<size_t>(rds[commSize-1] + rcs[commSize-1]);
     ENSURE_HOST_SEND_BUFFER(sbuf, totalSend, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, totalRecv, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -2028,10 +2029,10 @@ EL_NO_RELEASE_EXCEPT
         static_cast<size_t>(sds[commSize-1] + scs[commSize-1]);
     auto const totalRecv =
         static_cast<size_t>(rds[commSize-1] + rcs[commSize-1]);
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_SEND_BUFFER(sbuf, totalSend, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, totalRecv, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -2082,14 +2083,14 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto const commRank = mpi::Rank(comm);
     auto const commSize = mpi::Size(comm);
     auto const totalSend = std::accumulate(rcs,rcs+commSize,0UL);
     auto const totalRecv = static_cast<size_t>(rcs[commRank]);
     ENSURE_HOST_SEND_BUFFER(sbuf, totalSend, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, totalRecv, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -2108,14 +2109,14 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     auto const commRank = mpi::Rank(comm);
     auto const commSize = mpi::Size(comm);
     auto const totalSend = std::accumulate(rcs,rcs+commSize,0UL);
     auto const totalRecv = static_cast<size_t>(rcs[commRank]);
     ENSURE_HOST_SEND_BUFFER(sbuf, totalSend, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, totalRecv, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -2164,10 +2165,10 @@ EL_NO_RELEASE_EXCEPT
     auto const commSize = mpi::Size(comm);
     auto const totalSend = std::accumulate(rcs,rcs+commSize,0UL);
     auto const totalRecv = static_cast<size_t>(rcs[commRank]);
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_SEND_BUFFER(sbuf, totalSend, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, totalRecv, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -2219,10 +2220,10 @@ EL_NO_RELEASE_EXCEPT
     if (count == 0)
         return;
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_SEND_BUFFER(sbuf, count, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, count, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -2244,10 +2245,10 @@ EL_NO_RELEASE_EXCEPT
     if (count == 0)
         return;
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_SEND_BUFFER(sbuf, count, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, count, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -2288,10 +2289,10 @@ EL_NO_RELEASE_EXCEPT
     if (count == 0)
         return;
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_SEND_BUFFER(sbuf, count, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, count, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -2341,9 +2342,9 @@ EL_NO_RELEASE_EXCEPT
     if (count == 0)
         return;
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_INPLACE_BUFFER(buf, count, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -2364,9 +2365,9 @@ EL_NO_RELEASE_EXCEPT
     if( count == 0 )
         return;
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_INPLACE_BUFFER(buf, count, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -2407,9 +2408,9 @@ EL_NO_RELEASE_EXCEPT
     if( count == 0 )
         return;
 
-#ifndef HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_INPLACE_BUFFER(buf, count, syncInfo);
-#endif // HYDROGEN_ASSUME_CUDA_AWARE_MPI
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
