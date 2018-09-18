@@ -232,6 +232,9 @@ struct IsBackendSupported<Collective::REDUCESCATTER, Al::NCCLBackend>
 template <>
 struct IsBackendSupported<Collective::ALLREDUCE, Al::MPICUDABackend>
     : std::true_type {};
+template <>
+struct IsBackendSupported<Collective::ALLTOALL, Al::MPICUDABackend>
+    : std::true_type {};
 #endif // HYDROGEN_HAVE_AL_MPI_CUDA
 
 template <Collective C, typename BackendList>
