@@ -66,7 +66,7 @@ void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
     Synchronize(syncInfo);
 
 #ifdef EL_HAVE_MPI_REDUCE_SCATTER_BLOCK
-    EL_CHECK_MPI(
+    CheckMpi(
         MPI_Reduce_scatter_block(
             sbuf, rbuf, count, TypeMap<T>(), NativeOp<T>(op), comm.comm));
 #else
@@ -100,11 +100,11 @@ void ReduceScatter(Complex<T> const* sbuf, Complex<T>* rbuf,
 
 #ifdef EL_HAVE_MPI_REDUCE_SCATTER_BLOCK
 # ifdef EL_AVOID_COMPLEX_MPI
-    EL_CHECK_MPI(
+    CheckMpi(
         MPI_Reduce_scatter_block(
             sbuf, rbuf, 2*count, TypeMap<T>(), NativeOp<T>(op), comm.comm));
 # else
-    EL_CHECK_MPI(
+    CheckMpi(
         MPI_Reduce_scatter_block(
             sbuf, rbuf, count,
             TypeMap<Complex<T>>(), NativeOp<Complex<T>>(op),
@@ -148,7 +148,7 @@ void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
     Serialize(totalSend, sbuf, packedSend);
 
     ReserveSerialized(totalRecv, rbuf, packedRecv);
-    EL_CHECK_MPI(
+    CheckMpi(
         MPI_Reduce_scatter_block(
             packedSend.data(), packedRecv.data(), count, TypeMap<T>(),
             NativeOp<T>(op), comm.comm));
@@ -235,7 +235,7 @@ void ReduceScatter(T* buf, int count, Op op, Comm comm,
     Synchronize(syncInfo);
 
 #ifdef EL_HAVE_MPI_REDUCE_SCATTER_BLOCK
-    EL_CHECK_MPI(
+    CheckMpi(
         MPI_Reduce_scatter_block(
             MPI_IN_PLACE, buf, count,
             TypeMap<T>(), NativeOp<T>(op), comm.comm));
@@ -268,12 +268,12 @@ void ReduceScatter(Complex<T>* buf, int count, Op op, Comm comm,
 
 #ifdef EL_HAVE_MPI_REDUCE_SCATTER_BLOCK
 # ifdef EL_AVOID_COMPLEX_MPI
-    EL_CHECK_MPI(
+    CheckMpi(
         MPI_Reduce_scatter_block(
             MPI_IN_PLACE, buf, 2*count,
             TypeMap<T>(), NativeOp<T>(op), comm.comm));
 # else
-    EL_CHECK_MPI(
+    CheckMpi(
         MPI_Reduce_scatter_block(
             MPI_IN_PLACE, buf, count,
             TypeMap<Complex<T>>(),
@@ -314,7 +314,7 @@ void ReduceScatter(T* buf, int count, Op op, Comm comm,
     Serialize(totalSend, buf, packedSend);
 
     ReserveSerialized(totalRecv, buf, packedRecv);
-    EL_CHECK_MPI(
+    CheckMpi(
         MPI_Reduce_scatter_block(
             packedSend.data(), packedRecv.data(), count, TypeMap<T>(),
             NativeOp<T>(op), comm.comm));
