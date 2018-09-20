@@ -40,17 +40,33 @@ template <typename T, typename BackendT>
 struct IsAlTypeT : std::false_type {};
 
 template <>
-struct IsAlTypeT<          int, Al::MPIBackend> : std::true_type {};
+struct IsAlTypeT<              char, Al::MPIBackend> : std::true_type {};
 template <>
-struct IsAlTypeT< unsigned int, Al::MPIBackend> : std::true_type {};
+struct IsAlTypeT<       signed char, Al::MPIBackend> : std::true_type {};
 template <>
-struct IsAlTypeT<     long int, Al::MPIBackend> : std::true_type {};
+struct IsAlTypeT<     unsigned char, Al::MPIBackend> : std::true_type {};
 template <>
-struct IsAlTypeT<long long int, Al::MPIBackend> : std::true_type {};
+struct IsAlTypeT<             short, Al::MPIBackend> : std::true_type {};
 template <>
-struct IsAlTypeT<        float, Al::MPIBackend> : std::true_type {};
+struct IsAlTypeT<    unsigned short, Al::MPIBackend> : std::true_type {};
 template <>
-struct IsAlTypeT<       double, Al::MPIBackend> : std::true_type {};
+struct IsAlTypeT<               int, Al::MPIBackend> : std::true_type {};
+template <>
+struct IsAlTypeT<      unsigned int, Al::MPIBackend> : std::true_type {};
+template <>
+struct IsAlTypeT<          long int, Al::MPIBackend> : std::true_type {};
+template <>
+struct IsAlTypeT<     long long int, Al::MPIBackend> : std::true_type {};
+template <>
+struct IsAlTypeT< unsigned long int, Al::MPIBackend> : std::true_type {};
+template <>
+struct IsAlTypeT<unsigned long long, Al::MPIBackend> : std::true_type {};
+template <>
+struct IsAlTypeT<             float, Al::MPIBackend> : std::true_type {};
+template <>
+struct IsAlTypeT<            double, Al::MPIBackend> : std::true_type {};
+template <>
+struct IsAlTypeT<       long double, Al::MPIBackend> : std::true_type {};
 
 #ifdef HYDROGEN_HAVE_NCCL2
 template <>
@@ -72,8 +88,8 @@ struct IsAlTypeT<                double, Al::NCCLBackend> : std::true_type {};
 #endif // HYDROGEN_HAVE_NCCL2
 
 #ifdef HYDROGEN_HAVE_AL_MPI_CUDA
-template <>
-struct IsAlTypeT<float, Al::MPICUDABackend> : std::true_type {};
+template <typename T>
+struct IsAlTypeT<T, Al::MPICUDABackend> : IsAlTypeT<T, Al::MPIBackend> {};
 #endif // HYDROGEN_HAVE_AL_MPI_CUDA
 
 template <typename T, typename BackendT>
