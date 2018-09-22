@@ -1506,7 +1506,7 @@ void ReduceScatter(
 template <typename T, Device D>
 void ReduceScatter(T* buf, int rc, Comm comm, SyncInfo<D> const&);
 
-#undef COLL // Collectives::REDUCESCATTER
+#undef COLL // Collective::REDUCESCATTER
 
 // Variable-length ReduceScatter
 // -----------------------------

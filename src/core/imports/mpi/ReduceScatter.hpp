@@ -17,7 +17,7 @@ void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
 {
     EL_DEBUG_CSE
 
-    Al::Reduce_scatter<BestBackend<T,D>>(
+    Al::Reduce_scatter<BestBackend<T,D,Collective::REDUCESCATTER>>(
         sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         *comm.aluminum_comm);
 }
@@ -38,7 +38,7 @@ void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
 
     auto syncHelper = MakeMultiSync(alSyncInfo, syncInfo);
 
-    Al::Reduce_scatter<BestBackend<T,Device::GPU>>(
+    Al::Reduce_scatter<BestBackend<T,Device::GPU,Collective::REDUCESCATTER>>(
         sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         *comm.aluminum_comm);
 }
@@ -187,7 +187,7 @@ void ReduceScatter(T* buf, int count, Op op, Comm comm,
         return;
 
     // FIXME Synchronize
-    Al::Reduce_scatter<BestBackend<T,D>>(
+    Al::Reduce_scatter<BestBackend<T,D,Collective::REDUCESCATTER>>(
         buf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         *comm.aluminum_comm);
 }
@@ -208,7 +208,7 @@ void ReduceScatter(T* buf, int count, Op op, Comm comm,
 
     auto syncHelper = MakeMultiSync(alSyncInfo, syncInfo);
 
-    Al::Reduce_scatter<BestBackend<T,Device::GPU>>(
+    Al::Reduce_scatter<BestBackend<T,Device::GPU,Collective::REDUCESCATTER>>(
         buf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         *comm.aluminum_comm);
 }

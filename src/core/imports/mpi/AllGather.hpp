@@ -15,7 +15,7 @@ void AllGather(
     EL_DEBUG_CSE
 
     // FIXME: Synchronization here??
-    Al::Allgather<BestBackend<T,D>>(sbuf, rbuf, sc, *comm.aluminum_comm);
+    Al::Allgather<BestBackend<T,D,Collective::ALLGATHER>>(sbuf, rbuf, sc, *comm.aluminum_comm);
 }
 
 #ifdef HYDROGEN_HAVE_CUDA
@@ -31,7 +31,7 @@ void AllGather(
 
     auto multisync = MakeMultiSync(alSyncInfo, syncInfo);
 
-    Al::Allgather<BestBackend<T,Device::GPU>>(
+    Al::Allgather<BestBackend<T,Device::GPU,Collective::ALLGATHER>>(
         sbuf, rbuf, sc, *comm.aluminum_comm);
 }
 #endif // HYDROGEN_HAVE_CUDA

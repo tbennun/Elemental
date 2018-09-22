@@ -15,7 +15,7 @@ void Broadcast(T* buffer, int count, int root, Comm comm, SyncInfo<D> const&)
     EL_DEBUG_CSE
 
     // FIXME What kind of synchronization needs to happen here??
-    Al::Bcast<BestBackend<T,D>>(buffer, count, root, *comm.aluminum_comm);
+    Al::Bcast<BestBackend<T,D,Collective::BROADCAST>>(buffer, count, root, *comm.aluminum_comm);
 }
 
 #ifdef HYDROGEN_HAVE_CUDA
@@ -30,7 +30,7 @@ void Broadcast(T* buffer, int count, int root, Comm comm,
 
     auto multisync = MakeMultiSync(alSyncInfo, syncInfo);
 
-    Al::Bcast<BestBackend<T,Device::GPU>>(
+    Al::Bcast<BestBackend<T,Device::GPU,Collective::BROADCAST>>(
         buffer, count, root, *comm.aluminum_comm);
 }
 #endif // HYDROGEN_HAVE_CUDA

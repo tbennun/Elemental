@@ -12,8 +12,8 @@ void SendRecv(const T* sbuf, int sc, int to,
               T* rbuf, int rc, int from, Comm comm,
               SyncInfo<D> const& syncInfo)
 {
-    std::cout << "ALUMINUM SENDRECV." << std::endl;
-    Al::SendRecv<BestBackend<T,D>>(
+    //std::cout << "ALUMINUM SENDRECV." << std::endl;
+    Al::SendRecv<BestBackend<T,D,Collective::SENDRECV>>(
         sbuf, sc, to, rbuf, rc, from, *comm.aluminum_comm);
 }
 
@@ -23,8 +23,8 @@ void SendRecv(T* buf, int count, int to, int from, Comm comm,
               SyncInfo<D> const& syncInfo)
 {
     // Not sure if Al is ok with this bit
-    std::cout << "WARNING: IN-PLACE SENDRECV." << std::endl;
-    Al::SendRecv<BestBackend<T,D>>(
+    //std::cout << "WARNING: IN-PLACE SENDRECV." << std::endl;
+    Al::SendRecv<BestBackend<T,D,Collective::SENDRECV>>(
         buf, count, to, buf, count, from, *comm.aluminum_comm);
 }
 
@@ -40,8 +40,8 @@ void SendRecv(const T* sbuf, int sc, int to,
                                      syncInfo.event_);
 
     auto multisync = MakeMultiSync(alSyncInfo, syncInfo);
-    std::cout << "ALUMINUM GPU SENDRECV." << std::endl;
-    Al::SendRecv<BestBackend<T,Device::GPU>>(
+    //std::cout << "ALUMINUM GPU SENDRECV." << std::endl;
+    Al::SendRecv<BestBackend<T,Device::GPU,Collective::SENDRECV>>(
         sbuf, sc, to, rbuf, rc, from, *comm.aluminum_comm);
 }
 
@@ -57,8 +57,8 @@ void SendRecv(T* buf, int count, int to, int from, Comm comm,
     auto multisync = MakeMultiSync(alSyncInfo, syncInfo);
 
     // Not sure if Al is ok with this bit
-    std::cout << "WARNING: IN-PLACE GPU SENDRECV." << std::endl;
-    Al::SendRecv<BestBackend<T,Device::GPU>>(
+    //std::cout << "WARNING: IN-PLACE GPU SENDRECV." << std::endl;
+    Al::SendRecv<BestBackend<T,Device::GPU,Collective::SENDRECV>>(
         buf, count, to, buf, count, from, *comm.aluminum_comm);
 }
 #endif // HYDROGEN_HAVE_CUDA

@@ -18,7 +18,7 @@ void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
         return;
 
     // FIXME Synchronize
-    Al::Allreduce<BestBackend<T,D>>(
+    Al::Allreduce<BestBackend<T,D,Collective::ALLREDUCE>>(
         sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         *comm.aluminum_comm);
 }
@@ -38,7 +38,7 @@ void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
 
     AddSynchronizationPoint(syncInfo, alSyncInfo);
 
-    Al::Allreduce<BestBackend<T,Device::GPU>>(
+    Al::Allreduce<BestBackend<T,Device::GPU,Collective::ALLREDUCE>>(
         sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         *comm.aluminum_comm);
 
@@ -166,7 +166,7 @@ void AllReduce(T* buf, int count, Op op, Comm comm,
         return;
 
     // FIXME Synchronize
-    Al::Allreduce<BestBackend<T,D>>(
+    Al::Allreduce<BestBackend<T,D,Collective::ALLREDUCE>>(
         buf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         *comm.aluminum_comm);
 }
@@ -186,7 +186,7 @@ void AllReduce(T* buf, int count, Op op, Comm comm,
 
     auto syncHelper = MakeMultiSync(alSyncInfo, syncInfo);
 
-    Al::Allreduce<BestBackend<T,Device::GPU>>(
+    Al::Allreduce<BestBackend<T,Device::GPU,Collective::ALLREDUCE>>(
         buf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         *comm.aluminum_comm);
 }

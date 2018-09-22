@@ -207,15 +207,6 @@ struct IsAluminumDeviceType
     : IsTrueForAny<BackendsForDevice<D>, T, IsAlTypeT>
 {};
 
-// TODO: Need to incorporate collective information
-template <typename T, Device D>
-struct BestBackendT
-    : SelectFirstMatch<BackendsForDevice<D>,T,IsAlTypeT>
-{};
-
-template <typename T, Device D>
-using BestBackend = typename BestBackendT<T,D>::type;
-
 template <Collective C, typename BackendT>
 struct IsBackendSupported : std::false_type {};
 
@@ -274,6 +265,28 @@ struct IsAluminumSupported
     : And<IsBackendSupportedByAny<C,BackendsForDevice<D>>,
           IsAluminumDeviceType<T,D>>
 {};
+
+template <typename T, typename BackendT, Collective C>
+struct AluminumSupportsBackendAndCollective
+    : And<IsBackendSupported<C,BackendT>, IsAlTypeT<T,BackendT>>
+{};
+
+template <typename List, typename U,
+          Collective C, template <class,class,Collective> class Pred>
+struct SelectFirstOkBackend
+    : Select<Pred<U,Head<List>,C>, HeadT<List>,
+             SelectFirstOkBackend<Tail<List>,U,C,Pred>>
+{};
+
+// The "best" backend is the first one in the list that supports our
+// type T and implements our collective C.
+template <typename T, Device D, Collective C>
+struct BestBackendT
+    : SelectFirstOkBackend<BackendsForDevice<D>,T,C,AluminumSupportsBackendAndCollective>
+{};
+
+template <typename T, Device D, Collective C>
+using BestBackend = typename BestBackendT<T,D,C>::type;
 
 #endif // ndefined(HYDROGEN_HAVE_ALUMINUM)
 

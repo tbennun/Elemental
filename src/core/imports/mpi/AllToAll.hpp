@@ -16,7 +16,8 @@ void AllToAll(T const* sbuf, int /*sc*/, T* rbuf, int rc, Comm comm,
         return;
 
     // FIXME Synchronize
-    Al::Alltoall<BestBackend<T,D>>(sbuf, rbuf, rc, *comm.aluminum_comm);
+    Al::Alltoall<BestBackend<T,D,Collective::ALLTOALL>>(
+        sbuf, rbuf, rc, *comm.aluminum_comm);
 }
 
 #ifdef HYDROGEN_HAVE_CUDA
@@ -34,7 +35,7 @@ void AllToAll(T const* sbuf, int /*sc*/, T* rbuf, int rc, Comm comm,
 
     auto syncHelper = MakeMultiSync(alSyncInfo, syncInfo);
 
-    Al::Alltoall<BestBackend<T,Device::GPU>>(
+    Al::Alltoall<BestBackend<T,Device::GPU,Collective::ALLTOALL>>(
         sbuf, rbuf, rc, *comm.aluminum_comm);
 
 }

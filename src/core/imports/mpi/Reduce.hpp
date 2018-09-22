@@ -13,7 +13,7 @@ void Reduce(T const* sbuf, T* rbuf, int count, Op op,
 {
     EL_DEBUG_CSE
 
-    Al::Reduce<BestBackend<T,D>>(
+    Al::Reduce<BestBackend<T,D,Collective::REDUCE>>(
         sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         root, *comm.aluminum_comm);
 }
@@ -31,7 +31,7 @@ void Reduce(T const* sbuf, T* rbuf, int count, Op op,
 
     auto syncHelper = MakeMultiSync(alSyncInfo, syncInfo);
 
-    Al::Reduce<BestBackend<T,Device::GPU>>(
+    Al::Reduce<BestBackend<T,Device::GPU,Collective::REDUCE>>(
         sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         root, *comm.aluminum_comm);
 }
@@ -187,7 +187,7 @@ void Reduce(T* buf, int count, Op op,
 {
     EL_DEBUG_CSE
 
-    Al::Reduce<BestBackend<T,D>>(
+    Al::Reduce<BestBackend<T,D,Collective::REDUCE>>(
         buf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         root, *comm.aluminum_comm);
 }
@@ -205,7 +205,7 @@ void Reduce(T* buf, int count, Op op,
 
     auto syncHelper = MakeMultiSync(alSyncInfo, syncInfo);
 
-    Al::Reduce<BestBackend<T,Device::GPU>>(
+    Al::Reduce<BestBackend<T,Device::GPU,Collective::REDUCE>>(
         buf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         root, *comm.aluminum_comm);
 }
