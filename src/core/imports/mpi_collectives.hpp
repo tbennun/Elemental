@@ -45,11 +45,12 @@ Al::ReductionOperator MPI_Op2ReductionOperator(MPI_Op op)
 #include "mpi/AllReduce.hpp"
 #include "mpi/AllToAll.hpp"
 #include "mpi/Broadcast.hpp"
+#include "mpi/Gather.hpp"
 #include "mpi/Reduce.hpp"
 #include "mpi/ReduceScatter.hpp"
+#include "mpi/SendRecv.hpp"
 
 // These don't exist in NCCL, so they're left here as a reminder of
 // all your unfulfilled hopes and dreams.
 
-//#include "mpi/Gather.hpp"
 //#include "mpi/Scatter.hpp"

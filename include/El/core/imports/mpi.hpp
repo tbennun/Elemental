@@ -646,11 +646,64 @@ void TaggedSendRecv(
     EL_NO_RELEASE_EXCEPT;
 
 // If the tags are irrelevant
-template <typename T, Device D>
-void SendRecv(
-    const T* sbuf, int sc, int to,
-    T* rbuf, int rc, int from, Comm comm, SyncInfo<D> const& )
-    EL_NO_RELEASE_EXCEPT;
+#define COLL Collective::SENDRECV
+
+#ifdef HYDROGEN_HAVE_ALUMINUM
+template <typename T, Device D,
+          typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
+void SendRecv(const T* sbuf, int sc, int to,
+              T* rbuf, int rc, int from, Comm comm,
+              SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
+void SendRecv(T* buf, int count, int to, int from, Comm comm,
+              SyncInfo<D> const& syncInfo);
+
+#ifdef HYDROGEN_HAVE_CUDA
+template <typename T,
+          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
+void SendRecv(const T* sbuf, int sc, int to,
+              T* rbuf, int rc, int from, Comm comm,
+              SyncInfo<Device::GPU> const& syncInfo);
+template <typename T,
+          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
+void SendRecv(T* buf, int count, int to, int from, Comm comm,
+              SyncInfo<Device::GPU> const& syncInfo);
+#endif // HYDROGEN_HAVE_CUDA
+#endif // HYDROGEN_HAVE_ALUMINUM
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=void>
+void SendRecv(const T* sbuf, int sc, int to,
+              T* rbuf, int rc, int from, Comm comm,
+              SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=void, typename=void>
+void SendRecv(const T* sbuf, int sc, int to,
+              T* rbuf, int rc, int from, Comm comm,
+              SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=void>
+void SendRecv( T* buf, int count, int to, int from, Comm comm,
+               SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=void, typename=void>
+void SendRecv( T* buf, int count, int to, int from, Comm comm,
+               SyncInfo<D> const& syncInfo);
+
+#undef COLL // Collective::SENDRECV
 
 // If the send and recv counts are one
 template<typename T>
@@ -681,12 +734,6 @@ template <typename T, Device D,
 void TaggedSendRecv(
     T* buf, int count, int to, int stag, int from, int rtag, Comm comm,
     SyncInfo<D> const& )
-    EL_NO_RELEASE_EXCEPT;
-
-// If the tags don't matter
-template<typename T, Device D>
-void SendRecv(
-    T* buf, int count, int to, int from, Comm comm, SyncInfo<D> const& )
     EL_NO_RELEASE_EXCEPT;
 
 // Collective communication
@@ -766,27 +813,68 @@ void IBroadcast( T& b, int root, Comm comm, Request<T>& request );
 
 // Gather
 // ------
+
+#define COLL Collective::GATHER
+#ifdef HYDROGEN_HAVE_ALUMINUM
+template <typename T, Device D,
+          typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
+void Gather(
+    const T* sbuf, int sc,
+    T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& syncInfo);
+
+#ifdef HYDROGEN_HAVE_CUDA
+template <typename T,
+          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
+void Gather(
+    const T* sbuf, int sc,
+    T* rbuf, int rc, int root, Comm comm,
+    SyncInfo<Device::GPU> const& syncInfo);
+#endif // HYDROGEN_HAVE_CUDA
+#endif // HYDROGEN_HAVE_ALUMINUM
+
+
 // Even though EL_AVOID_COMPLEX_MPI being defined implies that an std::vector
 // copy of the input data will be created, and the memory allocation can clearly
 // fail and throw an exception, said exception is not necessarily thrown on
 // Linux platforms due to the "optimistic" allocation policy. Therefore we will
 // go ahead and allow std::terminate to be called should such an std::bad_alloc
 // exception occur in a Release build
-template <typename Real, Device D,
-         typename=EnableIf<IsPacked<Real>>>
-void Gather
-( const Real* sbuf, int sc,
-        Real* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& ) EL_NO_RELEASE_EXCEPT;
-template <typename Real, Device D,
-         typename=EnableIf<IsPacked<Real>>>
-void  Gather
-( const Complex<Real>* sbuf, int sc,
-        Complex<Real>* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& ) EL_NO_RELEASE_EXCEPT;
 template <typename T, Device D,
-         typename=DisableIf<IsPacked<T>>,typename=void>
-void Gather
-( const T* sbuf, int sc,
-        T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& ) EL_NO_RELEASE_EXCEPT;
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=EnableIf<IsPacked<T>>>
+void Gather(
+    const T* sbuf, int sc,
+    T* rbuf, int rc, int root, Comm comm,
+    SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=EnableIf<IsPacked<T>>>
+void Gather(
+    const Complex<T>* sbuf, int sc,
+    Complex<T>* rbuf, int rc, int root, Comm comm,
+    SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=DisableIf<IsPacked<T>>,
+          typename=void>
+void Gather(
+    const T* sbuf, int sc,
+    T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& syncInfo );
+
+template <typename T, Device D,
+          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=void, typename=void, typename=void>
+void Gather(
+    const T* sbuf, int sc,
+    T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& syncInfo );
+
+#undef COLL /* Collective::GATHER */
 
 // Non-blocking gather
 // -------------------
