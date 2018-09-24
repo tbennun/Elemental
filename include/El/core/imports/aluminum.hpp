@@ -250,39 +250,42 @@ struct IsBackendSupported<Collective::SENDRECV, Al::MPICUDABackend>
     : std::true_type {};
 #endif // HYDROGEN_HAVE_AL_MPI_CUDA
 
-template <Collective C, typename BackendList>
-struct IsBackendSupportedByAny
-    : Or<IsBackendSupported<C,Head<BackendList>>,
-         IsBackendSupportedByAny<C,Tail<BackendList>>>
+template <typename T, Collective C, typename BackendT>
+struct AluminumSupportsBackendAndCollective
+    : And<IsAlTypeT<T,BackendT>,IsBackendSupported<C,BackendT>>
 {};
 
-template <Collective C>
-struct IsBackendSupportedByAny<C,TypeList<>>
-    : std::false_type {};
+template <typename T, Collective C, typename BackendList>
+struct IsBackendSupportedByAny
+    : Or<AluminumSupportsBackendAndCollective<T,C,Head<BackendList>>,
+         IsBackendSupportedByAny<T,C,Tail<BackendList>>>
+{};
+
+template <typename T, Collective C>
+struct IsBackendSupportedByAny<T,C,TypeList<>>
+    : std::false_type
+{};
 
 template <typename T, Device D, Collective C>
 struct IsAluminumSupported
-    : And<IsBackendSupportedByAny<C,BackendsForDevice<D>>,
-          IsAluminumDeviceType<T,D>>
+    : IsBackendSupportedByAny<T,C,BackendsForDevice<D>>
 {};
 
-template <typename T, typename BackendT, Collective C>
-struct AluminumSupportsBackendAndCollective
-    : And<IsBackendSupported<C,BackendT>, IsAlTypeT<T,BackendT>>
-{};
 
 template <typename List, typename U,
-          Collective C, template <class,class,Collective> class Pred>
+          Collective C, template <class,Collective,class> class Pred>
 struct SelectFirstOkBackend
-    : Select<Pred<U,Head<List>,C>, HeadT<List>,
-             SelectFirstOkBackend<Tail<List>,U,C,Pred>>
+    : std::conditional<Pred<U,C,Head<List>>::value,
+                       HeadT<List>,
+                       SelectFirstOkBackend<Tail<List>,U,C,Pred>>::type
 {};
 
 // The "best" backend is the first one in the list that supports our
 // type T and implements our collective C.
 template <typename T, Device D, Collective C>
 struct BestBackendT
-    : SelectFirstOkBackend<BackendsForDevice<D>,T,C,AluminumSupportsBackendAndCollective>
+    : SelectFirstOkBackend<BackendsForDevice<D>,T,C,
+                           AluminumSupportsBackendAndCollective>
 {};
 
 template <typename T, Device D, Collective C>

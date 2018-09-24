@@ -18,9 +18,10 @@ void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
         return;
 
     // FIXME Synchronize
-    Al::Allreduce<BestBackend<T,D,Collective::ALLREDUCE>>(
+    using Backend = BestBackend<T,D,Collective::ALLREDUCE>;
+    Al::Allreduce<Backend>(
         sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
-        *comm.aluminum_comm);
+        comm.template GetComm<Backend>());
 }
 
 #ifdef HYDROGEN_HAVE_CUDA
@@ -33,16 +34,15 @@ void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
     if (count == 0)
         return;
 
-    SyncInfo<Device::GPU> alSyncInfo(comm.aluminum_comm->get_stream(),
+    using Backend = BestBackend<T,Device::GPU,Collective::ALLREDUCE>;
+    SyncInfo<Device::GPU> alSyncInfo(comm.template GetComm<Backend>().get_stream(),
                                      syncInfo.event_);
 
-    AddSynchronizationPoint(syncInfo, alSyncInfo);
+    auto syncHelper = MakeMultiSync(alSyncInfo, syncInfo);
 
-    Al::Allreduce<BestBackend<T,Device::GPU,Collective::ALLREDUCE>>(
+    Al::Allreduce<Backend>(
         sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
-        *comm.aluminum_comm);
-
-    AddSynchronizationPoint(alSyncInfo, syncInfo);
+        comm.template GetComm<Backend>());
 }
 #endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM
@@ -166,9 +166,10 @@ void AllReduce(T* buf, int count, Op op, Comm comm,
         return;
 
     // FIXME Synchronize
-    Al::Allreduce<BestBackend<T,D,Collective::ALLREDUCE>>(
+    using Backend = BestBackend<T,D,Collective::ALLREDUCE>;
+    Al::Allreduce<Backend>(
         buf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
-        *comm.aluminum_comm);
+        comm.template GetComm<Backend>());
 }
 
 #ifdef HYDROGEN_HAVE_CUDA
@@ -181,14 +182,15 @@ void AllReduce(T* buf, int count, Op op, Comm comm,
     if (count == 0)
         return;
 
-    SyncInfo<Device::GPU> alSyncInfo(comm.aluminum_comm->get_stream(),
+    using Backend = BestBackend<T,Device::GPU,Collective::ALLREDUCE>;
+    SyncInfo<Device::GPU> alSyncInfo(comm.template GetComm<Backend>().get_stream(),
                                      syncInfo.event_);
 
     auto syncHelper = MakeMultiSync(alSyncInfo, syncInfo);
 
-    Al::Allreduce<BestBackend<T,Device::GPU,Collective::ALLREDUCE>>(
+    Al::Allreduce<Backend>(
         buf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
-        *comm.aluminum_comm);
+        comm.template GetComm<Backend>());
 }
 #endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM

@@ -14,8 +14,10 @@ void Gather(
 {
     EL_DEBUG_CSE
 
+    using Backend = BestBackend<T,D,Collective::GATHER>;
+
     // FIXME: Synchronization here??
-    Al::Gather<BestBackend<T,D,Collective::GATHER>>(sbuf, rbuf, sc, root, *comm.aluminum_comm);
+    Al::Gather<Backend>(sbuf, rbuf, sc, root, comm.template GetComm<Backend>());
 }
 
 #ifdef HYDROGEN_HAVE_CUDA
@@ -27,13 +29,15 @@ void Gather(
     SyncInfo<Device::GPU> const& syncInfo )
 {
     EL_DEBUG_CSE
-    SyncInfo<Device::GPU> alSyncInfo(comm.aluminum_comm->get_stream(),
+
+    using Backend = BestBackend<T,Device::GPU,Collective::GATHER>;
+    SyncInfo<Device::GPU> alSyncInfo(comm.template GetComm<Backend>().get_stream(),
                                      syncInfo.event_);
 
     auto multisync = MakeMultiSync(alSyncInfo, syncInfo);
     std::cout << "ALUMINUM GATHER" << std::endl;
-    Al::Gather<BestBackend<T,Device::GPU,Collective::GATHER>>(
-        sbuf, rbuf, sc, root, *comm.aluminum_comm);
+    Al::Gather<Backend>(
+        sbuf, rbuf, sc, root, comm.template GetComm<Backend>());
 }
 
 #endif // HYDROGEN_HAVE_CUDA
