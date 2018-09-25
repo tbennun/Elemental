@@ -1,4 +1,4 @@
-// Collective
+// Gather
 
 namespace El
 {
