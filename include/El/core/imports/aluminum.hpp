@@ -36,55 +36,42 @@ struct IsAluminumSupported : std::false_type {};
 // A function to convert an MPI MPI_Op into an Aluminum operator
 Al::ReductionOperator MPI_Op2ReductionOperator(MPI_Op op);
 
+#define ADD_ALUMINUM_TYPE(type, backend) \
+    template <> struct IsAlTypeT<type,backend> : std::true_type {}
+#define ADD_ALUMINUM_COLLECTIVE(coll, backend) \
+    template <> struct IsBackendSupported<coll, backend> : std::true_type {}
+
+//
+// Setup type support
+//
+
 template <typename T, typename BackendT>
 struct IsAlTypeT : std::false_type {};
 
-template <>
-struct IsAlTypeT<              char, Al::MPIBackend> : std::true_type {};
-template <>
-struct IsAlTypeT<       signed char, Al::MPIBackend> : std::true_type {};
-template <>
-struct IsAlTypeT<     unsigned char, Al::MPIBackend> : std::true_type {};
-template <>
-struct IsAlTypeT<             short, Al::MPIBackend> : std::true_type {};
-template <>
-struct IsAlTypeT<    unsigned short, Al::MPIBackend> : std::true_type {};
-template <>
-struct IsAlTypeT<               int, Al::MPIBackend> : std::true_type {};
-template <>
-struct IsAlTypeT<      unsigned int, Al::MPIBackend> : std::true_type {};
-template <>
-struct IsAlTypeT<          long int, Al::MPIBackend> : std::true_type {};
-template <>
-struct IsAlTypeT<     long long int, Al::MPIBackend> : std::true_type {};
-template <>
-struct IsAlTypeT< unsigned long int, Al::MPIBackend> : std::true_type {};
-template <>
-struct IsAlTypeT<unsigned long long, Al::MPIBackend> : std::true_type {};
-template <>
-struct IsAlTypeT<             float, Al::MPIBackend> : std::true_type {};
-template <>
-struct IsAlTypeT<            double, Al::MPIBackend> : std::true_type {};
-template <>
-struct IsAlTypeT<       long double, Al::MPIBackend> : std::true_type {};
+ADD_ALUMINUM_TYPE(              char, Al::MPIBackend);
+ADD_ALUMINUM_TYPE(       signed char, Al::MPIBackend);
+ADD_ALUMINUM_TYPE(     unsigned char, Al::MPIBackend);
+ADD_ALUMINUM_TYPE(             short, Al::MPIBackend);
+ADD_ALUMINUM_TYPE(    unsigned short, Al::MPIBackend);
+ADD_ALUMINUM_TYPE(               int, Al::MPIBackend);
+ADD_ALUMINUM_TYPE(      unsigned int, Al::MPIBackend);
+ADD_ALUMINUM_TYPE(          long int, Al::MPIBackend);
+ADD_ALUMINUM_TYPE(     long long int, Al::MPIBackend);
+ADD_ALUMINUM_TYPE( unsigned long int, Al::MPIBackend);
+ADD_ALUMINUM_TYPE(unsigned long long, Al::MPIBackend);
+ADD_ALUMINUM_TYPE(             float, Al::MPIBackend);
+ADD_ALUMINUM_TYPE(            double, Al::MPIBackend);
+ADD_ALUMINUM_TYPE(       long double, Al::MPIBackend);
 
 #ifdef HYDROGEN_HAVE_NCCL2
-template <>
-struct IsAlTypeT<                  char, Al::NCCLBackend> : std::true_type {};
-template <>
-struct IsAlTypeT<         unsigned char, Al::NCCLBackend> : std::true_type {};
-template <>
-struct IsAlTypeT<                   int, Al::NCCLBackend> : std::true_type {};
-template <>
-struct IsAlTypeT<          unsigned int, Al::NCCLBackend> : std::true_type {};
-template <>
-struct IsAlTypeT<         long long int, Al::NCCLBackend> : std::true_type {};
-template <>
-struct IsAlTypeT<unsigned long long int, Al::NCCLBackend> : std::true_type {};
-template <>
-struct IsAlTypeT<                 float, Al::NCCLBackend> : std::true_type {};
-template <>
-struct IsAlTypeT<                double, Al::NCCLBackend> : std::true_type {};
+ADD_ALUMINUM_TYPE(                  char, Al::NCCLBackend);
+ADD_ALUMINUM_TYPE(         unsigned char, Al::NCCLBackend);
+ADD_ALUMINUM_TYPE(                   int, Al::NCCLBackend);
+ADD_ALUMINUM_TYPE(          unsigned int, Al::NCCLBackend);
+ADD_ALUMINUM_TYPE(         long long int, Al::NCCLBackend);
+ADD_ALUMINUM_TYPE(unsigned long long int, Al::NCCLBackend);
+ADD_ALUMINUM_TYPE(                 float, Al::NCCLBackend);
+ADD_ALUMINUM_TYPE(                double, Al::NCCLBackend);
 #endif // HYDROGEN_HAVE_NCCL2
 
 #ifdef HYDROGEN_HAVE_AL_MPI_CUDA
@@ -92,75 +79,33 @@ template <typename T>
 struct IsAlTypeT<T, Al::MPICUDABackend> : IsAlTypeT<T, Al::MPIBackend> {};
 #endif // HYDROGEN_HAVE_AL_MPI_CUDA
 
-template <typename T, typename BackendT>
-constexpr bool IsAlType() { return IsAlTypeT<T,BackendT>::value; }
+//
+// Setup collective support
+//
 
-/** \class IsAluminumTypeT
- *  \brief A predicate to determine if a type is a valid Aluminum type.
- *
- *  In contrast to the previous predicate, this checks all available backends.
- */
-template <typename T>
-struct IsAluminumTypeT
-{
-    static constexpr bool value = IsAlType<T, Al::MPIBackend>()
-#ifdef HYDROGEN_HAVE_NCCL2
-        || IsAlType<T, Al::NCCLBackend>()
-#endif // HYDROGEN_HAVE_NCCL2
-#ifdef HYDROGEN_HAVE_AL_MPI_CUDA
-        || IsAlType<T, Al::MPICUDABackend>()
-#endif // HYDROGEN_HAVE_AL_MPI_CUDA
-        ;
-};
+template <Collective C, typename BackendT>
+struct IsBackendSupported : std::false_type {};
 
-template <typename T>
-constexpr bool IsAluminumType() { return IsAluminumTypeT<T>::value; }
-
-/** \class IsHostMemoryCompatibleT
- *  \brief A traits class for whether host memory can be used with a
- *      given backend.
- */
-template <typename BackendT>
-struct IsHostMemoryCompatibleT : std::false_type {};
-
-// Only the MPI backend is compatible with host memory
-template <>
-struct IsHostMemoryCompatibleT<Al::MPIBackend> : std::true_type {};
-
-/** \brief Helper function for IsHostMemoryCompatibleT trait. */
-template <typename BackendT>
-constexpr bool IsHostMemCompatible()
-{
-    return IsHostMemoryCompatibleT<BackendT>::value;
-}
-
-/** \class IsGPUMemoryCompatibleT
- *  \brief A traits class for whether GPU memory can be used with a
- *      given backend.
- */
-template <typename BackendT>
-struct IsGPUMemoryCompatibleT : std::false_type {};
-
-// The MPI-CUDA and NCCL backends are compatible with GPU memory
-#ifdef HYDROGEN_HAVE_AL_MPI_CUDA
-template <>
-struct IsGPUMemoryCompatibleT<Al::MPICUDABackend> : std::true_type {};
-#endif // HYDROGEN_HAVE_AL_MPI_CUDA
+// MPI backend only supports AllReduce
+ADD_ALUMINUM_COLLECTIVE(    Collective::ALLREDUCE, Al::MPIBackend);
 
 #ifdef HYDROGEN_HAVE_NCCL2
-template <>
-struct IsGPUMemoryCompatibleT<Al::NCCLBackend> : std::true_type {};
+// NCCL backend supports these
+ADD_ALUMINUM_COLLECTIVE(    Collective::ALLGATHER, Al::NCCLBackend);
+ADD_ALUMINUM_COLLECTIVE(    Collective::ALLREDUCE, Al::NCCLBackend);
+ADD_ALUMINUM_COLLECTIVE(    Collective::BROADCAST, Al::NCCLBackend);
+ADD_ALUMINUM_COLLECTIVE(       Collective::REDUCE, Al::NCCLBackend);
+ADD_ALUMINUM_COLLECTIVE(Collective::REDUCESCATTER, Al::NCCLBackend);
 #endif // HYDROGEN_HAVE_NCCL2
 
-/** \brief Helper function for IsGPUMemoryCompatibleT trait. */
-template <typename BackendT>
-constexpr bool IsGPUMemCompatible()
-{
-    return IsGPUMemoryCompatibleT<BackendT>::value;
-}
-
-// FIXME: We need to account for the fact that CUDA might be enabled
-// in Hydrogen but Aluminum might not have a GPU backend enabled.
+#ifdef HYDROGEN_HAVE_AL_MPI_CUDA
+// MPICUDA backend only supports AllReduce
+ADD_ALUMINUM_COLLECTIVE(    Collective::ALLREDUCE, Al::MPICUDABackend);
+ADD_ALUMINUM_COLLECTIVE(     Collective::ALLTOALL, Al::MPICUDABackend);
+ADD_ALUMINUM_COLLECTIVE(       Collective::GATHER, Al::MPICUDABackend);
+ADD_ALUMINUM_COLLECTIVE(      Collective::SCATTER, Al::MPICUDABackend);
+ADD_ALUMINUM_COLLECTIVE(     Collective::SENDRECV, Al::MPICUDABackend);
+#endif // HYDROGEN_HAVE_AL_MPI_CUDA
 
 template <Device D>
 struct BackendsForDeviceT;
@@ -197,58 +142,6 @@ using BackendsForDevice = typename BackendsForDeviceT<D>::type;
 //
 // Aluminum-specific predicates/metafunctions
 //
-
-// Predicate for checking if T is a valid Aluminum type on Device D
-//
-// A type T is a valid Aluminum type iff IsAlType<T,BackendT> is true
-// for some BackendT in BackendsForDevice<D>.
-template <typename T, Device D>
-struct IsAluminumDeviceType
-    : IsTrueForAny<BackendsForDevice<D>, T, IsAlTypeT>
-{};
-
-template <Collective C, typename BackendT>
-struct IsBackendSupported : std::false_type {};
-
-// MPI backend only supports AllReduce
-template <>
-struct IsBackendSupported<Collective::ALLREDUCE, Al::MPIBackend>
-    : std::true_type {};
-
-#ifdef HYDROGEN_HAVE_NCCL2
-// NCCL backend supports these
-template <>
-struct IsBackendSupported<Collective::ALLGATHER, Al::NCCLBackend>
-    : std::true_type {};
-template <>
-struct IsBackendSupported<Collective::ALLREDUCE, Al::NCCLBackend>
-    : std::true_type {};
-template <>
-struct IsBackendSupported<Collective::BROADCAST, Al::NCCLBackend>
-    : std::true_type {};
-template <>
-struct IsBackendSupported<Collective::REDUCE, Al::NCCLBackend>
-    : std::true_type {};
-template <>
-struct IsBackendSupported<Collective::REDUCESCATTER, Al::NCCLBackend>
-    : std::true_type {};
-#endif // HYDROGEN_HAVE_NCCL2
-
-#ifdef HYDROGEN_HAVE_AL_MPI_CUDA
-// MPICUDA backend only supports AllReduce
-template <>
-struct IsBackendSupported<Collective::ALLREDUCE, Al::MPICUDABackend>
-    : std::true_type {};
-template <>
-struct IsBackendSupported<Collective::ALLTOALL, Al::MPICUDABackend>
-    : std::true_type {};
-template <>
-struct IsBackendSupported<Collective::GATHER, Al::MPICUDABackend>
-    : std::true_type {};
-template <>
-struct IsBackendSupported<Collective::SENDRECV, Al::MPICUDABackend>
-    : std::true_type {};
-#endif // HYDROGEN_HAVE_AL_MPI_CUDA
 
 template <typename T, Collective C, typename BackendT>
 struct AluminumSupportsBackendAndCollective

@@ -1429,7 +1429,7 @@ void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
 
 #ifdef HYDROGEN_HAVE_CUDA
 template <typename T,
-          typename=EnableIf<IsAluminumDeviceType<T,Device::GPU>>>
+          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
 void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
                SyncInfo<Device::GPU> const&);
 #endif // HYDROGEN_HAVE_CUDA
@@ -1472,7 +1472,7 @@ void AllReduce(T* buf, int count, Op op, Comm comm,
                SyncInfo<D> const& /*syncInfo*/);
 #ifdef HYDROGEN_HAVE_CUDA
 template <typename T,
-          typename=EnableIf<IsAluminumDeviceType<T,Device::GPU>>>
+          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
 void AllReduce(T* buf, int count, Op op, Comm comm,
                SyncInfo<Device::GPU> const& /*syncInfo*/);
 #endif // HYDROGEN_HAVE_CUDA
