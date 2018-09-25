@@ -48,9 +48,5 @@ Al::ReductionOperator MPI_Op2ReductionOperator(MPI_Op op)
 #include "mpi/Gather.hpp"
 #include "mpi/Reduce.hpp"
 #include "mpi/ReduceScatter.hpp"
+#include "mpi/Scatter.hpp"
 #include "mpi/SendRecv.hpp"
-
-// These don't exist in NCCL, so they're left here as a reminder of
-// all your unfulfilled hopes and dreams.
-
-//#include "mpi/Scatter.hpp"

@@ -1147,25 +1147,59 @@ EL_NO_RELEASE_EXCEPT;
 
 // Scatter
 // -------
-template <typename Real, Device D,
-         typename=EnableIf<IsPacked<Real>>>
-void Scatter
-( const Real* sbuf, int sc,
-        Real* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& )
-EL_NO_RELEASE_EXCEPT;
-template <typename Real, Device D,
-         typename=EnableIf<IsPacked<Real>>>
-void Scatter
-( const Complex<Real>* sbuf, int sc,
-        Complex<Real>* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& )
-EL_NO_RELEASE_EXCEPT;
+#define COLL Collective::SCATTER
+
+#ifdef HYDROGEN_HAVE_ALUMINUM
 template <typename T, Device D,
-         typename=DisableIf<IsPacked<T>>,
-         typename=void>
-void Scatter
-( const T* sbuf, int sc,
-        T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& )
-EL_NO_RELEASE_EXCEPT;
+          typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
+void Scatter(
+    const T* sbuf, int sc,
+    T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& syncInfo);
+
+#ifdef HYDROGEN_HAVE_CUDA
+template <typename T,
+          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
+void Scatter(
+    const T* sbuf, int sc,
+    T* rbuf, int rc, int root, Comm comm,
+    SyncInfo<Device::GPU> const& syncInfo);
+#endif // HYDROGEN_HAVE_CUDA
+#endif // HYDROGEN_HAVE_ALUMINUM
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=EnableIf<IsPacked<T>>>
+void Scatter(
+    const T* sbuf, int sc,
+    T* rbuf, int rc, int root, Comm comm,
+    SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=EnableIf<IsPacked<T>>>
+void Scatter(
+    const Complex<T>* sbuf, int sc,
+    Complex<T>* rbuf, int rc, int root, Comm comm,
+    SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=DisableIf<IsPacked<T>>,
+          typename=void>
+void Scatter(
+    const T* sbuf, int sc,
+    T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& syncInfo );
+
+template <typename T, Device D,
+          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=void, typename=void, typename=void>
+void Scatter(
+    const T* sbuf, int sc,
+    T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& syncInfo );
 
 // In-place option
 template <typename Real, Device D,
@@ -1181,6 +1215,8 @@ template <typename T, Device D,
          typename=void>
 void Scatter( T* buf, int sc, int rc, int root, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
+
+#undef COLL // Collective::SCATTER
 
 // TODO(poulson): MPI_Scatterv support
 
