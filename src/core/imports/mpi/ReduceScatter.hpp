@@ -17,9 +17,10 @@ void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
 {
     EL_DEBUG_CSE
 
-    Al::Reduce_scatter<BestBackend<T,D>>(
+    using Backend = BestBackend<T,D,Collective::REDUCESCATTER>;
+    Al::Reduce_scatter<Backend>(
         sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
-        *comm.aluminum_comm);
+        comm.template GetComm<Backend>());
 }
 
 #ifdef HYDROGEN_HAVE_CUDA
@@ -33,14 +34,16 @@ void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
     if (count == 0)
         return;
 
-    SyncInfo<Device::GPU> alSyncInfo(comm.aluminum_comm->get_stream(),
-                                     syncInfo.event_);
+    using Backend = BestBackend<T,Device::GPU,Collective::REDUCESCATTER>;
+    SyncInfo<Device::GPU> alSyncInfo(
+        comm.template GetComm<Backend>().get_stream(),
+        syncInfo.event_);
 
     auto syncHelper = MakeMultiSync(alSyncInfo, syncInfo);
 
-    Al::Reduce_scatter<BestBackend<T,Device::GPU>>(
+    Al::Reduce_scatter<Backend>(
         sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
-        *comm.aluminum_comm);
+        comm.template GetComm<Backend>());
 }
 #endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM
@@ -66,7 +69,7 @@ void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
     Synchronize(syncInfo);
 
 #ifdef EL_HAVE_MPI_REDUCE_SCATTER_BLOCK
-    EL_CHECK_MPI(
+    CheckMpi(
         MPI_Reduce_scatter_block(
             sbuf, rbuf, count, TypeMap<T>(), NativeOp<T>(op), comm.comm));
 #else
@@ -100,11 +103,11 @@ void ReduceScatter(Complex<T> const* sbuf, Complex<T>* rbuf,
 
 #ifdef EL_HAVE_MPI_REDUCE_SCATTER_BLOCK
 # ifdef EL_AVOID_COMPLEX_MPI
-    EL_CHECK_MPI(
+    CheckMpi(
         MPI_Reduce_scatter_block(
             sbuf, rbuf, 2*count, TypeMap<T>(), NativeOp<T>(op), comm.comm));
 # else
-    EL_CHECK_MPI(
+    CheckMpi(
         MPI_Reduce_scatter_block(
             sbuf, rbuf, count,
             TypeMap<Complex<T>>(), NativeOp<Complex<T>>(op),
@@ -148,7 +151,7 @@ void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
     Serialize(totalSend, sbuf, packedSend);
 
     ReserveSerialized(totalRecv, rbuf, packedRecv);
-    EL_CHECK_MPI(
+    CheckMpi(
         MPI_Reduce_scatter_block(
             packedSend.data(), packedRecv.data(), count, TypeMap<T>(),
             NativeOp<T>(op), comm.comm));
@@ -187,9 +190,10 @@ void ReduceScatter(T* buf, int count, Op op, Comm comm,
         return;
 
     // FIXME Synchronize
-    Al::Reduce_scatter<BestBackend<T,D>>(
+    using Backend = BestBackend<T,D,Collective::REDUCESCATTER>;
+    Al::Reduce_scatter<Backend>(
         buf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
-        *comm.aluminum_comm);
+        comm.template GetComm<Backend>());
 }
 
 #ifdef HYDROGEN_HAVE_CUDA
@@ -203,14 +207,15 @@ void ReduceScatter(T* buf, int count, Op op, Comm comm,
     if (count == 0)
         return;
 
-    SyncInfo<Device::GPU> alSyncInfo(comm.aluminum_comm->get_stream(),
+    using Backend = BestBackend<T,Device::GPU,Collective::REDUCESCATTER>;
+    SyncInfo<Device::GPU> alSyncInfo(comm.template GetComm<Backend>().get_stream(),
                                      syncInfo.event_);
 
     auto syncHelper = MakeMultiSync(alSyncInfo, syncInfo);
 
-    Al::Reduce_scatter<BestBackend<T,Device::GPU>>(
+    Al::Reduce_scatter<Backend>(
         buf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
-        *comm.aluminum_comm);
+        comm.template GetComm<Backend>());
 }
 #endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM
@@ -235,7 +240,7 @@ void ReduceScatter(T* buf, int count, Op op, Comm comm,
     Synchronize(syncInfo);
 
 #ifdef EL_HAVE_MPI_REDUCE_SCATTER_BLOCK
-    EL_CHECK_MPI(
+    CheckMpi(
         MPI_Reduce_scatter_block(
             MPI_IN_PLACE, buf, count,
             TypeMap<T>(), NativeOp<T>(op), comm.comm));
@@ -268,12 +273,12 @@ void ReduceScatter(Complex<T>* buf, int count, Op op, Comm comm,
 
 #ifdef EL_HAVE_MPI_REDUCE_SCATTER_BLOCK
 # ifdef EL_AVOID_COMPLEX_MPI
-    EL_CHECK_MPI(
+    CheckMpi(
         MPI_Reduce_scatter_block(
             MPI_IN_PLACE, buf, 2*count,
             TypeMap<T>(), NativeOp<T>(op), comm.comm));
 # else
-    EL_CHECK_MPI(
+    CheckMpi(
         MPI_Reduce_scatter_block(
             MPI_IN_PLACE, buf, count,
             TypeMap<Complex<T>>(),
@@ -314,7 +319,7 @@ void ReduceScatter(T* buf, int count, Op op, Comm comm,
     Serialize(totalSend, buf, packedSend);
 
     ReserveSerialized(totalRecv, buf, packedRecv);
-    EL_CHECK_MPI(
+    CheckMpi(
         MPI_Reduce_scatter_block(
             packedSend.data(), packedRecv.data(), count, TypeMap<T>(),
             NativeOp<T>(op), comm.comm));

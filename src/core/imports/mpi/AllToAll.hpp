@@ -8,21 +8,38 @@ namespace mpi
 #ifdef HYDROGEN_HAVE_ALUMINUM
 template <typename T, Device D,
           typename/*=EnableIf<IsAluminumSupported<T,D,COLL>>*/>
-void AllToAll(T const* sbuf, int sc, T* rbuf, int rc, Comm comm,
+void AllToAll(T const* sbuf, int /*sc*/, T* rbuf, int rc, Comm comm,
               SyncInfo<D> const&)
 {
-    EL_DEBUG_CSE;
-    LogicError("AllToAll: Al::AllToAll is not yet implemented.");
+    EL_DEBUG_CSE
+    if (rc == 0)
+        return;
+
+    using Backend = BestBackend<T,D,Collective::ALLTOALL>;
+    // FIXME Synchronize
+    Al::Alltoall<Backend>(
+        sbuf, rbuf, rc, comm.template GetComm<Backend>());
 }
 
 #ifdef HYDROGEN_HAVE_CUDA
 template <typename T,
           typename/*=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>*/>
-void AllToAll(T const* sbuf, int sc, T* rbuf, int rc, Comm comm,
+void AllToAll(T const* sbuf, int /*sc*/, T* rbuf, int rc, Comm comm,
               SyncInfo<Device::GPU> const& syncInfo)
 {
-    EL_DEBUG_CSE;
-    LogicError("AllToAll: Al::AllToAll is not yet implemented.");
+    EL_DEBUG_CSE
+    if (rc == 0)
+        return;
+
+    using Backend = BestBackend<T,Device::GPU,Collective::ALLTOALL>;
+    SyncInfo<Device::GPU> alSyncInfo(comm.template GetComm<Backend>().get_stream(),
+                                     syncInfo.event_);
+
+    auto syncHelper = MakeMultiSync(alSyncInfo, syncInfo);
+
+    Al::Alltoall<Backend>(
+        sbuf, rbuf, rc, comm.template GetComm<Backend>());
+
 }
 
 #endif // HYDROGEN_HAVE_CUDA

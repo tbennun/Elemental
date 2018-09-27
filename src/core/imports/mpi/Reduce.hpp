@@ -13,9 +13,10 @@ void Reduce(T const* sbuf, T* rbuf, int count, Op op,
 {
     EL_DEBUG_CSE
 
-    Al::Reduce<BestBackend<T,D>>(
+    using Backend = BestBackend<T,D,Collective::REDUCE>;
+    Al::Reduce<Backend>(
         sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
-        root, *comm.aluminum_comm);
+        root, comm.template GetComm<Backend>());
 }
 
 #ifdef HYDROGEN_HAVE_CUDA
@@ -26,14 +27,16 @@ void Reduce(T const* sbuf, T* rbuf, int count, Op op,
 {
     EL_DEBUG_CSE
 
-    SyncInfo<Device::GPU> alSyncInfo(comm.aluminum_comm->get_stream(),
-                                     syncInfo.event_);
+    using Backend = BestBackend<T,Device::GPU,Collective::REDUCE>;
+    SyncInfo<Device::GPU> alSyncInfo(
+        comm.template GetComm<Backend>().get_stream(),
+        syncInfo.event_);
 
     auto syncHelper = MakeMultiSync(alSyncInfo, syncInfo);
 
-    Al::Reduce<BestBackend<T,Device::GPU>>(
+    Al::Reduce<Backend>(
         sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
-        root, *comm.aluminum_comm);
+        root, comm.template GetComm<Backend>());
 }
 #endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM
@@ -187,9 +190,10 @@ void Reduce(T* buf, int count, Op op,
 {
     EL_DEBUG_CSE
 
-    Al::Reduce<BestBackend<T,D>>(
+    using Backend = BestBackend<T,D,Collective::REDUCE>;
+    Al::Reduce<Backend>(
         buf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
-        root, *comm.aluminum_comm);
+        root, comm.template GetComm<Backend>());
 }
 
 #ifdef HYDROGEN_HAVE_CUDA
@@ -200,14 +204,16 @@ void Reduce(T* buf, int count, Op op,
 {
     EL_DEBUG_CSE
 
-    SyncInfo<Device::GPU> alSyncInfo(comm.aluminum_comm->get_stream(),
-                                     syncInfo.event_);
+    using Backend = BestBackend<T,Device::GPU,Collective::REDUCE>;
+    SyncInfo<Device::GPU> alSyncInfo(
+        comm.template GetComm<Backend>().get_stream(),
+        syncInfo.event_);
 
     auto syncHelper = MakeMultiSync(alSyncInfo, syncInfo);
 
-    Al::Reduce<BestBackend<T,Device::GPU>>(
+    Al::Reduce<Backend>(
         buf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
-        root, *comm.aluminum_comm);
+        root, comm.template GetComm<Backend>());
 }
 #endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM

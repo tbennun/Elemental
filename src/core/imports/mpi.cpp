@@ -1120,11 +1120,6 @@ EL_NO_RELEASE_EXCEPT
     return rb;
 }
 
-template <typename T, Device D>
-T SendRecv( T sb, int to, int from, Comm comm, SyncInfo<D> const& syncInfo )
-EL_NO_RELEASE_EXCEPT
-{ return TaggedSendRecv( sb, to, 0, from, ANY_TAG, comm, syncInfo ); }
-
 template <typename Real, Device D,
          typename/*=EnableIf<IsPacked<Real>>*/>
 void TaggedSendRecv(
@@ -1271,105 +1266,6 @@ void IBroadcast
 template <typename T>
 void IBroadcast( T& b, int root, Comm comm, Request<T>& request )
 { IBroadcast( &b, 1, root, comm, request ); }
-
-template <typename Real, Device D,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void Gather(
-    const Real* sbuf, int sc,
-    Real* rbuf, int rc, int root, Comm comm,
-    SyncInfo<D> const& syncInfo)
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-
-#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
-    auto const rank = mpi::Rank(comm);
-    auto const size_c = mpi::Size(comm);
-    auto const recvCount
-        = (rank == root ? static_cast<size_t>(rc*size_c) : 0UL);
-    ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
-    ENSURE_HOST_RECV_BUFFER(rbuf, recvCount, syncInfo);
-#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
-
-    Synchronize(syncInfo);
-
-    CheckMpi(
-        MPI_Gather(
-            sbuf, sc, TypeMap<Real>(),
-            rbuf, rc, TypeMap<Real>(), root, comm.comm));
-}
-
-template <typename Real, Device D,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void Gather(
-    const Complex<Real>* sbuf, int sc,
-    Complex<Real>* rbuf, int rc, int root, Comm comm,
-    SyncInfo<D> const& syncInfo)
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-
-#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
-    auto const rank = mpi::Rank(comm);
-    auto const size_c = mpi::Size(comm);
-    auto const recvCount
-        = (rank == root ? static_cast<size_t>(rc*size_c) : 0UL);
-    ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
-    ENSURE_HOST_RECV_BUFFER(rbuf, recvCount, syncInfo);
-#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
-
-    Synchronize(syncInfo);
-
-#ifdef EL_AVOID_COMPLEX_MPI
-    CheckMpi(
-        MPI_Gather(
-            sbuf, 2*sc, TypeMap<Real>(),
-            rbuf, 2*rc, TypeMap<Real>(),
-            root, comm.comm));
-#else
-    CheckMpi(
-        MPI_Gather(
-            sbuf, sc, TypeMap<Complex<Real>>(),
-            rbuf, rc, TypeMap<Complex<Real>>(),
-            root, comm.comm));
-#endif
-}
-
-template <typename T, Device D,
-         typename/*=DisableIf<IsPacked<T>>*/,
-         typename/*=void*/>
-void Gather(
-    const T* sbuf, int sc,
-    T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& syncInfo )
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-
-    const int commSize = mpi::Size(comm);
-    const int commRank = mpi::Rank(comm);
-    const int totalRecv = rc*commSize;
-
-#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
-    auto const recvCount
-        = (commRank == root ? static_cast<size_t>(rc*commSize) : 0UL);
-    ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
-    ENSURE_HOST_RECV_BUFFER(rbuf, recvCount, syncInfo);
-#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
-
-    Synchronize(syncInfo);
-
-    std::vector<byte> packedSend, packedRecv;
-    Serialize( sc, sbuf, packedSend );
-
-    if( commRank == root )
-        ReserveSerialized( totalRecv, rbuf, packedRecv );
-    CheckMpi(
-        MPI_Gather(
-            packedSend.data(), sc, TypeMap<T>(),
-            packedRecv.data(), rc, TypeMap<T>(), root, comm.comm ) );
-    if( commRank == root )
-        Deserialize( totalRecv, packedRecv, rbuf );
-}
 
 template <typename Real,
          typename/*=EnableIf<IsPacked<Real>>*/>
@@ -1708,100 +1604,6 @@ EL_NO_RELEASE_EXCEPT
     Deserialize( totalRecv, packedRecv, rbuf );
 }
 
-template <typename Real, Device D,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void Scatter(
-    const Real* sbuf, int sc,
-    Real* rbuf, int rc, int root, Comm comm,
-    SyncInfo<D> const& syncInfo)
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-
-#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
-    auto const commSize = Size(comm);
-    auto const commRank = Rank(comm);
-    auto const totalSend =
-        (commRank == root ? static_cast<size_t>(sc*commSize) : 0UL);
-    ENSURE_HOST_SEND_BUFFER(sbuf, totalSend, syncInfo);
-    ENSURE_HOST_RECV_BUFFER(rbuf, rc, syncInfo);
-#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
-
-    Synchronize(syncInfo);
-    CheckMpi(
-        MPI_Scatter(
-            sbuf, sc, TypeMap<Real>(),
-            rbuf, rc, TypeMap<Real>(), root, comm.comm));
-}
-
-template <typename Real, Device D,
-         typename/*=EnableIf<IsPacked<Real>>*/>
-void Scatter(
-    const Complex<Real>* sbuf, int sc,
-    Complex<Real>* rbuf, int rc, int root, Comm comm,
-    SyncInfo<D> const& syncInfo)
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-
-#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
-    auto const commSize = Size(comm);
-    auto const commRank = Rank(comm);
-    auto const totalSend =
-        (commRank == root ? static_cast<size_t>(sc*commSize) : 0UL);
-    ENSURE_HOST_SEND_BUFFER(sbuf, totalSend, syncInfo);
-    ENSURE_HOST_RECV_BUFFER(rbuf, rc, syncInfo);
-#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
-
-    Synchronize(syncInfo);
-
-#ifdef EL_AVOID_COMPLEX_MPI
-    CheckMpi(
-        MPI_Scatter(
-            sbuf, 2*sc, TypeMap<Real>(),
-            rbuf, 2*rc, TypeMap<Real>(), root, comm.comm));
-#else
-    CheckMpi(
-        MPI_Scatter(
-            sbuf, sc, TypeMap<Complex<Real>>(),
-            rbuf,rc, TypeMap<Complex<Real>>(),
-            root, comm.comm));
-#endif
-}
-
-template <typename T, Device D,
-         typename/*=DisableIf<IsPacked<T>>*/,
-         typename/*=void*/>
-void Scatter(
-    const T* sbuf, int sc,
-    T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& syncInfo)
-EL_NO_RELEASE_EXCEPT
-{
-    EL_DEBUG_CSE
-
-    auto const commSize = Size(comm);
-    auto const commRank = Rank(comm);
-    auto const totalSend =
-        (commRank == root ? static_cast<size_t>(sc*commSize) : 0UL);
-
-#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
-    ENSURE_HOST_SEND_BUFFER(sbuf, totalSend, syncInfo);
-    ENSURE_HOST_RECV_BUFFER(rbuf, rc, syncInfo);
-#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
-
-    Synchronize(syncInfo);
-
-    std::vector<byte> packedSend, packedRecv;
-    if( commRank == root )
-        Serialize( totalSend, sbuf, packedSend );
-
-    ReserveSerialized( rc, rbuf, packedRecv );
-    CheckMpi(
-        MPI_Scatter(
-            packedSend.data(), sc, TypeMap<T>(),
-            packedRecv.data(), rc, TypeMap<T>(), root, comm.comm));
-    Deserialize( rc, packedRecv, rbuf );
-}
 
 template <typename Real, Device D,
          typename/*=EnableIf<IsPacked<Real>>*/>
@@ -2578,28 +2380,13 @@ EL_NO_RELEASE_EXCEPT
         T* rbuf, int rc, int from, int rtag, Comm comm,                 \
         SyncInfo<D> const&)                                             \
         EL_NO_RELEASE_EXCEPT;                                           \
-    template void SendRecv(                                             \
-        const T* sbuf, int sc, int to,                                  \
-        T* rbuf, int rc, int from, Comm comm, SyncInfo<D> const&)       \
-        EL_NO_RELEASE_EXCEPT;                                           \
     template T TaggedSendRecv(                                          \
         T sb, int to, int stag, int from, int rtag, Comm comm,          \
         SyncInfo<D> const&)                                             \
         EL_NO_RELEASE_EXCEPT;                                           \
-    template T SendRecv(                                                \
-        T sb, int to, int from, Comm comm, SyncInfo<D> const&)          \
-        EL_NO_RELEASE_EXCEPT;                                           \
     template void TaggedSendRecv(                                       \
         T* buf, int count, int to, int stag, int from, int rtag,        \
         Comm comm,                                                      \
-        SyncInfo<D> const&)                                             \
-        EL_NO_RELEASE_EXCEPT;                                           \
-    template void SendRecv(                                             \
-        T* buf, int count, int to, int from, Comm comm,                 \
-        SyncInfo<D> const&)                                             \
-        EL_NO_RELEASE_EXCEPT;                                           \
-    template void Gather(                                               \
-        const T* sbuf, int sc, T* rbuf, int rc, int root, Comm comm,    \
         SyncInfo<D> const&)                                             \
         EL_NO_RELEASE_EXCEPT;                                           \
     template void Gather(                                               \
@@ -2611,10 +2398,6 @@ EL_NO_RELEASE_EXCEPT
         const T* sbuf, int sc,                                          \
         T* rbuf, const int* rcs, const int* rds, Comm comm,             \
         SyncInfo<D> const&)                                             \
-        EL_NO_RELEASE_EXCEPT;                                           \
-    template void Scatter(                                              \
-        const T* sbuf, int sc,                                          \
-        T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const&)       \
         EL_NO_RELEASE_EXCEPT;                                           \
     template void Scatter(                                              \
         T* buf, int sc, int rc, int root, Comm comm,                    \

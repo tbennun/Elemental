@@ -14,6 +14,7 @@
 
 #if defined(HYDROGEN_HAVE_AL_MPI_CUDA) || defined(HYDROGEN_HAVE_NCCL2)
 #include "cuda.hpp"
+#define HYDROGEN_ALUMINUM_USES_GPU
 #endif // defined(HYDROGEN_HAVE_AL_MPI_CUDA) || defined(HYDROGEN_HAVE_NCCL2)
 
 #include "aluminum.hpp"
@@ -64,16 +65,140 @@ struct Comm
 #else
 namespace internal
 {
+template <typename IntT, IntT... Is>
+struct IntegerSequence {};
+
+template <size_t... Is>
+using IndexSequence = IntegerSequence<size_t, Is...>;
+
+template <typename Seq1, typename Seq2>
+struct MergeIndexSequences;
+
+template <size_t... Is1, size_t... Is2>
+struct MergeIndexSequences<IndexSequence<Is1...>, IndexSequence<Is2...>>
+{
+  using type = IndexSequence<Is1..., (Is2 + sizeof...(Is1))...>;
+};
+
+template <size_t N>
+struct GenerateIndexSequence
+    : MergeIndexSequences<typename GenerateIndexSequence<N/2>::type,
+                          typename GenerateIndexSequence<N-N/2>::type>
+{};
+
+template <>
+struct GenerateIndexSequence<1>
+{
+  using type = IndexSequence<0>;
+};
+
+template <size_t N>
+using MakeIndexSequence = typename GenerateIndexSequence<N>::type;
+
+template <size_t N, typename List>
+struct GetIthTypeT
+    : GetIthTypeT<N-1, Tail<List>>
+{};
+
+template <typename List>
+struct GetIthTypeT<0,List>
+    : HeadT<List>
+{};
+
+template <size_t I, typename List>
+using GetIthType = typename GetIthTypeT<I,List>::type;
+
+struct Zero
+{
+  constexpr static size_t value = 0;
+};
+
+template <typename T>
+struct PlusOne
+{
+    constexpr static size_t value = 1 + T::value;
+};
+
+template <typename T, typename List>
+struct IndexInTypeList
+{
+    constexpr static size_t value =
+        std::conditional<std::is_same<T,Head<List>>::value,
+                         Zero,
+                         PlusOne<IndexInTypeList<T,Tail<List>>>>::type::value;
+};
+
+template <typename T>
+struct SharedPtrCommTupleT;
+
+template <typename... Ts>
+struct SharedPtrCommTupleT<TypeList<Ts...>>
+{
+    using type = std::tuple<std::shared_ptr<typename Ts::comm_type>...>;
+};
+
+template <typename T>
+using SharedPtrCommTuple = typename SharedPtrCommTupleT<T>::type;
+
+template <typename... Ts, size_t I, size_t... Is>
+void ConstructAllComms_impl(std::tuple<std::shared_ptr<Ts>...>& tup,
+                            MPI_Comm comm, IndexSequence<I,Is...>)
+{
+    using comm_type_list = TypeList<Ts...>;
+    using this_comm_type = GetIthType<I,comm_type_list>;
+
+    std::get<I>(tup) = std::make_shared<this_comm_type>(
+        comm
+#ifdef HYDROGEN_ALUMINUM_USES_GPU
+        , GPUManager::Stream()
+#endif
+        );
+
+    ConstructAllComms_impl(tup, comm, IndexSequence<Is...>{});
+}
+
+template <typename... Ts>
+void ConstructAllComms_impl(std::tuple<std::shared_ptr<Ts>...>&,
+                            MPI_Comm, IndexSequence<>)
+{}
+
+template <typename... Ts>
+void ConstructAllComms(std::tuple<std::shared_ptr<Ts>...>& tup, MPI_Comm comm)
+{
+    ConstructAllComms_impl(tup,comm,MakeIndexSequence<sizeof...(Ts)>{});
+}
+
+template <typename... Ts, size_t I, size_t... Is>
+void ResetAllPtrs_impl(std::tuple<std::shared_ptr<Ts>...>& tup,
+                       IndexSequence<I,Is...>)
+{
+    std::get<I>(tup).reset();
+    ResetAllPtrs_impl(tup, IndexSequence<Is...>{});
+}
+
+template <typename... Ts>
+void ResetAllPtrs_impl(std::tuple<std::shared_ptr<Ts>...>&,
+                       IndexSequence<>)
+{}
+
+template <typename... Ts>
+void ResetAllPtrs(std::tuple<std::shared_ptr<Ts>...>& tup)
+{
+    ResetAllPtrs_impl(tup,MakeIndexSequence<sizeof...(Ts)>{});
+}
+
 struct DelayCtorType {};
 }// namespace internal
 
 struct Comm
 {
-#if defined(HYDROGEN_HAVE_AL_MPI_CUDA) || defined(HYDROGEN_HAVE_NCCL2)
-    using aluminum_comm_type = Head<BackendsForDevice<Device::GPU>>::comm_type;
+#ifdef HYDROGEN_ALUMINUM_USES_GPU
+    using comm_ptr_tuple_type =
+        internal::SharedPtrCommTuple<BackendsForDevice<Device::GPU>>;
 #else
-    using aluminum_comm_type = Head<BackendsForDevice<Device::CPU>>::comm_type;
-#endif // defined(HYDROGEN_HAVE_AL_MPI_CUDA) || defined(HYDROGEN_HAVE_NCCL2)
+    using comm_ptr_tuple_type =
+        internal::SharedPtrCommTuple<BackendsForDevice<Device::CPU>>;
+#endif // HYDROGEN_ALUMINUM_USES_GPU
 
     // Hack to handle global objects, MPI_COMM could be int or void*...
     explicit Comm(internal::DelayCtorType const&,
@@ -93,13 +218,36 @@ struct Comm
     inline int Rank() const EL_NO_RELEASE_EXCEPT;
     inline int Size() const EL_NO_RELEASE_EXCEPT;
 
-    // Re-sync the Aluminum comm with the MPI comm
+    // Re-sync the Aluminum comms with the MPI comm
     inline void Reinit();
-    inline void Reset() EL_NO_EXCEPT { aluminum_comm.reset(); }
+    inline void Reset() EL_NO_EXCEPT;
+
+    template <typename BackendT>
+    typename BackendT::comm_type& GetComm() EL_NO_EXCEPT
+    {
+#ifdef HYDROGEN_ALUMINUM_USES_GPU
+        using BackendList = BackendsForDevice<Device::GPU>;
+#else
+        using BackendList = BackendsForDevice<Device::CPU>;
+#endif // HYDROGEN_ALUMINUM_USES_GPU
+
+        return *(std::get<internal::IndexInTypeList<BackendT,BackendList>::value>(al_comms));
+    }
 
     MPI_Comm comm;
-    std::shared_ptr<aluminum_comm_type> aluminum_comm;
+    comm_ptr_tuple_type al_comms;
 };
+
+    // FIXME (trb): This could be more elegant.
+#ifdef HYDROGEN_ALUMINUM_USES_GPU
+template <>
+inline typename Al::MPIBackend::comm_type& Comm::GetComm<Al::MPIBackend>()
+    EL_NO_EXCEPT
+{
+    // All GPU backend comm_types should work with CPU MPIBackend.
+    return *(std::get<0>(al_comms));
+}
+#endif // HYDROGEN_ALUMINUM_USES_GPU
 
 
 inline
@@ -108,24 +256,19 @@ Comm::Comm(MPI_Comm mpiComm)
 #else
 Comm::Comm(MPI_Comm mpiComm) EL_NO_EXCEPT
 #endif
-: comm(mpiComm),
-    aluminum_comm{
-    std::make_shared<aluminum_comm_type>(
-        mpiComm
-#if defined(HYDROGEN_HAVE_NCCL2) || defined(HYDROGEN_HAVE_AL_MPI_CUDA)
-        , GPUManager::Stream()
-#endif
-        )}
-{}
+: comm(mpiComm)
+{
+    Reinit();
+}
 
 inline void Comm::Reinit()
 {
-    aluminum_comm = std::make_shared<aluminum_comm_type>(
-        comm
-#if defined(HYDROGEN_HAVE_NCCL2) || defined(HYDROGEN_HAVE_AL_MPI_CUDA)
-        , GPUManager::Stream()
-#endif
-        );
+    internal::ConstructAllComms(al_comms,comm);
+}
+
+inline void Comm::Reset()
+{
+    internal::ResetAllPtrs(al_comms);
 }
 
 #endif // HYDROGEN_HAVE_ALUMINUM
@@ -646,11 +789,64 @@ void TaggedSendRecv(
     EL_NO_RELEASE_EXCEPT;
 
 // If the tags are irrelevant
-template <typename T, Device D>
-void SendRecv(
-    const T* sbuf, int sc, int to,
-    T* rbuf, int rc, int from, Comm comm, SyncInfo<D> const& )
-    EL_NO_RELEASE_EXCEPT;
+#define COLL Collective::SENDRECV
+
+#ifdef HYDROGEN_HAVE_ALUMINUM
+template <typename T, Device D,
+          typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
+void SendRecv(const T* sbuf, int sc, int to,
+              T* rbuf, int rc, int from, Comm comm,
+              SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
+void SendRecv(T* buf, int count, int to, int from, Comm comm,
+              SyncInfo<D> const& syncInfo);
+
+#ifdef HYDROGEN_HAVE_CUDA
+template <typename T,
+          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
+void SendRecv(const T* sbuf, int sc, int to,
+              T* rbuf, int rc, int from, Comm comm,
+              SyncInfo<Device::GPU> const& syncInfo);
+template <typename T,
+          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
+void SendRecv(T* buf, int count, int to, int from, Comm comm,
+              SyncInfo<Device::GPU> const& syncInfo);
+#endif // HYDROGEN_HAVE_CUDA
+#endif // HYDROGEN_HAVE_ALUMINUM
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=void>
+void SendRecv(const T* sbuf, int sc, int to,
+              T* rbuf, int rc, int from, Comm comm,
+              SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=void, typename=void>
+void SendRecv(const T* sbuf, int sc, int to,
+              T* rbuf, int rc, int from, Comm comm,
+              SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=void>
+void SendRecv( T* buf, int count, int to, int from, Comm comm,
+               SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=void, typename=void>
+void SendRecv( T* buf, int count, int to, int from, Comm comm,
+               SyncInfo<D> const& syncInfo);
+
+#undef COLL // Collective::SENDRECV
 
 // If the send and recv counts are one
 template<typename T>
@@ -681,12 +877,6 @@ template <typename T, Device D,
 void TaggedSendRecv(
     T* buf, int count, int to, int stag, int from, int rtag, Comm comm,
     SyncInfo<D> const& )
-    EL_NO_RELEASE_EXCEPT;
-
-// If the tags don't matter
-template<typename T, Device D>
-void SendRecv(
-    T* buf, int count, int to, int from, Comm comm, SyncInfo<D> const& )
     EL_NO_RELEASE_EXCEPT;
 
 // Collective communication
@@ -766,27 +956,68 @@ void IBroadcast( T& b, int root, Comm comm, Request<T>& request );
 
 // Gather
 // ------
+
+#define COLL Collective::GATHER
+#ifdef HYDROGEN_HAVE_ALUMINUM
+template <typename T, Device D,
+          typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
+void Gather(
+    const T* sbuf, int sc,
+    T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& syncInfo);
+
+#ifdef HYDROGEN_HAVE_CUDA
+template <typename T,
+          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
+void Gather(
+    const T* sbuf, int sc,
+    T* rbuf, int rc, int root, Comm comm,
+    SyncInfo<Device::GPU> const& syncInfo);
+#endif // HYDROGEN_HAVE_CUDA
+#endif // HYDROGEN_HAVE_ALUMINUM
+
+
 // Even though EL_AVOID_COMPLEX_MPI being defined implies that an std::vector
 // copy of the input data will be created, and the memory allocation can clearly
 // fail and throw an exception, said exception is not necessarily thrown on
 // Linux platforms due to the "optimistic" allocation policy. Therefore we will
 // go ahead and allow std::terminate to be called should such an std::bad_alloc
 // exception occur in a Release build
-template <typename Real, Device D,
-         typename=EnableIf<IsPacked<Real>>>
-void Gather
-( const Real* sbuf, int sc,
-        Real* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& ) EL_NO_RELEASE_EXCEPT;
-template <typename Real, Device D,
-         typename=EnableIf<IsPacked<Real>>>
-void  Gather
-( const Complex<Real>* sbuf, int sc,
-        Complex<Real>* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& ) EL_NO_RELEASE_EXCEPT;
 template <typename T, Device D,
-         typename=DisableIf<IsPacked<T>>,typename=void>
-void Gather
-( const T* sbuf, int sc,
-        T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& ) EL_NO_RELEASE_EXCEPT;
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=EnableIf<IsPacked<T>>>
+void Gather(
+    const T* sbuf, int sc,
+    T* rbuf, int rc, int root, Comm comm,
+    SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=EnableIf<IsPacked<T>>>
+void Gather(
+    const Complex<T>* sbuf, int sc,
+    Complex<T>* rbuf, int rc, int root, Comm comm,
+    SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=DisableIf<IsPacked<T>>,
+          typename=void>
+void Gather(
+    const T* sbuf, int sc,
+    T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& syncInfo );
+
+template <typename T, Device D,
+          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=void, typename=void, typename=void>
+void Gather(
+    const T* sbuf, int sc,
+    T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& syncInfo );
+
+#undef COLL /* Collective::GATHER */
 
 // Non-blocking gather
 // -------------------
@@ -916,25 +1147,59 @@ EL_NO_RELEASE_EXCEPT;
 
 // Scatter
 // -------
-template <typename Real, Device D,
-         typename=EnableIf<IsPacked<Real>>>
-void Scatter
-( const Real* sbuf, int sc,
-        Real* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& )
-EL_NO_RELEASE_EXCEPT;
-template <typename Real, Device D,
-         typename=EnableIf<IsPacked<Real>>>
-void Scatter
-( const Complex<Real>* sbuf, int sc,
-        Complex<Real>* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& )
-EL_NO_RELEASE_EXCEPT;
+#define COLL Collective::SCATTER
+
+#ifdef HYDROGEN_HAVE_ALUMINUM
 template <typename T, Device D,
-         typename=DisableIf<IsPacked<T>>,
-         typename=void>
-void Scatter
-( const T* sbuf, int sc,
-        T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& )
-EL_NO_RELEASE_EXCEPT;
+          typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
+void Scatter(
+    const T* sbuf, int sc,
+    T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& syncInfo);
+
+#ifdef HYDROGEN_HAVE_CUDA
+template <typename T,
+          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
+void Scatter(
+    const T* sbuf, int sc,
+    T* rbuf, int rc, int root, Comm comm,
+    SyncInfo<Device::GPU> const& syncInfo);
+#endif // HYDROGEN_HAVE_CUDA
+#endif // HYDROGEN_HAVE_ALUMINUM
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=EnableIf<IsPacked<T>>>
+void Scatter(
+    const T* sbuf, int sc,
+    T* rbuf, int rc, int root, Comm comm,
+    SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=EnableIf<IsPacked<T>>>
+void Scatter(
+    const Complex<T>* sbuf, int sc,
+    Complex<T>* rbuf, int rc, int root, Comm comm,
+    SyncInfo<D> const& syncInfo);
+
+template <typename T, Device D,
+          typename=EnableIf<And<IsDeviceValidType<T,D>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=DisableIf<IsPacked<T>>,
+          typename=void>
+void Scatter(
+    const T* sbuf, int sc,
+    T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& syncInfo );
+
+template <typename T, Device D,
+          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
+                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=void, typename=void, typename=void>
+void Scatter(
+    const T* sbuf, int sc,
+    T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& syncInfo );
 
 // In-place option
 template <typename Real, Device D,
@@ -950,6 +1215,8 @@ template <typename T, Device D,
          typename=void>
 void Scatter( T* buf, int sc, int rc, int root, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
+
+#undef COLL // Collective::SCATTER
 
 // TODO(poulson): MPI_Scatterv support
 
@@ -1198,7 +1465,7 @@ void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
 
 #ifdef HYDROGEN_HAVE_CUDA
 template <typename T,
-          typename=EnableIf<IsAluminumDeviceType<T,Device::GPU>>>
+          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
 void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
                SyncInfo<Device::GPU> const&);
 #endif // HYDROGEN_HAVE_CUDA
@@ -1241,7 +1508,7 @@ void AllReduce(T* buf, int count, Op op, Comm comm,
                SyncInfo<D> const& /*syncInfo*/);
 #ifdef HYDROGEN_HAVE_CUDA
 template <typename T,
-          typename=EnableIf<IsAluminumDeviceType<T,Device::GPU>>>
+          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
 void AllReduce(T* buf, int count, Op op, Comm comm,
                SyncInfo<Device::GPU> const& /*syncInfo*/);
 #endif // HYDROGEN_HAVE_CUDA
@@ -1418,7 +1685,7 @@ void ReduceScatter(
 template <typename T, Device D>
 void ReduceScatter(T* buf, int rc, Comm comm, SyncInfo<D> const&);
 
-#undef COLL // Collectives::REDUCESCATTER
+#undef COLL // Collective::REDUCESCATTER
 
 // Variable-length ReduceScatter
 // -----------------------------

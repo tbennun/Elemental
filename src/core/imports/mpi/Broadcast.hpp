@@ -14,8 +14,10 @@ void Broadcast(T* buffer, int count, int root, Comm comm, SyncInfo<D> const&)
 {
     EL_DEBUG_CSE
 
+    using Backend = BestBackend<T,D,Collective::BROADCAST>;
+
     // FIXME What kind of synchronization needs to happen here??
-    Al::Bcast<BestBackend<T,D>>(buffer, count, root, *comm.aluminum_comm);
+    Al::Bcast<Backend>(buffer, count, root, comm.template GetComm<Backend>());
 }
 
 #ifdef HYDROGEN_HAVE_CUDA
@@ -25,13 +27,15 @@ void Broadcast(T* buffer, int count, int root, Comm comm,
                SyncInfo<Device::GPU> const& syncInfo)
 {
     EL_DEBUG_CSE
-    SyncInfo<Device::GPU> alSyncInfo(comm.aluminum_comm->get_stream(),
+
+    using Backend = BestBackend<T,Device::GPU,Collective::BROADCAST>;
+    SyncInfo<Device::GPU> alSyncInfo(comm.template GetComm<Backend>().get_stream(),
                                      syncInfo.event_);
 
     auto multisync = MakeMultiSync(alSyncInfo, syncInfo);
 
-    Al::Bcast<BestBackend<T,Device::GPU>>(
-        buffer, count, root, *comm.aluminum_comm);
+    Al::Bcast<Backend>(
+        buffer, count, root, comm.template GetComm<Backend>());
 }
 #endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM
