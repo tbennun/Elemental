@@ -849,9 +849,9 @@ void SendRecv( T* buf, int count, int to, int from, Comm comm,
 #undef COLL // Collective::SENDRECV
 
 // If the send and recv counts are one
-template<typename T>
+template<typename T, Device D>
 T TaggedSendRecv(
-    T sb, int to, int stag, int from, int rtag, Comm comm )
+    T sb, int to, int stag, int from, int rtag, Comm comm, SyncInfo<D> const& )
     EL_NO_RELEASE_EXCEPT;
 
 // If the send and recv counts are one and the tags don't matter
