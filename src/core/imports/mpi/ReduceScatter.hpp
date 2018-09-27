@@ -1,3 +1,5 @@
+// ReduceScatter
+
 namespace El
 {
 namespace mpi
@@ -54,16 +56,16 @@ void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
     if (count == 0)
         return;
 
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
+    auto size_c = Size(comm);
+
+    ENSURE_HOST_SEND_BUFFER(sbuf, count*size_c, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, count, syncInfo);
+#endif
+
     Synchronize(syncInfo);
 
-#ifdef EL_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE
-    LogicError("ReduceScatter: Let Tom know if you go down this code path.");
-
-    const int commSize = Size(comm);
-    const int commRank = Rank(comm);
-    AllReduce(sbuf, count*commSize, op, comm, syncInfo);
-    MemCopy(rbuf, &sbuf[commRank*count], count);
-#elif defined(EL_HAVE_MPI_REDUCE_SCATTER_BLOCK)
+#ifdef EL_HAVE_MPI_REDUCE_SCATTER_BLOCK
     EL_CHECK_MPI(
         MPI_Reduce_scatter_block(
             sbuf, rbuf, count, TypeMap<T>(), NativeOp<T>(op), comm.comm));
@@ -87,15 +89,16 @@ void ReduceScatter(Complex<T> const* sbuf, Complex<T>* rbuf,
     if (count == 0)
         return;
 
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
+    auto size_c = Size(comm);
+
+    ENSURE_HOST_SEND_BUFFER(sbuf, count*size_c, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, count, syncInfo);
+#endif
+
     Synchronize(syncInfo);
 
-#ifdef EL_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE
-    LogicError("ReduceScatter: Let Tom know if you go down this code path.");
-    const int commSize = Size(comm);
-    const int commRank = Rank(comm);
-    AllReduce(sbuf, count*commSize, op, comm);
-    MemCopy(rbuf, &sbuf[commRank*count], count);
-#elif defined(EL_HAVE_MPI_REDUCE_SCATTER_BLOCK)
+#ifdef EL_HAVE_MPI_REDUCE_SCATTER_BLOCK
 # ifdef EL_AVOID_COMPLEX_MPI
     EL_CHECK_MPI(
         MPI_Reduce_scatter_block(
@@ -128,15 +131,19 @@ void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
     if (count == 0)
         return;
 
-    Synchronize(syncInfo);
-
     const int commSize = mpi::Size(comm);
     const int totalSend = count*commSize;
     const int totalRecv = count;
 
-    // TODO(poulson): Add AllReduce approach via
-    // EL_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE
 #if defined(EL_HAVE_MPI_REDUCE_SCATTER_BLOCK)
+
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
+    ENSURE_HOST_SEND_BUFFER(sbuf, totalSend, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, totalRecv, syncInfo);
+#endif
+
+    Synchronize(syncInfo);
+
     std::vector<byte> packedSend, packedRecv;
     Serialize(totalSend, sbuf, packedSend);
 
@@ -219,16 +226,15 @@ void ReduceScatter(T* buf, int count, Op op, Comm comm,
     if (count == 0 || Size(comm) == 1)
         return;
 
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
+    auto const size_c = Size(comm);
+    ENSURE_HOST_BUFFER_PREPOST_XFER(
+        buf, count*size_c, 0, count*size_c, 0, count, syncInfo);
+#endif
+
     Synchronize(syncInfo);
 
-#ifdef EL_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE
-    LogicError("ReduceScatter: Let Tom know if you go down this code path.");
-    const int commSize = Size(comm);
-    const int commRank = Rank(comm);
-    AllReduce(buf, count*commSize, op, comm);
-    if (commRank != 0)
-        MemCopy(buf, &buf[commRank*count], count);
-#elif defined(EL_HAVE_MPI_REDUCE_SCATTER_BLOCK)
+#ifdef EL_HAVE_MPI_REDUCE_SCATTER_BLOCK
     EL_CHECK_MPI(
         MPI_Reduce_scatter_block(
             MPI_IN_PLACE, buf, count,
@@ -252,16 +258,15 @@ void ReduceScatter(Complex<T>* buf, int count, Op op, Comm comm,
     if (count == 0 || Size(comm) == 1)
         return;
 
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
+    auto const size_c = Size(comm);
+    ENSURE_HOST_BUFFER_PREPOST_XFER(
+        buf, count*size_c, 0, count*size_c, 0, count, syncInfo);
+#endif
+
     Synchronize(syncInfo);
 
-#ifdef EL_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE
-    LogicError("ReduceScatter: Let Tom know if you go down this code path.");
-    const int commSize = Size(comm);
-    const int commRank = Rank(comm);
-    AllReduce(buf, count*commSize, op, comm);
-    if (commRank != 0)
-        MemCopy(buf, &buf[commRank*count], count);
-#elif defined(EL_HAVE_MPI_REDUCE_SCATTER_BLOCK)
+#ifdef EL_HAVE_MPI_REDUCE_SCATTER_BLOCK
 # ifdef EL_AVOID_COMPLEX_MPI
     EL_CHECK_MPI(
         MPI_Reduce_scatter_block(
@@ -297,11 +302,14 @@ void ReduceScatter(T* buf, int count, Op op, Comm comm,
     const int totalSend = count*commSize;
     const int totalRecv = count;
 
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
+    ENSURE_HOST_BUFFER_PREPOST_XFER(
+        buf, totalSend, 0, totalSend, 0, totalRecv, syncInfo);
+#endif
+
     Synchronize(syncInfo);
 
-    // TODO(poulson): Add AllReduce approach via
-    // EL_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE
-#if defined(EL_HAVE_MPI_REDUCE_SCATTER_BLOCK)
+#ifdef EL_HAVE_MPI_REDUCE_SCATTER_BLOCK
     std::vector<byte> packedSend, packedRecv;
     Serialize(totalSend, buf, packedSend);
 

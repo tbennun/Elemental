@@ -47,6 +47,16 @@ void Broadcast(T* buffer, int count, int root, Comm comm,
     if (Size(comm) == 1 || count == 0)
         return;
 
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
+    // I want to pre-transfer if root, I want to post-transfer if not root
+    auto const rank = Rank(comm);
+    auto const pre_xfer_size = (rank == root ? static_cast<size_t>(count) : 0);
+    auto const post_xfer_size = (rank != root ? static_cast<size_t>(count) : 0);
+
+    ENSURE_HOST_BUFFER_PREPOST_XFER(
+        buffer, count, 0UL, pre_xfer_size, 0UL, post_xfer_size, syncInfo);
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
+
     Synchronize(syncInfo);// NOOP on CPU,
                           // cudaStreamSynchronize on GPU.
     CheckMpi(MPI_Bcast(buffer, count, TypeMap<T>(), root, comm.comm));
@@ -62,6 +72,16 @@ void Broadcast(Complex<T>* buffer, int count, int root, Comm comm,
     EL_DEBUG_CSE
     if (Size(comm) == 1 || count == 0)
         return;
+
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
+    // I want to pre-transfer if root, I want to post-transfer if not root
+    auto const rank = Rank(comm);
+    auto const pre_xfer_size = (rank == root ? static_cast<size_t>(count) : 0);
+    auto const post_xfer_size = (rank != root ? static_cast<size_t>(count) : 0);
+
+    ENSURE_HOST_BUFFER_PREPOST_XFER(
+        buffer, count, 0UL, pre_xfer_size, 0UL, post_xfer_size, syncInfo);
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 
@@ -83,6 +103,16 @@ void Broadcast(T* buffer, int count, int root, Comm comm,
     EL_DEBUG_CSE
     if (Size(comm) == 1 || count == 0)
         return;
+
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
+    // I want to pre-transfer if root, I want to post-transfer if not root
+    auto const rank = Rank(comm);
+    auto const pre_xfer_size = (rank == root ? static_cast<size_t>(count) : 0);
+    auto const post_xfer_size = (rank != root ? static_cast<size_t>(count) : 0);
+
+    ENSURE_HOST_BUFFER_PREPOST_XFER(
+        buffer, count, 0UL, pre_xfer_size, 0UL, post_xfer_size, syncInfo);
+#endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
 
     Synchronize(syncInfo);
 

@@ -10,16 +10,29 @@ class simple_buffer
 {
 public:
     simple_buffer() = default;
+
+    // Construct uninitialized memory of a given size
     explicit simple_buffer(size_t size,
                            SyncInfo<D> const& = SyncInfo<D>{},
                            unsigned int mode = DefaultMemoryMode<D>());
+
+    // Construct and initialize memory of a given size
     explicit simple_buffer(size_t size, T const& value,
                            SyncInfo<D> const& = SyncInfo<D>{},
                            unsigned int mode = DefaultMemoryMode<D>());
+    // Enable moves
+    simple_buffer(simple_buffer<T,D>&&) = default;
 
+    // Disable copy
+    simple_buffer(simple_buffer<T,D> const&) = delete;
+
+    // Allow lazy allocation (use with default ctor)
     void allocate(size_t size);
 
+    // Return the current memory size
     size_t size() const noexcept;
+
+    // Buffer access
     T* data() noexcept;
     T const* data() const noexcept;
 

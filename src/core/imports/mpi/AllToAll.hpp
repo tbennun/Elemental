@@ -37,10 +37,17 @@ void AllToAll(T const* sbuf, int sc, T* rbuf, int rc, Comm comm,
 {
     EL_DEBUG_CSE
 
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
+    auto size_c = Size(comm);
+
+    ENSURE_HOST_SEND_BUFFER(sbuf, sc*size_c, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, rc*size_c, syncInfo);
+#endif
+
     Synchronize(syncInfo);
     CheckMpi(
         MPI_Alltoall(
-            const_cast<T*>(sbuf), sc, TypeMap<T>(),
+            sbuf, sc, TypeMap<T>(),
             rbuf, rc, TypeMap<T>(), comm.comm));
 }
 
@@ -53,6 +60,13 @@ void AllToAll(Complex<T> const* sbuf,
               SyncInfo<D> const& syncInfo)
 {
     EL_DEBUG_CSE
+
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
+    auto size_c = Size(comm);
+
+    ENSURE_HOST_SEND_BUFFER(sbuf, sc*size_c, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, rc*size_c, syncInfo);
+#endif
 
     Synchronize(syncInfo);
 
@@ -83,11 +97,16 @@ void AllToAll(T const* sbuf, int sc, T* rbuf, int rc, Comm comm,
 {
     EL_DEBUG_CSE
 
-    Synchronize(syncInfo);
-
     const int commSize = mpi::Size(comm);
     const int totalSend = sc*commSize;
     const int totalRecv = rc*commSize;
+
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
+    ENSURE_HOST_SEND_BUFFER(sbuf, totalSend, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, totalRecv, syncInfo);
+#endif
+
+    Synchronize(syncInfo);
 
     std::vector<byte> packedSend, packedRecv;
     Serialize(totalSend, sbuf, packedSend);

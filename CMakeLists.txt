@@ -129,27 +129,25 @@ mark_as_advanced(${PROJECT_NAME}_AVOID_OMP_FMA)
 # MPI
 #
 
-option(${PROJECT_NAME}_USE_CUSTOM_ALLTOALLV "Avoid MPI_Alltoallv for performance reasons" ON)
+# CUDA-aware MPI can provide a benefit, if it works. However, it is
+# often buggy. We can avoid it by setting this to ON
+option(${PROJECT_NAME}_AVOID_CUDA_AWARE_MPI "Avoid CUDA-aware MPI" OFF)
+
+option(${PROJECT_NAME}_USE_CUSTOM_ALLTOALLV "Avoid MPI_Alltoallv for performance reasons" OFF)
 mark_as_advanced(${PROJECT_NAME}_USE_CUSTOM_ALLTOALLV)
 
 # Since it is surprisingly common for MPI libraries to have bugs in their
 # support for complex data, the following option forces Elemental to cast
 # all possible MPI communications in terms of twice as many real units of data.
-option(${PROJECT_NAME}_AVOID_COMPLEX_MPI "Avoid potentially buggy complex MPI routines" ON)
+option(${PROJECT_NAME}_AVOID_COMPLEX_MPI "Avoid potentially buggy complex MPI routines" OFF)
 mark_as_advanced(${PROJECT_NAME}_AVOID_COMPLEX_MPI)
 
 # Due to a subtle flaw in the Blue Gene/P extensions for MPICH2, treating
 # floating-point data as a collection of byte-sized objects results in a
 # better algorithm being chosen for MPI_Allgather. This should not effect
 # performance on most machines.
-option(${PROJECT_NAME}_USE_BYTE_ALLGATHERS "Avoid BG/P allgather performance bug." ON)
+option(${PROJECT_NAME}_USE_BYTE_ALLGATHERS "Avoid BG/P allgather performance bug." OFF)
 mark_as_advanced(${PROJECT_NAME}_USE_BYTE_ALLGATHERS)
-
-# If MPI_Reduce_scatter_block doesn't exist, perform it by composing
-# MPI_Allreduce and std::memcpy rather than MPI_Reduce and MPI_Scatter
-option(${PROJECT_NAME}_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE
-       "AllReduce based block MPI_Reduce_scatter" OFF)
-mark_as_advanced(${PROJECT_NAME}_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE)
 
 #
 # Runtime warnings

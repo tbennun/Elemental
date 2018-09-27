@@ -46,6 +46,14 @@ void AllGather(
     SyncInfo<D> const& syncInfo)
 {
     EL_DEBUG_CSE
+
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
+    auto size_c = Size(comm);
+
+    ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, rc*size_c, syncInfo);
+#endif
+
     Synchronize(syncInfo);
 
 #ifdef EL_USE_BYTE_ALLGATHERS
@@ -74,6 +82,14 @@ void AllGather(
     SyncInfo<D> const& syncInfo)
 {
     EL_DEBUG_CSE
+
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
+    auto size_c = Size(comm);
+
+    ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, rc*size_c, syncInfo);
+#endif
+
     Synchronize(syncInfo);
 
 #ifdef EL_USE_BYTE_ALLGATHERS
@@ -111,6 +127,11 @@ void AllGather(
     EL_DEBUG_CSE
     const int commSize = mpi::Size(comm);
     const int totalRecv = rc*commSize;
+
+#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
+    ENSURE_HOST_SEND_BUFFER(sbuf, sc, syncInfo);
+    ENSURE_HOST_RECV_BUFFER(rbuf, totalRecv, syncInfo);
+#endif
 
     Synchronize(syncInfo);
 
