@@ -704,7 +704,8 @@ void BDM::ProcessPullQueue(T* pullBuf, bool includeViewers) const
     vector<ValueInt<Int>> sendCoords(totalSend);
     mpi::AllToAll(
         recvCoords.data(), recvCounts.data(), recvOffs.data(),
-        sendCoords.data(), sendCounts.data(), sendOffs.data(), comm);
+        sendCoords.data(), sendCounts.data(), sendOffs.data(), comm,
+        SyncInfo<Device::CPU>{});
 
     // Pack the data
     // =============
@@ -723,7 +724,8 @@ void BDM::ProcessPullQueue(T* pullBuf, bool includeViewers) const
     FastResize(recvBuf, totalRecv);
     mpi::AllToAll(
         sendBuf.data(), sendCounts.data(), sendOffs.data(),
-        recvBuf.data(), recvCounts.data(), recvOffs.data(), comm);
+        recvBuf.data(), recvCounts.data(), recvOffs.data(), comm,
+        SyncInfo<Device::CPU>{});
     offs = recvOffs;
     for(Int k=0; k<totalRecv; ++k)
         pullBuf[k] = recvBuf[offs[owners[k]]++];

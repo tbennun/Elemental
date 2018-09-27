@@ -13,9 +13,9 @@ namespace El {
 namespace copy {
 
 template<typename T,Device D>
-void Gather
-(ElementalMatrix<T> const& A,
-  DistMatrix<T,CIRC,CIRC,ELEMENT,D>& B)
+void Gather(
+    ElementalMatrix<T> const& A,
+    DistMatrix<T,CIRC,CIRC,ELEMENT,D>& B)
 {
     EL_DEBUG_CSE
     AssertSameGrids(A, B);
@@ -28,7 +28,7 @@ void Gather
         B.Resize(A.Height(), A.Width());
         if(B.CrossRank() == B.Root())
             Copy(static_cast<Matrix<T,D> const&>(A.LockedMatrix()),
-                  B.Matrix());
+                 B.Matrix());
         return;
     }
 
@@ -36,6 +36,12 @@ void Gather
     const Int width = A.Width();
     B.SetGrid(A.Grid());
     B.Resize(height, width);
+
+    SyncInfo<D> syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
+        syncInfoB(B.LockedMatrix());
+    SyncInfo<Device::CPU> syncInfoCPU;
+
+    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 
     // Gather the colShifts and rowShifts
     // ==================================
@@ -46,7 +52,8 @@ void Gather
     const Int crossSize = B.CrossSize();
     if(B.CrossRank() == B.Root())
         shifts.resize(2*crossSize);
-    mpi::Gather(myShifts, 2, shifts.data(), 2, B.Root(), B.CrossComm());
+    mpi::Gather(myShifts, 2, shifts.data(), 2, B.Root(), B.CrossComm(),
+                syncInfoCPU);
 
     // Gather the payload data
     // =======================
@@ -55,11 +62,10 @@ void Gather
     vector<int> recvCounts, recvOffsets;
     if(B.CrossRank() == B.Root())
         recvCounts.resize(crossSize);
-    mpi::Gather(&totalSend, 1, recvCounts.data(), 1, B.Root(), B.CrossComm());
+    mpi::Gather(&totalSend, 1, recvCounts.data(), 1, B.Root(), B.CrossComm(),
+        syncInfoCPU);
     int totalRecv = Scan(recvCounts, recvOffsets);
 
-    SyncInfo<D> syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
-        syncInfoB(B.LockedMatrix());
     simple_buffer<T,D> sendBuf(totalSend, syncInfoB),
         recvBuf(totalRecv, syncInfoB);
     if (!irrelevant)
@@ -68,11 +74,10 @@ void Gather
             A.LockedBuffer(), 1, A.LDim(),
             sendBuf.data(),   1, A.LocalHeight(), syncInfoB);
 
-    Synchronize(syncInfoB);
     mpi::Gather(
         sendBuf.data(), totalSend,
         recvBuf.data(), recvCounts.data(), recvOffsets.data(),
-        B.Root(), B.CrossComm());
+        B.Root(), B.CrossComm(), syncInfoB);
 
     // Unpack
     // ======
@@ -112,6 +117,8 @@ void Gather
         return;
     }
 
+    SyncInfo<Device::CPU> syncInfoCPU;
+
     const Int height = A.Height();
     const Int width = A.Width();
     B.SetGrid(A.Grid());
@@ -126,7 +133,8 @@ void Gather
     const Int crossSize = B.CrossSize();
     if(B.CrossRank() == B.Root())
         shifts.resize(2*crossSize);
-    mpi::Gather(myShifts, 2, shifts.data(), 2, B.Root(), B.CrossComm());
+    mpi::Gather(myShifts, 2, shifts.data(), 2, B.Root(), B.CrossComm(),
+                syncInfoCPU);
 
     // Gather the payload data
     // =======================
@@ -135,7 +143,8 @@ void Gather
     vector<int> recvCounts, recvOffsets;
     if(B.CrossRank() == B.Root())
         recvCounts.resize(crossSize);
-    mpi::Gather(&totalSend, 1, recvCounts.data(), 1, B.Root(), B.CrossComm());
+    mpi::Gather(&totalSend, 1, recvCounts.data(), 1, B.Root(), B.CrossComm(),
+                syncInfoCPU);
     int totalRecv = Scan(recvCounts, recvOffsets);
     vector<T> sendBuf, recvBuf;
     FastResize(sendBuf, totalSend);
@@ -145,11 +154,11 @@ void Gather
             A.LocalHeight(), A.LocalWidth(),
             A.LockedBuffer(), 1, A.LDim(),
             sendBuf.data(),   1, A.LocalHeight(),
-            SyncInfo<Device::CPU>{});
+            syncInfoCPU);
     mpi::Gather(
         sendBuf.data(), totalSend,
         recvBuf.data(), recvCounts.data(), recvOffsets.data(),
-        B.Root(), B.CrossComm());
+        B.Root(), B.CrossComm(), syncInfoCPU);
 
     // Unpack
     // ======

@@ -71,8 +71,10 @@ void Cannon_NN
     const Int belowInitB = Mod(row+rowShiftA,pSqrt);
     const Int pkgSizeA = localHeightA*localWidthA;
     const Int pkgSizeB = localHeightB*localWidthB;
-    mpi::SendRecv(pkgA.Buffer(), pkgSizeA, leftInitA, rightInitA, rowComm);
-    mpi::SendRecv(pkgB.Buffer(), pkgSizeB, aboveInitB, belowInitB, colComm);
+    mpi::SendRecv(pkgA.Buffer(), pkgSizeA, leftInitA, rightInitA, rowComm,
+                  SyncInfo<Device::CPU>{});
+    mpi::SendRecv(pkgB.Buffer(), pkgSizeB, aboveInitB, belowInitB, colComm,
+                  SyncInfo<Device::CPU>{});
 
     // Now begin the data flow
     const Int aboveRow = Mod(row-1,pSqrt);
@@ -84,10 +86,12 @@ void Cannon_NN
         Gemm(NORMAL, NORMAL, alpha, pkgA, pkgB, T(1), C.Matrix());
         if (q != pSqrt-1)
         {
-            mpi::SendRecv
-            (pkgA.Buffer(), pkgSizeA, leftCol, rightCol, rowComm);
-            mpi::SendRecv
-            (pkgB.Buffer(), pkgSizeB, aboveRow, belowRow, colComm);
+            mpi::SendRecv(
+                pkgA.Buffer(), pkgSizeA, leftCol, rightCol, rowComm,
+                SyncInfo<Device::CPU>{});
+            mpi::SendRecv(
+                pkgB.Buffer(), pkgSizeB, aboveRow, belowRow, colComm,
+                SyncInfo<Device::CPU>{});
         }
     }
 }

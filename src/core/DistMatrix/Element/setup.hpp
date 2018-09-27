@@ -721,8 +721,6 @@ void DM::ProcessQueues(bool includeViewers)
 
     // Exchange and unpack the data
     // ============================
-    // FIXME (TRB): Better safe than sorry.
-    Synchronize(syncInfoA);
     auto recvBuf = mpi::AllToAll(sendBuf, sendCounts, sendOffs, comm);
     Int recvBufSize = recvBuf.size();
     mpi::Broadcast(recvBufSize, redundantRoot, RedundantComm(), syncInfoA);
@@ -814,9 +812,10 @@ void DM::ProcessPullQueue(T* pullBuf, bool includeViewers) const
     for(Int k=0; k<totalRecv; ++k)
         recvCoords[offs[owners[k]]++] = remotePulls_[k];
     vector<ValueInt<Int>> sendCoords(totalSend);
-    mpi::AllToAll
-    (recvCoords.data(), recvCounts.data(), recvOffs.data(),
-      sendCoords.data(), sendCounts.data(), sendOffs.data(), comm);
+    mpi::AllToAll(
+        recvCoords.data(), recvCounts.data(), recvOffs.data(),
+        sendCoords.data(), sendCounts.data(), sendOffs.data(), comm,
+        SyncInfo<Device::CPU>{});
 
     // Pack the data
     // =============
@@ -833,9 +832,10 @@ void DM::ProcessPullQueue(T* pullBuf, bool includeViewers) const
     // ============================
     vector<T> recvBuf;
     FastResize(recvBuf, totalRecv);
-    mpi::AllToAll
-    (sendBuf.data(), sendCounts.data(), sendOffs.data(),
-      recvBuf.data(), recvCounts.data(), recvOffs.data(), comm);
+    mpi::AllToAll(
+        sendBuf.data(), sendCounts.data(), sendOffs.data(),
+        recvBuf.data(), recvCounts.data(), recvOffs.data(), comm,
+        SyncInfo<Device::CPU>{});
     offs = recvOffs;
     for(Int k=0; k<totalRecv; ++k)
         pullBuf[k] = recvBuf[offs[owners[k]]++];

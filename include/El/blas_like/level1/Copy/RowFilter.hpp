@@ -72,12 +72,10 @@ void RowFilter_impl
             A.LockedBuffer(0,rowShift), 1, rowStride*A.LDim(),
             sendBuf,                    1, localHeightA, syncInfoB);
 
-        Synchronize(syncInfoB);
-
         // Realign
         mpi::SendRecv(
             sendBuf, sendSize, sendColRank,
-            recvBuf, recvSize, recvColRank, B.ColComm());
+            recvBuf, recvSize, recvColRank, B.ColComm(), syncInfoB);
 
         // Unpack
         util::InterleaveMatrix(
@@ -186,7 +184,8 @@ void RowFilter
         // Realign
         mpi::SendRecv
         ( sendBuf, sendSize, sendColRank,
-          recvBuf, recvSize, recvColRank, B.ColComm() );
+          recvBuf, recvSize, recvColRank, B.ColComm(),
+          SyncInfo<Device::CPU>{} );
 
         // Unpack
         util::InterleaveMatrix

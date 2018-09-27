@@ -209,9 +209,9 @@ void TranslateBetweenGrids
                           (sendRowShift-rowShiftB) / rowStride;
 
                         const Int sendVCRank = sendRow+sendCol*colStrideA;
-                        mpi::Recv
-                        (recvBuf, sendHeight*sendWidth, rankMap[sendVCRank],
-                          viewingCommB);
+                        mpi::Recv(
+                            recvBuf, sendHeight*sendWidth, rankMap[sendVCRank],
+                            viewingCommB, syncInfoB);
 
                         // Unpack the data
                         copy::util::InterleaveMatrix(
@@ -341,7 +341,8 @@ void TranslateBetweenGrids
             // TODO(poulson): Use mpi::Translate instead?
             const Int sendRank =
               (usingViewingA ? A.Grid().VCToViewing(0) : 0);
-            mpi::Recv(bcastBuffer.data(), height*width, sendRank, activeCommB);
+            mpi::Recv(bcastBuffer.data(), height*width, sendRank, activeCommB,
+                      syncInfoB);
         }
 
         mpi::Broadcast(bcastBuffer.data(), height*width, 0, B.RedundantComm(),

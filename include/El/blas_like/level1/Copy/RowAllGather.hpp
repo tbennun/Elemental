@@ -88,11 +88,10 @@ void RowAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
             {
                 if (A.RowRank() == A.RowAlign())
                 {
-                    Synchronize(syncInfoB);
                     mpi::SendRecv(
                         A.LockedBuffer(), A.LocalHeight(), sendColRank,
                         B.Buffer(),       B.LocalHeight(), recvColRank,
-                        A.ColComm());
+                        A.ColComm(), syncInfoB);
                 }
                 // Perform the row broadcast
                 mpi::Broadcast(
@@ -119,12 +118,11 @@ void RowAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
                     A.LockedBuffer(), 1, A.LDim(),
                     secondBuf,        1, localHeight, syncInfoB);
 
-                Synchronize(syncInfoB);
-
                 // Realign
                 mpi::SendRecv(
                     secondBuf, portionSize, sendColRank,
-                    firstBuf,  portionSize, recvColRank, A.ColComm());
+                    firstBuf,  portionSize, recvColRank, A.ColComm(),
+                    syncInfoB);
 
                 // Perform the row AllGather
                 mpi::AllGather(
@@ -299,7 +297,8 @@ void RowAllGather(const BlockMatrix<T>& A, BlockMatrix<T>& B)
                 // Realign
                 mpi::SendRecv(
                     secondBuf, portionSize, sendColRank,
-                    firstBuf,  portionSize, recvColRank, A.ColComm());
+                    firstBuf,  portionSize, recvColRank, A.ColComm(),
+                    SyncInfo<Device::CPU>{});
 
                 // Perform the row AllGather
                 mpi::AllGather(

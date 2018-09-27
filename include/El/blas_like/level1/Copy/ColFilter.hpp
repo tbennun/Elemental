@@ -74,12 +74,10 @@ void ColFilter_impl( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
             sendBuf,                    1,         localHeight,
             syncInfoB);
 
-        Synchronize(syncInfoB);
-
         // Realign
-        mpi::SendRecv
-        ( sendBuf, sendSize, sendRowRank,
-          recvBuf, recvSize, recvRowRank, B.RowComm() );
+        mpi::SendRecv(
+            sendBuf, sendSize, sendRowRank,
+            recvBuf, recvSize, recvRowRank, B.RowComm(), syncInfoB );
 
         // Unpack
         util::InterleaveMatrix(
@@ -179,22 +177,23 @@ void ColFilter
         T* recvBuf = &buffer[sendSize];
 
         // Pack
-        util::BlockedColFilter
-        ( height, localWidthA,
-          colShift, colStride, B.BlockHeight(), B.ColCut(),
-          A.LockedBuffer(), A.LDim(),
-          sendBuf,          localHeight );
+        util::BlockedColFilter(
+            height, localWidthA,
+            colShift, colStride, B.BlockHeight(), B.ColCut(),
+            A.LockedBuffer(), A.LDim(),
+            sendBuf,          localHeight);
 
         // Realign
-        mpi::SendRecv
-        ( sendBuf, sendSize, sendRowRank,
-          recvBuf, recvSize, recvRowRank, B.RowComm() );
+        mpi::SendRecv(
+            sendBuf, sendSize, sendRowRank,
+            recvBuf, recvSize, recvRowRank, B.RowComm(),
+            SyncInfo<Device::CPU>{} );
 
         // Unpack
-        util::InterleaveMatrix
-        ( localHeight, localWidth,
-          recvBuf,    1, localHeight,
-          B.Buffer(), 1, B.LDim(), SyncInfo<Device::CPU>{} );
+        util::InterleaveMatrix(
+            localHeight, localWidth,
+            recvBuf,    1, localHeight,
+            B.Buffer(), 1, B.LDim(), SyncInfo<Device::CPU>{});
     }
 }
 

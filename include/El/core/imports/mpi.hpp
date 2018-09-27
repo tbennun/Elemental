@@ -421,33 +421,35 @@ void SetUserReduceFunc
 
 // Send
 // ----
-template<typename Real,
-         typename=EnableIf<IsPacked<Real>>>
-void TaggedSend
-( const Real* buf, int count, int to, int tag, Comm comm )
-EL_NO_RELEASE_EXCEPT;
-template<typename Real,
-         typename=EnableIf<IsPacked<Real>>>
-void TaggedSend
-( const Complex<Real>* buf, int count, int to, int tag, Comm comm )
-EL_NO_RELEASE_EXCEPT;
-
-template<typename T,
+template <typename Real, Device D,
+          typename=EnableIf<IsPacked<Real>>>
+void TaggedSend(
+    const Real* buf, int count, int to, int tag, Comm comm,
+    SyncInfo<D> const& )
+    EL_NO_RELEASE_EXCEPT;
+template <typename Real, Device D,
+          typename=EnableIf<IsPacked<Real>>>
+void TaggedSend(
+    const Complex<Real>* buf, int count, int to, int tag, Comm comm,
+    SyncInfo<D> const& )
+    EL_NO_RELEASE_EXCEPT;
+template <typename T, Device D,
          typename=DisableIf<IsPacked<T>>,
          typename=void>
-void TaggedSend( const T* buf, int count, int to, int tag, Comm comm )
-EL_NO_RELEASE_EXCEPT;
+void TaggedSend(
+    const T* buf, int count, int to, int tag, Comm comm, SyncInfo<D> const& )
+    EL_NO_RELEASE_EXCEPT;
 
 
 // If the tag is irrelevant
-template<typename T>
-void Send( const T* buf, int count, int to, Comm comm )
-EL_NO_RELEASE_EXCEPT;
+template<typename T, Device D>
+void Send( const T* buf, int count, int to, Comm comm, SyncInfo<D> const& )
+    EL_NO_RELEASE_EXCEPT;
 
 // If the send-count is one
 template<typename T>
 void TaggedSend( T b, int to, int tag, Comm comm )
-EL_NO_RELEASE_EXCEPT;
+    EL_NO_RELEASE_EXCEPT;
 
 // If the send-count is one and the tag is irrelevant
 template<typename T>
@@ -557,27 +559,27 @@ EL_NO_RELEASE_EXCEPT;
 
 // Recv
 // ----
-template<typename Real,
+template <typename Real, Device D,
          typename=EnableIf<IsPacked<Real>>>
 void TaggedRecv
-( Real* buf, int count, int from, int tag, Comm comm )
+( Real* buf, int count, int from, int tag, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
-template<typename Real,
+template <typename Real, Device D,
          typename=EnableIf<IsPacked<Real>>>
 void TaggedRecv
-( Complex<Real>* buf, int count, int from, int tag, Comm comm )
+( Complex<Real>* buf, int count, int from, int tag, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
-template<typename T,
+template <typename T, Device D,
          typename=DisableIf<IsPacked<T>>,
          typename=void>
 void TaggedRecv
-( T* buf, int count, int from, int tag, Comm comm )
+( T* buf, int count, int from, int tag, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
 
 // If the tag is irrelevant
-template<typename T>
-void Recv( T* buf, int count, int from, Comm comm )
-EL_NO_RELEASE_EXCEPT;
+template <typename T, Device D>
+void Recv( T* buf, int count, int from, Comm comm, SyncInfo<D> const& )
+    EL_NO_RELEASE_EXCEPT;
 
 // If the recv count is one
 template<typename T>
@@ -622,37 +624,39 @@ T IRecv( int from, Comm comm, Request<T>& request ) EL_NO_RELEASE_EXCEPT;
 
 // SendRecv
 // --------
-template<typename Real,
+template <typename Real, Device D,
          typename=EnableIf<IsPacked<Real>>>
-void TaggedSendRecv
-( const Real* sbuf, int sc, int to,   int stag,
-        Real* rbuf, int rc, int from, int rtag, Comm comm )
-EL_NO_RELEASE_EXCEPT;
-template<typename Real,
-         typename=EnableIf<IsPacked<Real>>>
-void TaggedSendRecv
-( const Complex<Real>* sbuf, int sc, int to,   int stag,
-        Complex<Real>* rbuf, int rc, int from, int rtag, Comm comm )
-EL_NO_RELEASE_EXCEPT;
-template<typename T,
-         typename=DisableIf<IsPacked<T>>,
-         typename=void>
-void TaggedSendRecv
-( const T* sbuf, int sc, int to,   int stag,
-        T* rbuf, int rc, int from, int rtag, Comm comm )
-EL_NO_RELEASE_EXCEPT;
+void TaggedSendRecv(
+    const Real* sbuf, int sc, int to,   int stag,
+    Real* rbuf, int rc, int from, int rtag, Comm comm, SyncInfo<D> const& )
+    EL_NO_RELEASE_EXCEPT;
+template <typename Real, Device D,
+          typename=EnableIf<IsPacked<Real>>>
+void TaggedSendRecv(
+    const Complex<Real>* sbuf, int sc, int to,   int stag,
+    Complex<Real>* rbuf, int rc, int from, int rtag, Comm comm,
+    SyncInfo<D> const& )
+    EL_NO_RELEASE_EXCEPT;
+template <typename T, Device D,
+          typename=DisableIf<IsPacked<T>>,
+          typename=void>
+void TaggedSendRecv(
+    const T* sbuf, int sc, int to,   int stag,
+    T* rbuf, int rc, int from, int rtag, Comm comm, SyncInfo<D> const& )
+    EL_NO_RELEASE_EXCEPT;
 
 // If the tags are irrelevant
-template<typename T>
-void SendRecv
-( const T* sbuf, int sc, int to,
-        T* rbuf, int rc, int from, Comm comm ) EL_NO_RELEASE_EXCEPT;
+template <typename T, Device D>
+void SendRecv(
+    const T* sbuf, int sc, int to,
+    T* rbuf, int rc, int from, Comm comm, SyncInfo<D> const& )
+    EL_NO_RELEASE_EXCEPT;
 
 // If the send and recv counts are one
 template<typename T>
-T TaggedSendRecv
-( T sb, int to, int stag, int from, int rtag, Comm comm )
-EL_NO_RELEASE_EXCEPT;
+T TaggedSendRecv(
+    T sb, int to, int stag, int from, int rtag, Comm comm )
+    EL_NO_RELEASE_EXCEPT;
 
 // If the send and recv counts are one and the tags don't matter
 template<typename T>
@@ -660,27 +664,30 @@ T SendRecv( T sb, int to, int from, Comm comm ) EL_NO_RELEASE_EXCEPT;
 
 // Single-buffer SendRecv
 // ----------------------
-template<typename Real,
-         typename=EnableIf<IsPacked<Real>>>
-void TaggedSendRecv
-( Real* buf, int count, int to, int stag, int from, int rtag, Comm comm )
-EL_NO_RELEASE_EXCEPT;
-template<typename Real,
-         typename=EnableIf<IsPacked<Real>>>
-void TaggedSendRecv
-( Complex<Real>* buf, int count, int to, int stag, int from, int rtag,
-  Comm comm ) EL_NO_RELEASE_EXCEPT;
-template<typename T,
-         typename=DisableIf<IsPacked<T>>,
-         typename=void>
-void TaggedSendRecv
-( T* buf, int count, int to, int stag, int from, int rtag, Comm comm )
-EL_NO_RELEASE_EXCEPT;
+template <typename Real, Device D,
+          typename=EnableIf<IsPacked<Real>>>
+void TaggedSendRecv(
+    Real* buf, int count, int to, int stag, int from, int rtag, Comm comm,
+    SyncInfo<D> const& )
+    EL_NO_RELEASE_EXCEPT;
+template <typename Real, Device D,
+          typename=EnableIf<IsPacked<Real>>>
+void TaggedSendRecv(
+    Complex<Real>* buf, int count, int to, int stag, int from, int rtag,
+    Comm comm, SyncInfo<D> const& ) EL_NO_RELEASE_EXCEPT;
+template <typename T, Device D,
+          typename=DisableIf<IsPacked<T>>,
+          typename=void>
+void TaggedSendRecv(
+    T* buf, int count, int to, int stag, int from, int rtag, Comm comm,
+    SyncInfo<D> const& )
+    EL_NO_RELEASE_EXCEPT;
 
 // If the tags don't matter
-template<typename T>
-void SendRecv( T* buf, int count, int to, int from, Comm comm )
-EL_NO_RELEASE_EXCEPT;
+template<typename T, Device D>
+void SendRecv(
+    T* buf, int count, int to, int from, Comm comm, SyncInfo<D> const& )
+    EL_NO_RELEASE_EXCEPT;
 
 // Collective communication
 // ========================
@@ -765,21 +772,21 @@ void IBroadcast( T& b, int root, Comm comm, Request<T>& request );
 // Linux platforms due to the "optimistic" allocation policy. Therefore we will
 // go ahead and allow std::terminate to be called should such an std::bad_alloc
 // exception occur in a Release build
-template<typename Real,
+template <typename Real, Device D,
          typename=EnableIf<IsPacked<Real>>>
 void Gather
 ( const Real* sbuf, int sc,
-        Real* rbuf, int rc, int root, Comm comm ) EL_NO_RELEASE_EXCEPT;
-template<typename Real,
+        Real* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& ) EL_NO_RELEASE_EXCEPT;
+template <typename Real, Device D,
          typename=EnableIf<IsPacked<Real>>>
 void  Gather
 ( const Complex<Real>* sbuf, int sc,
-        Complex<Real>* rbuf, int rc, int root, Comm comm ) EL_NO_RELEASE_EXCEPT;
-template<typename T,
+        Complex<Real>* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& ) EL_NO_RELEASE_EXCEPT;
+template <typename T, Device D,
          typename=DisableIf<IsPacked<T>>,typename=void>
 void Gather
 ( const T* sbuf, int sc,
-        T* rbuf, int rc, int root, Comm comm ) EL_NO_RELEASE_EXCEPT;
+        T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& ) EL_NO_RELEASE_EXCEPT;
 
 // Non-blocking gather
 // -------------------
@@ -806,26 +813,26 @@ void IGather
 
 // Gather with variable recv sizes
 // -------------------------------
-template<typename Real,
+template <typename Real, Device D,
          typename=EnableIf<IsPacked<Real>>>
 void Gather
 ( const Real* sbuf, int sc,
         Real* rbuf, const int* rcs, const int* rds,
-  int root, Comm comm )
+  int root, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
-template<typename Real,
+template <typename Real, Device D,
          typename=EnableIf<IsPacked<Real>>>
 void Gather
 ( const Complex<Real>* sbuf, int sc,
         Complex<Real>* rbuf, const int* rcs, const int* rds,
-  int root, Comm comm ) EL_NO_RELEASE_EXCEPT;
-template<typename T,
+  int root, Comm comm, SyncInfo<D> const& ) EL_NO_RELEASE_EXCEPT;
+template <typename T, Device D,
          typename=DisableIf<IsPacked<T>>,
          typename=void>
 void Gather
 ( const T* sbuf, int sc,
         T* rbuf, const int* rcs, const int* rds,
-  int root, Comm comm )
+  int root, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
 
 // AllGather
@@ -886,62 +893,62 @@ void AllGather(T const*, int, T*, int, Comm, SyncInfo<D> const&);
 
 // AllGather with variable recv sizes
 // ----------------------------------
-template<typename Real,
+template <typename Real, Device D,
          typename=EnableIf<IsPacked<Real>>>
 void AllGather
 ( const Real* sbuf, int sc,
-        Real* rbuf, const int* rcs, const int* rds, Comm comm )
+        Real* rbuf, const int* rcs, const int* rds, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
-template<typename Real,
+template <typename Real, Device D,
          typename=EnableIf<IsPacked<Real>>>
 void AllGather
 ( const Complex<Real>* sbuf, int sc,
         Complex<Real>* rbuf, const int* rcs, const int* rds,
-  Comm comm )
+  Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
-template<typename T,
+template <typename T, Device D,
          typename=DisableIf<IsPacked<T>>,
          typename=void>
 void AllGather
 ( const T* sbuf, int sc,
-        T* rbuf, const int* rcs, const int* rds, Comm comm )
+        T* rbuf, const int* rcs, const int* rds, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
 
 // Scatter
 // -------
-template<typename Real,
+template <typename Real, Device D,
          typename=EnableIf<IsPacked<Real>>>
 void Scatter
 ( const Real* sbuf, int sc,
-        Real* rbuf, int rc, int root, Comm comm )
+        Real* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
-template<typename Real,
+template <typename Real, Device D,
          typename=EnableIf<IsPacked<Real>>>
 void Scatter
 ( const Complex<Real>* sbuf, int sc,
-        Complex<Real>* rbuf, int rc, int root, Comm comm )
+        Complex<Real>* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
-template<typename T,
+template <typename T, Device D,
          typename=DisableIf<IsPacked<T>>,
          typename=void>
 void Scatter
 ( const T* sbuf, int sc,
-        T* rbuf, int rc, int root, Comm comm )
+        T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
 
 // In-place option
-template<typename Real,
+template <typename Real, Device D,
          typename=EnableIf<IsPacked<Real>>>
-void Scatter( Real* buf, int sc, int rc, int root, Comm comm )
+void Scatter( Real* buf, int sc, int rc, int root, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
-template<typename Real,
+template <typename Real, Device D,
          typename=EnableIf<IsPacked<Real>>>
-void Scatter( Complex<Real>* buf, int sc, int rc, int root, Comm comm )
+void Scatter( Complex<Real>* buf, int sc, int rc, int root, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
-template<typename T,
+template <typename T, Device D,
          typename=DisableIf<IsPacked<T>>,
          typename=void>
-void Scatter( T* buf, int sc, int rc, int root, Comm comm )
+void Scatter( T* buf, int sc, int rc, int root, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
 
 // TODO(poulson): MPI_Scatterv support
@@ -998,25 +1005,25 @@ void AllToAll(T const*, int, T*, int, Comm, SyncInfo<D> const&);
 
 // AllToAll with non-uniform send/recv sizes
 // -----------------------------------------
-template<typename Real,
+template <typename Real, Device D,
          typename=EnableIf<IsPacked<Real>>>
 void AllToAll
 ( const Real* sbuf, const int* scs, const int* sds,
-        Real* rbuf, const int* rcs, const int* rds, Comm comm )
+        Real* rbuf, const int* rcs, const int* rds, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
-template<typename Real,
+template <typename Real, Device D,
          typename=EnableIf<IsPacked<Real>>>
 void AllToAll
 ( const Complex<Real>* sbuf, const int* scs, const int* sds,
         Complex<Real>* rbuf, const int* rcs, const int* rds,
-  Comm comm )
+  Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
-template<typename T,
+template <typename T, Device D,
          typename=DisableIf<IsPacked<T>>,
          typename=void>
 void AllToAll
 ( const T* sbuf, const int* scs, const int* sds,
-        T* rbuf, const int* rcs, const int* rds, Comm comm )
+        T* rbuf, const int* rcs, const int* rds, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
 
 template<typename T>
@@ -1072,11 +1079,11 @@ template <typename T, Device D,
           typename=void, typename=void, typename=void>
 void Reduce(T const*, T*, int, Op, int, Comm, SyncInfo<D> const&);
 
-template<typename T,class OpClass,
+template <typename T, Device D,class OpClass,
          typename=DisableIf<IsData<OpClass>>>
 void Reduce
 ( const T* sb, T* rb, int count, OpClass op, bool commutative,
-  int root, Comm comm )
+  int root, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT
 {
     SetUserReduceFunc( function<T(const T&,const T&)>(op), commutative );
@@ -1097,7 +1104,7 @@ template <typename T, Device D>
 T Reduce( T sb, Op op, int root, Comm comm,
           SyncInfo<D> const& syncInfo );
 
-template<typename T,class OpClass,
+template <typename T, Device D,class OpClass,
          typename=DisableIf<IsData<OpClass>>>
 T Reduce
 ( T sb, OpClass op, bool commutative, int root, Comm comm )
@@ -1159,10 +1166,10 @@ template <typename T, Device D,
           typename=void, typename=void, typename=void>
 void Reduce(T*, int, Op, int, Comm, SyncInfo<D> const&);
 
-template<typename T,class OpClass,
+template <typename T, Device D,class OpClass,
          typename=DisableIf<IsData<OpClass>>>
 void Reduce
-( T* buf, int count, OpClass op, bool commutative, int root, Comm comm )
+( T* buf, int count, OpClass op, bool commutative, int root, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT
 {
     SetUserReduceFunc( function<T(const T&,const T&)>(op), commutative );
@@ -1331,16 +1338,17 @@ template <typename T, Device D,
 void ReduceScatter(T const*, T*, int, Op, Comm, SyncInfo<D> const&);
 
 // FIXME: WHAT TO DO HERE??
-template<typename T,class OpClass,
+template<typename T, Device D, class OpClass,
          typename=DisableIf<IsData<OpClass>>>
-void ReduceScatter
-( const T* sb, T* rb, int count, OpClass op, bool commutative, Comm comm )
+void ReduceScatter(
+    const T* sb, T* rb, int count, OpClass op, bool commutative, Comm comm,
+    SyncInfo<D> const& syncInfo)
 {
     SetUserReduceFunc( function<T(const T&,const T&)>(op), commutative );
     if( commutative )
-        ReduceScatter( sb, rb, count, UserCommOp<T>(), comm );
+        ReduceScatter( sb, rb, count, UserCommOp<T>(), comm, syncInfo );
     else
-        ReduceScatter( sb, rb, count, UserOp<T>(), comm );
+        ReduceScatter( sb, rb, count, UserOp<T>(), comm, syncInfo );
 }
 
 // Default to SUM
@@ -1393,48 +1401,49 @@ template <typename T, Device D,
 void ReduceScatter(T*, int, Op, Comm, SyncInfo<D> const&);
 
 // FIXME: WHAT TO DO HERE??
-template<typename T,class OpClass,
+template<typename T, Device D, class OpClass,
          typename=DisableIf<IsData<OpClass>>>
-void ReduceScatter
-( T* buf, int count, OpClass op, bool commutative, Comm comm )
+void ReduceScatter(
+    T* buf, int count, OpClass op, bool commutative, Comm comm,
+    SyncInfo<D> const& syncInfo)
 {
     SetUserReduceFunc( function<T(const T&,const T&)>(op), commutative );
     if( commutative )
-        ReduceScatter( buf, count, UserCommOp<T>(), comm );
+        ReduceScatter( buf, count, UserCommOp<T>(), comm, syncInfo );
     else
-        ReduceScatter( buf, count, UserOp<T>(), comm );
+        ReduceScatter( buf, count, UserOp<T>(), comm, syncInfo );
 }
 
 // Default to SUM
 template <typename T, Device D>
-void ReduceScatter(T* buf, int rc, Comm comm, SyncInfo<D> const& syncInfo);
+void ReduceScatter(T* buf, int rc, Comm comm, SyncInfo<D> const&);
 
 #undef COLL // Collectives::REDUCESCATTER
 
 // Variable-length ReduceScatter
 // -----------------------------
-template<typename Real,
+template <typename Real, Device D,
          typename=EnableIf<IsPacked<Real>>>
 void ReduceScatter
-( const Real* sbuf, Real* rbuf, const int* rcs, Op op, Comm comm )
+( const Real* sbuf, Real* rbuf, const int* rcs, Op op, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
-template<typename Real,
+template <typename Real, Device D,
          typename=EnableIf<IsPacked<Real>>>
 void ReduceScatter
 ( const Complex<Real>* sbuf, Complex<Real>* rbuf, const int* rcs, Op op,
-  Comm comm ) EL_NO_RELEASE_EXCEPT;
-template<typename T,
+  Comm comm, SyncInfo<D> const& ) EL_NO_RELEASE_EXCEPT;
+template <typename T, Device D,
          typename=DisableIf<IsPacked<T>>,
          typename=void>
 void ReduceScatter
-( const T* sbuf, T* rbuf, const int* rcs, Op op, Comm comm )
+( const T* sbuf, T* rbuf, const int* rcs, Op op, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
 
-template<typename T,class OpClass,
+template <typename T, Device D,class OpClass,
          typename=DisableIf<IsData<OpClass>>>
 void ReduceScatter
 ( const T* sb, T* rb, const int* rcs, OpClass op, bool commutative,
-  Comm comm )
+  Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT
 {
     SetUserReduceFunc( function<T(const T&,const T&)>(op), commutative );
@@ -1445,53 +1454,54 @@ EL_NO_RELEASE_EXCEPT
 }
 
 // Default to SUM
-template<typename T>
-void ReduceScatter( const T* sbuf, T* rbuf, const int* rcs, Comm comm )
-EL_NO_RELEASE_EXCEPT;
+template <typename T, Device D>
+void ReduceScatter(
+    const T* sbuf, T* rbuf, const int* rcs, Comm comm, SyncInfo<D> const& )
+    EL_NO_RELEASE_EXCEPT;
 
 // Scan
 // ----
-template<typename Real,
+template <typename Real, Device D,
          typename=EnableIf<IsPacked<Real>>>
-void Scan( const Real* sbuf, Real* rbuf, int count, Op op, Comm comm )
+void Scan( const Real* sbuf, Real* rbuf, int count, Op op, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
-template<typename Real,
+template <typename Real, Device D,
          typename=EnableIf<IsPacked<Real>>>
 void Scan
-( const Complex<Real>* sbuf, Complex<Real>* rbuf, int count, Op op, Comm comm )
+( const Complex<Real>* sbuf, Complex<Real>* rbuf, int count, Op op, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
-template<typename T,
+template <typename T, Device D,
          typename=DisableIf<IsPacked<T>>,
          typename=void>
-void Scan( const T* sbuf, T* rbuf, int count, Op op, Comm comm )
+void Scan( const T* sbuf, T* rbuf, int count, Op op, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
 
-template<typename T,class OpClass,
+template <typename T, Device D,class OpClass,
          typename=DisableIf<IsData<OpClass>>>
-void Scan
-( const T* sb, T* rb, int count, OpClass op, bool commutative,
-  int root, Comm comm )
+void Scan(
+    const T* sb, T* rb, int count, OpClass op, bool commutative,
+    int root, Comm comm, SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
 {
     SetUserReduceFunc( function<T(const T&,const T&)>(op), commutative );
     if( commutative )
-        Scan( sb, rb, count, UserCommOp<T>(), root, comm );
+        Scan(sb, rb, count, UserCommOp<T>(), root, comm, syncInfo);
     else
-        Scan( sb, rb, count, UserOp<T>(), root, comm );
+        Scan(sb, rb, count, UserOp<T>(), root, comm, syncInfo);
 }
 
 // Default to SUM
-template<typename T>
-void Scan( const T* sbuf, T* rbuf, int count, Comm comm )
+template <typename T, Device D>
+void Scan( const T* sbuf, T* rbuf, int count, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
 
 // With a message-size of one
 template<typename T>
 T Scan( T sb, Op op, Comm comm ) EL_NO_RELEASE_EXCEPT;
 
-template<typename T,class OpClass,
+template <typename T, Device D,class OpClass,
          typename=DisableIf<IsData<OpClass>>>
-T Scan( T sb, OpClass op, bool commutative, int root, Comm comm )
+T Scan( T sb, OpClass op, bool commutative, int root, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT
 {
     SetUserReduceFunc( function<T(const T&,const T&)>(op), commutative );
@@ -1507,24 +1517,24 @@ T Scan( T sb, Comm comm ) EL_NO_RELEASE_EXCEPT;
 
 // Single-buffer scan
 // ------------------
-template<typename Real,
+template <typename Real, Device D,
          typename=EnableIf<IsPacked<Real>>>
-void Scan( Real* buf, int count, Op op, Comm comm )
+void Scan( Real* buf, int count, Op op, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
-template<typename Real,
+template <typename Real, Device D,
          typename=EnableIf<IsPacked<Real>>>
-void Scan( Complex<Real>* buf, int count, Op op, Comm comm )
+void Scan( Complex<Real>* buf, int count, Op op, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
-template<typename T,
+template <typename T, Device D,
          typename=DisableIf<IsPacked<T>>,
          typename=void>
-void Scan( T* buf, int count, Op op, Comm comm )
+void Scan( T* buf, int count, Op op, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
 
-template<typename T,class OpClass,
+template <typename T, Device D,class OpClass,
          typename=DisableIf<IsData<OpClass>>>
 void Scan
-( T* buf, int count, OpClass op, bool commutative, int root, Comm comm )
+( T* buf, int count, OpClass op, bool commutative, int root, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT
 {
     SetUserReduceFunc( function<T(const T&,const T&)>(op), commutative );
@@ -1535,8 +1545,9 @@ EL_NO_RELEASE_EXCEPT
 }
 
 // Default to SUM
-template<typename T>
-void Scan( T* buf, int count, Comm comm ) EL_NO_RELEASE_EXCEPT;
+template<typename T, Device D>
+void Scan(T* buf, int count, Comm comm, SyncInfo<D> const&)
+    EL_NO_RELEASE_EXCEPT;
 
 template<typename T>
 void SparseAllToAll

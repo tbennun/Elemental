@@ -96,13 +96,11 @@ void ColAllToAllPromote
             A.LockedBuffer(), A.LDim(),
             secondBuf,        portionSize, syncInfoB);
 
-        Synchronize(syncInfoB);
-
         // Realign the input
         mpi::SendRecv(
             secondBuf, colStrideUnion*portionSize, sendColRankPart,
             firstBuf,  colStrideUnion*portionSize, recvColRankPart,
-            A.PartialColComm());
+            A.PartialColComm(), syncInfoB);
 
         // Simultaneously Scatter in columns and Gather in rows
         mpi::AllToAll(

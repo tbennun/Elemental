@@ -84,12 +84,11 @@ void PartialRowFilter_impl
             sendBuf,                         1, height,
             syncInfoB);
 
-        Synchronize(syncInfoB);
-
         // Change the column alignment
         mpi::SendRecv(
             sendBuf, sendSize, sendRowRankPart,
-            recvBuf, recvSize, recvRowRankPart, B.PartialRowComm());
+            recvBuf, recvSize, recvRowRankPart, B.PartialRowComm(),
+            syncInfoB);
 
         // Unpack
         // ------

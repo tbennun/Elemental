@@ -108,14 +108,11 @@ void RowAllToAllDemote(
             firstBuf,  portionSize, B.PartialUnionRowComm(),
             syncInfoB);
 
-        // Sync before AllToAll
-        Synchronize(syncInfoB);
-
         // Realign the result
         mpi::SendRecv(
             firstBuf,  rowStrideUnion*portionSize, sendRowRankPart,
             secondBuf, rowStrideUnion*portionSize, recvRowRankPart,
-            B.PartialRowComm());
+            B.PartialRowComm(), syncInfoB);
 
         // Unpack
         util::ColStridedUnpack(

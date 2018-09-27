@@ -101,16 +101,19 @@ void Translate(
                 const Int fromRank = fromRow + fromCol*colStride;
 
                 mpi::SendRecv(
-                    buffer.data(), pkgSize, toRank, fromRank, A.DistComm());
+                    buffer.data(), pkgSize, toRank, fromRank, A.DistComm(),
+                    syncInfoA);
             }
         }
         if(root != B.Root())
         {
             // Send to the correct new root over the cross communicator
             if(crossRank == root)
-                mpi::Send(buffer.data(), recvSize, B.Root(), B.CrossComm());
+                mpi::Send(buffer.data(), recvSize, B.Root(), B.CrossComm(),
+                          syncInfoA);
             else if(crossRank == B.Root())
-                mpi::Recv(buffer.data(), recvSize, root, B.CrossComm());
+                mpi::Recv(buffer.data(), recvSize, root, B.CrossComm(),
+                          syncInfoA);
         }
         // Unpack -- buffer is on D1, B is on D2
         if(crossRank == B.Root())

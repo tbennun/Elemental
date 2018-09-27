@@ -110,13 +110,11 @@ void ColAllToAllDemote
             firstBuf,  portionSize, B.PartialUnionColComm(),
             syncInfoB);
 
-        Synchronize(syncInfoB);
-
         // Realign the result
         mpi::SendRecv(
             firstBuf,  colStrideUnion*portionSize, sendColRankPart,
             secondBuf, colStrideUnion*portionSize, recvColRankPart,
-            B.PartialColComm());
+            B.PartialColComm(), syncInfoB);
 
         // Unpack
         util::RowStridedUnpack(
