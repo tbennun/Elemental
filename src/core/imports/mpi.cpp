@@ -1129,8 +1129,6 @@ EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
-    LogicError("SendRecv_replace. Tom want's to know if this is used.");
-
 #ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_INPLACE_BUFFER(buf, count, syncInfo);
 #endif // HYDROGEN_ENSURE_HOST_MPI_BUFFERS
