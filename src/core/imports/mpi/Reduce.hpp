@@ -375,25 +375,38 @@ void Reduce(T* buf, int count, int root, Comm comm,
     Reduce(buf, count, SUM, root, std::move(comm), syncInfo);
 }
 
-
-
-#define MPI_REDUCE_PROTO_DEV(T,D)                                       \
-    template void Reduce(                                               \
-        T const*, T*, int, Op, int, Comm, SyncInfo<D> const&);          \
+#define MPI_REDUCE_COMMOM_PROTO_DEV(T,D) \
     template void Reduce(                                               \
         T const*, T*, int, int, Comm, SyncInfo<D> const&);              \
     template T Reduce(T, Op, int, Comm, SyncInfo<D> const&);            \
     template T Reduce(T, int, Comm, SyncInfo<D> const&);                \
-    template void Reduce(T*, int, Op, int, Comm, SyncInfo<D> const&);   \
     template void Reduce(T*, int, int, Comm, SyncInfo<D> const&);
+
+#define MPI_REDUCE_PROTO_DEV(T,D)                                       \
+    template void Reduce(                                               \
+        T const*, T*, int, Op, int, Comm, SyncInfo<D> const&);          \
+    template void Reduce(T*, int, Op, int, Comm, SyncInfo<D> const&);   \
+    MPI_REDUCE_COMMOM_PROTO_DEV(T,D)
+#define MPI_REDUCE_COMPLEX_PROTO_DEV(T,D)                               \
+    template void Reduce<T>(                                            \
+        Complex<T> const*, Complex<T>*, int, Op, int, Comm,             \
+        SyncInfo<D> const&);                                            \
+    template void Reduce<T>(Complex<T>*, int, Op, int, Comm,            \
+                         SyncInfo<D> const&);                           \
+    MPI_REDUCE_COMMOM_PROTO_DEV(Complex<T>,D)
 
 #ifndef HYDROGEN_HAVE_CUDA
 #define MPI_REDUCE_PROTO(T)                     \
     MPI_REDUCE_PROTO_DEV(T,Device::CPU)
+#define MPI_REDUCE_COMPLEX_PROTO(T)                     \
+    MPI_REDUCE_COMPLEX_PROTO_DEV(T,Device::CPU)
 #else
 #define MPI_REDUCE_PROTO(T)                     \
     MPI_REDUCE_PROTO_DEV(T,Device::CPU)         \
     MPI_REDUCE_PROTO_DEV(T,Device::GPU)
+#define MPI_REDUCE_COMPLEX_PROTO(T)                     \
+    MPI_REDUCE_COMPLEX_PROTO_DEV(T,Device::CPU)         \
+    MPI_REDUCE_COMPLEX_PROTO_DEV(T,Device::GPU)
 #endif // HYDROGEN_HAVE_CUDA
 
 MPI_REDUCE_PROTO(byte)
@@ -409,12 +422,12 @@ MPI_REDUCE_PROTO(unsigned long long)
 #endif
 MPI_REDUCE_PROTO(ValueInt<Int>)
 MPI_REDUCE_PROTO(Entry<Int>)
-MPI_REDUCE_PROTO(Complex<float>)
+MPI_REDUCE_COMPLEX_PROTO(float)
 MPI_REDUCE_PROTO(ValueInt<float>)
 MPI_REDUCE_PROTO(ValueInt<Complex<float>>)
 MPI_REDUCE_PROTO(Entry<float>)
 MPI_REDUCE_PROTO(Entry<Complex<float>>)
-MPI_REDUCE_PROTO(Complex<double>)
+MPI_REDUCE_COMPLEX_PROTO(double)
 MPI_REDUCE_PROTO(ValueInt<double>)
 MPI_REDUCE_PROTO(ValueInt<Complex<double>>)
 MPI_REDUCE_PROTO(Entry<double>)
@@ -422,8 +435,8 @@ MPI_REDUCE_PROTO(Entry<Complex<double>>)
 #ifdef HYDROGEN_HAVE_QD
 MPI_REDUCE_PROTO(DoubleDouble)
 MPI_REDUCE_PROTO(QuadDouble)
-MPI_REDUCE_PROTO(Complex<DoubleDouble>)
-MPI_REDUCE_PROTO(Complex<QuadDouble>)
+MPI_REDUCE_COMPLEX_PROTO(DoubleDouble)
+MPI_REDUCE_COMPLEX_PROTO(QuadDouble)
 MPI_REDUCE_PROTO(ValueInt<DoubleDouble>)
 MPI_REDUCE_PROTO(ValueInt<QuadDouble>)
 MPI_REDUCE_PROTO(ValueInt<Complex<DoubleDouble>>)
@@ -435,7 +448,7 @@ MPI_REDUCE_PROTO(Entry<Complex<QuadDouble>>)
 #endif
 #ifdef HYDROGEN_HAVE_QUADMATH
 MPI_REDUCE_PROTO(Quad)
-MPI_REDUCE_PROTO(Complex<Quad>)
+MPI_REDUCE_COMPLEX_PROTO(Quad)
 MPI_REDUCE_PROTO(ValueInt<Quad>)
 MPI_REDUCE_PROTO(ValueInt<Complex<Quad>>)
 MPI_REDUCE_PROTO(Entry<Quad>)
@@ -444,7 +457,7 @@ MPI_REDUCE_PROTO(Entry<Complex<Quad>>)
 #ifdef HYDROGEN_HAVE_MPC
 MPI_REDUCE_PROTO(BigInt)
 MPI_REDUCE_PROTO(BigFloat)
-MPI_REDUCE_PROTO(Complex<BigFloat>)
+MPI_REDUCE_COMPLEX_PROTO(BigFloat)
 MPI_REDUCE_PROTO(ValueInt<BigInt>)
 MPI_REDUCE_PROTO(ValueInt<BigFloat>)
 MPI_REDUCE_PROTO(ValueInt<Complex<BigFloat>>)

@@ -163,13 +163,22 @@ void AllGather(
     template void AllGather(const T* sbuf, int sc, T* rbuf, int rc, Comm comm, \
                             SyncInfo<D> const&);
 
+#define MPI_ALLGATHER_COMPLEX_PROTO_DEV(T,D) \
+    template void AllGather<T>(const Complex<T>*, int, Complex<T>*, int, Comm, \
+                               SyncInfo<D> const&);
+
 #ifndef HYDROGEN_HAVE_CUDA
 #define MPI_ALLGATHER_PROTO(T) \
     MPI_ALLGATHER_PROTO_DEV(T,Device::CPU)
+#define MPI_ALLGATHER_COMPLEX_PROTO(T) \
+    MPI_ALLGATHER_COMPLEX_PROTO_DEV(T,Device::CPU)
 #else
 #define MPI_ALLGATHER_PROTO(T)             \
     MPI_ALLGATHER_PROTO_DEV(T,Device::CPU) \
     MPI_ALLGATHER_PROTO_DEV(T,Device::GPU)
+#define MPI_ALLGATHER_COMPLEX_PROTO(T)     \
+    MPI_ALLGATHER_COMPLEX_PROTO_DEV(T,Device::CPU) \
+    MPI_ALLGATHER_COMPLEX_PROTO_DEV(T,Device::GPU)
 #endif // HYDROGEN_HAVE_CUDA
 
 MPI_ALLGATHER_PROTO(byte)
@@ -185,12 +194,12 @@ MPI_ALLGATHER_PROTO(unsigned long long)
 #endif
 MPI_ALLGATHER_PROTO(ValueInt<Int>)
 MPI_ALLGATHER_PROTO(Entry<Int>)
-MPI_ALLGATHER_PROTO(Complex<float>)
+MPI_ALLGATHER_COMPLEX_PROTO(float)
 MPI_ALLGATHER_PROTO(ValueInt<float>)
 MPI_ALLGATHER_PROTO(ValueInt<Complex<float>>)
 MPI_ALLGATHER_PROTO(Entry<float>)
 MPI_ALLGATHER_PROTO(Entry<Complex<float>>)
-MPI_ALLGATHER_PROTO(Complex<double>)
+MPI_ALLGATHER_COMPLEX_PROTO(double)
 MPI_ALLGATHER_PROTO(ValueInt<double>)
 MPI_ALLGATHER_PROTO(ValueInt<Complex<double>>)
 MPI_ALLGATHER_PROTO(Entry<double>)
@@ -198,8 +207,8 @@ MPI_ALLGATHER_PROTO(Entry<Complex<double>>)
 #ifdef HYDROGEN_HAVE_QD
 MPI_ALLGATHER_PROTO(DoubleDouble)
 MPI_ALLGATHER_PROTO(QuadDouble)
-MPI_ALLGATHER_PROTO(Complex<DoubleDouble>)
-MPI_ALLGATHER_PROTO(Complex<QuadDouble>)
+MPI_ALLGATHER_COMPLEX_PROTO(DoubleDouble)
+MPI_ALLGATHER_COMPLEX_PROTO(QuadDouble)
 MPI_ALLGATHER_PROTO(ValueInt<DoubleDouble>)
 MPI_ALLGATHER_PROTO(ValueInt<QuadDouble>)
 MPI_ALLGATHER_PROTO(ValueInt<Complex<DoubleDouble>>)
@@ -211,7 +220,7 @@ MPI_ALLGATHER_PROTO(Entry<Complex<QuadDouble>>)
 #endif
 #ifdef HYDROGEN_HAVE_QUADMATH
 MPI_ALLGATHER_PROTO(Quad)
-MPI_ALLGATHER_PROTO(Complex<Quad>)
+MPI_ALLGATHER_COMPLEX_PROTO(Quad)
 MPI_ALLGATHER_PROTO(ValueInt<Quad>)
 MPI_ALLGATHER_PROTO(ValueInt<Complex<Quad>>)
 MPI_ALLGATHER_PROTO(Entry<Quad>)
@@ -220,7 +229,7 @@ MPI_ALLGATHER_PROTO(Entry<Complex<Quad>>)
 #ifdef HYDROGEN_HAVE_MPC
 MPI_ALLGATHER_PROTO(BigInt)
 MPI_ALLGATHER_PROTO(BigFloat)
-MPI_ALLGATHER_PROTO(Complex<BigFloat>)
+MPI_ALLGATHER_COMPLEX_PROTO(BigFloat)
 MPI_ALLGATHER_PROTO(ValueInt<BigInt>)
 MPI_ALLGATHER_PROTO(ValueInt<BigFloat>)
 MPI_ALLGATHER_PROTO(ValueInt<Complex<BigFloat>>)

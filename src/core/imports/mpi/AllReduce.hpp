@@ -75,8 +75,8 @@ template <typename T, Device D,
           typename/*=EnableIf<And<IsDeviceValidType<T,D>,
                                 Not<IsAluminumDeviceType<T,D>>>>*/,
           typename/*=EnableIf<IsPacked<T>>*/>
-void AllReduce(Complex<T> const* sbuf, T* rbuf, int count, Op op, Comm comm,
-               SyncInfo<D> const& syncInfo)
+void AllReduce(Complex<T> const* sbuf, Complex<T>* rbuf, int count, Op op,
+               Comm comm, SyncInfo<D> const& syncInfo)
 {
     EL_DEBUG_CSE
     if (count == 0)
@@ -318,23 +318,39 @@ void AllReduce(T* buf, int count, Comm comm, SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
 { AllReduce(buf, count, SUM, std::move(comm), syncInfo); }
 
-#define MPI_ALLREDUCE_PROTO_DEV(T,D)                                    \
-    template void AllReduce(                                            \
-        const T*, T*, int, Op, Comm, SyncInfo<D> const&);               \
+#define MPI_ALLREDUCE_COMMON_PROTO_DEV(T,D)                             \
     template void AllReduce(                                            \
         const T*, T*, int, Comm, SyncInfo<D> const&);                   \
     template T AllReduce(T, Op, Comm, SyncInfo<D> const&);              \
     template T AllReduce(T, Comm, SyncInfo<D> const&);                  \
-    template void AllReduce(T*, int, Op, Comm, SyncInfo<D> const&);     \
     template void AllReduce(T*, int, Comm, SyncInfo<D> const&);
+
+#define MPI_ALLREDUCE_PROTO_DEV(T,D)                                    \
+    template void AllReduce(                                            \
+        const T*, T*, int, Op, Comm, SyncInfo<D> const&);               \
+    template void AllReduce(T*, int, Op, Comm, SyncInfo<D> const&);     \
+    MPI_ALLREDUCE_COMMON_PROTO_DEV(T,D)
+
+#define MPI_ALLREDUCE_COMPLEX_PROTO_DEV(T,D)                            \
+    template void AllReduce<T>(                                         \
+        const Complex<T>*, Complex<T>*, int, Op, Comm,                  \
+        SyncInfo<D> const&);                                            \
+    template void AllReduce<T>(                                         \
+        Complex<T>*, int, Op, Comm, SyncInfo<D> const&);                \
+    MPI_ALLREDUCE_COMMON_PROTO_DEV(Complex<T>,D)
 
 #ifndef HYDROGEN_HAVE_CUDA
 #define MPI_ALLREDUCE_PROTO(T)             \
     MPI_ALLREDUCE_PROTO_DEV(T,Device::CPU)
+#define MPI_ALLREDUCE_COMPLEX_PROTO(T)             \
+    MPI_ALLREDUCE_COMPLEX_PROTO_DEV(T,Device::CPU)
 #else
 #define MPI_ALLREDUCE_PROTO(T)             \
     MPI_ALLREDUCE_PROTO_DEV(T,Device::CPU) \
     MPI_ALLREDUCE_PROTO_DEV(T,Device::GPU)
+#define MPI_ALLREDUCE_PROTO(T)             \
+    MPI_ALLREDUCE_COMPLEX_PROTO_DEV(T,Device::CPU) \
+    MPI_ALLREDUCE_COMPLEX_PROTO_DEV(T,Device::GPU)
 #endif // HYDROGEN_HAVE_CUDA
 
 MPI_ALLREDUCE_PROTO(byte)
@@ -350,12 +366,12 @@ MPI_ALLREDUCE_PROTO(unsigned long long)
 #endif
 MPI_ALLREDUCE_PROTO(ValueInt<Int>)
 MPI_ALLREDUCE_PROTO(Entry<Int>)
-MPI_ALLREDUCE_PROTO(Complex<float>)
+MPI_ALLREDUCE_COMPLEX_PROTO(float)
 MPI_ALLREDUCE_PROTO(ValueInt<float>)
 MPI_ALLREDUCE_PROTO(ValueInt<Complex<float>>)
 MPI_ALLREDUCE_PROTO(Entry<float>)
 MPI_ALLREDUCE_PROTO(Entry<Complex<float>>)
-MPI_ALLREDUCE_PROTO(Complex<double>)
+MPI_ALLREDUCE_COMPLEX_PROTO(double)
 MPI_ALLREDUCE_PROTO(ValueInt<double>)
 MPI_ALLREDUCE_PROTO(ValueInt<Complex<double>>)
 MPI_ALLREDUCE_PROTO(Entry<double>)
@@ -363,8 +379,8 @@ MPI_ALLREDUCE_PROTO(Entry<Complex<double>>)
 #ifdef HYDROGEN_HAVE_QD
 MPI_ALLREDUCE_PROTO(DoubleDouble)
 MPI_ALLREDUCE_PROTO(QuadDouble)
-MPI_ALLREDUCE_PROTO(Complex<DoubleDouble>)
-MPI_ALLREDUCE_PROTO(Complex<QuadDouble>)
+MPI_ALLREDUCE_COMPLEX_PROTO(DoubleDouble)
+MPI_ALLREDUCE_COMPLEX_PROTO(QuadDouble)
 MPI_ALLREDUCE_PROTO(ValueInt<DoubleDouble>)
 MPI_ALLREDUCE_PROTO(ValueInt<QuadDouble>)
 MPI_ALLREDUCE_PROTO(ValueInt<Complex<DoubleDouble>>)
@@ -376,7 +392,7 @@ MPI_ALLREDUCE_PROTO(Entry<Complex<QuadDouble>>)
 #endif
 #ifdef HYDROGEN_HAVE_QUADMATH
 MPI_ALLREDUCE_PROTO(Quad)
-MPI_ALLREDUCE_PROTO(Complex<Quad>)
+MPI_ALLREDUCE_COMPLEX_PROTO(Quad)
 MPI_ALLREDUCE_PROTO(ValueInt<Quad>)
 MPI_ALLREDUCE_PROTO(ValueInt<Complex<Quad>>)
 MPI_ALLREDUCE_PROTO(Entry<Quad>)
@@ -385,7 +401,7 @@ MPI_ALLREDUCE_PROTO(Entry<Complex<Quad>>)
 #ifdef HYDROGEN_HAVE_MPC
 MPI_ALLREDUCE_PROTO(BigInt)
 MPI_ALLREDUCE_PROTO(BigFloat)
-MPI_ALLREDUCE_PROTO(Complex<BigFloat>)
+MPI_ALLREDUCE_COMPLEX_PROTO(BigFloat)
 MPI_ALLREDUCE_PROTO(ValueInt<BigInt>)
 MPI_ALLREDUCE_PROTO(ValueInt<BigFloat>)
 MPI_ALLREDUCE_PROTO(ValueInt<Complex<BigFloat>>)

@@ -147,13 +147,23 @@ void AllToAll(T const*, int, T*, int, Comm, SyncInfo<D> const&)
 #define MPI_ALLTOALL_PROTO_DEV(T,D) \
     template void AllToAll(T const*, int, T*, int, Comm, SyncInfo<D> const&);
 
+#define MPI_ALLTOALL_COMPLEX_PROTO_DEV(T,D)                             \
+    template void AllToAll<T>(                                          \
+        Complex<T> const*, int, Complex<T>*, int, Comm, \
+        SyncInfo<D> const&);
+
 #ifndef HYDROGEN_HAVE_CUDA
 #define MPI_ALLTOALL_PROTO(T)             \
     MPI_ALLTOALL_PROTO_DEV(T,Device::CPU)
+#define MPI_ALLTOALL_COMPLEX_PROTO(T)             \
+    MPI_ALLTOALL_COMPLEX_PROTO_DEV(T,Device::CPU)
 #else
 #define MPI_ALLTOALL_PROTO(T)             \
     MPI_ALLTOALL_PROTO_DEV(T,Device::CPU) \
     MPI_ALLTOALL_PROTO_DEV(T,Device::GPU)
+#define MPI_ALLTOALL_COMPLEX_PROTO(T)             \
+    MPI_ALLTOALL_COMPLEX_PROTO_DEV(T,Device::CPU) \
+    MPI_ALLTOALL_COMPLEX_PROTO_DEV(T,Device::GPU)
 #endif // HYDROGEN_HAVE_CUDA
 
 MPI_ALLTOALL_PROTO(byte)
@@ -169,12 +179,12 @@ MPI_ALLTOALL_PROTO(unsigned long long)
 #endif
 MPI_ALLTOALL_PROTO(ValueInt<Int>)
 MPI_ALLTOALL_PROTO(Entry<Int>)
-MPI_ALLTOALL_PROTO(Complex<float>)
+MPI_ALLTOALL_COMPLEX_PROTO(float)
 MPI_ALLTOALL_PROTO(ValueInt<float>)
 MPI_ALLTOALL_PROTO(ValueInt<Complex<float>>)
 MPI_ALLTOALL_PROTO(Entry<float>)
 MPI_ALLTOALL_PROTO(Entry<Complex<float>>)
-MPI_ALLTOALL_PROTO(Complex<double>)
+MPI_ALLTOALL_COMPLEX_PROTO(double)
 MPI_ALLTOALL_PROTO(ValueInt<double>)
 MPI_ALLTOALL_PROTO(ValueInt<Complex<double>>)
 MPI_ALLTOALL_PROTO(Entry<double>)
@@ -182,8 +192,8 @@ MPI_ALLTOALL_PROTO(Entry<Complex<double>>)
 #ifdef HYDROGEN_HAVE_QD
 MPI_ALLTOALL_PROTO(DoubleDouble)
 MPI_ALLTOALL_PROTO(QuadDouble)
-MPI_ALLTOALL_PROTO(Complex<DoubleDouble>)
-MPI_ALLTOALL_PROTO(Complex<QuadDouble>)
+MPI_ALLTOALL_COMPLEX_PROTO(DoubleDouble)
+MPI_ALLTOALL_COMPLEX_PROTO(QuadDouble)
 MPI_ALLTOALL_PROTO(ValueInt<DoubleDouble>)
 MPI_ALLTOALL_PROTO(ValueInt<QuadDouble>)
 MPI_ALLTOALL_PROTO(ValueInt<Complex<DoubleDouble>>)
@@ -195,7 +205,7 @@ MPI_ALLTOALL_PROTO(Entry<Complex<QuadDouble>>)
 #endif
 #ifdef HYDROGEN_HAVE_QUADMATH
 MPI_ALLTOALL_PROTO(Quad)
-MPI_ALLTOALL_PROTO(Complex<Quad>)
+MPI_ALLTOALL_COMPLEX_PROTO(Quad)
 MPI_ALLTOALL_PROTO(ValueInt<Quad>)
 MPI_ALLTOALL_PROTO(ValueInt<Complex<Quad>>)
 MPI_ALLTOALL_PROTO(Entry<Quad>)
@@ -204,7 +214,7 @@ MPI_ALLTOALL_PROTO(Entry<Complex<Quad>>)
 #ifdef HYDROGEN_HAVE_MPC
 MPI_ALLTOALL_PROTO(BigInt)
 MPI_ALLTOALL_PROTO(BigFloat)
-MPI_ALLTOALL_PROTO(Complex<BigFloat>)
+MPI_ALLTOALL_COMPLEX_PROTO(BigFloat)
 MPI_ALLTOALL_PROTO(ValueInt<BigInt>)
 MPI_ALLTOALL_PROTO(ValueInt<BigFloat>)
 MPI_ALLTOALL_PROTO(ValueInt<Complex<BigFloat>>)

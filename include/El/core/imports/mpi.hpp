@@ -1482,8 +1482,8 @@ template <typename T, Device D,
           typename=EnableIf<And<IsDeviceValidType<T,D>,
                                 Not<IsAluminumSupported<T,D,COLL>>>>,
           typename=EnableIf<IsPacked<T>>>
-void AllReduce(Complex<T> const* sbuf, T* rbuf, int count, Op op, Comm comm,
-               SyncInfo<D> const& syncInfo);
+void AllReduce(Complex<T> const* sbuf, Complex<T>* rbuf, int count, Op op,
+               Comm comm, SyncInfo<D> const& syncInfo);
 
 template <typename T, Device D,
           typename=EnableIf<And<IsDeviceValidType<T,D>,

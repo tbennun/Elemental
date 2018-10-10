@@ -158,13 +158,22 @@ void Gather(const T*, int, T*, int, int, Comm, SyncInfo<D> const&)
     template void Gather(const T* sbuf, int sc, T* rbuf, int rc, int root, \
                          Comm comm, SyncInfo<D> const&);
 
+#define MPI_COLLECTIVE_COMPLEX_PROTO_DEV(T,D) \
+    template void Gather<T>(const Complex<T>* sbuf, int sc, Complex<T>* rbuf, \
+                            int rc, int root, Comm comm, SyncInfo<D> const&);
+
 #ifdef HYDROGEN_HAVE_CUDA
 #define MPI_COLLECTIVE_PROTO(T) \
     MPI_COLLECTIVE_PROTO_DEV(T,Device::CPU) \
     MPI_COLLECTIVE_PROTO_DEV(T,Device::GPU)
+#define MPI_COLLECTIVE_COMPLEX_PROTO(T) \
+    MPI_COLLECTIVE_COMPLEX_PROTO_DEV(T,Device::CPU) \
+    MPI_COLLECTIVE_COMPLEX_PROTO_DEV(T,Device::GPU)
 #else
 #define MPI_COLLECTIVE_PROTO(T) \
     MPI_COLLECTIVE_PROTO_DEV(T,Device::CPU)
+#define MPI_COLLECTIVE_COMPLEX_PROTO(T) \
+    MPI_COLLECTIVE_COMPLEX_PROTO_DEV(T,Device::CPU)
 #endif
 
 MPI_COLLECTIVE_PROTO(byte)
@@ -180,12 +189,12 @@ MPI_COLLECTIVE_PROTO(unsigned long long)
 #endif
 MPI_COLLECTIVE_PROTO(ValueInt<Int>)
 MPI_COLLECTIVE_PROTO(Entry<Int>)
-MPI_COLLECTIVE_PROTO(Complex<float>)
+MPI_COLLECTIVE_COMPLEX_PROTO(float)
 MPI_COLLECTIVE_PROTO(ValueInt<float>)
 MPI_COLLECTIVE_PROTO(ValueInt<Complex<float>>)
 MPI_COLLECTIVE_PROTO(Entry<float>)
 MPI_COLLECTIVE_PROTO(Entry<Complex<float>>)
-MPI_COLLECTIVE_PROTO(Complex<double>)
+MPI_COLLECTIVE_COMPLEX_PROTO(double)
 MPI_COLLECTIVE_PROTO(ValueInt<double>)
 MPI_COLLECTIVE_PROTO(ValueInt<Complex<double>>)
 MPI_COLLECTIVE_PROTO(Entry<double>)
@@ -193,8 +202,8 @@ MPI_COLLECTIVE_PROTO(Entry<Complex<double>>)
 #ifdef HYDROGEN_HAVE_QD
 MPI_COLLECTIVE_PROTO(DoubleDouble)
 MPI_COLLECTIVE_PROTO(QuadDouble)
-MPI_COLLECTIVE_PROTO(Complex<DoubleDouble>)
-MPI_COLLECTIVE_PROTO(Complex<QuadDouble>)
+MPI_COLLECTIVE_COMPLEX_PROTO(DoubleDouble)
+MPI_COLLECTIVE_COMPLEX_PROTO(QuadDouble)
 MPI_COLLECTIVE_PROTO(ValueInt<DoubleDouble>)
 MPI_COLLECTIVE_PROTO(ValueInt<QuadDouble>)
 MPI_COLLECTIVE_PROTO(ValueInt<Complex<DoubleDouble>>)
@@ -206,7 +215,7 @@ MPI_COLLECTIVE_PROTO(Entry<Complex<QuadDouble>>)
 #endif
 #ifdef HYDROGEN_HAVE_QUADMATH
 MPI_COLLECTIVE_PROTO(Quad)
-MPI_COLLECTIVE_PROTO(Complex<Quad>)
+MPI_COLLECTIVE_COMPLEX_PROTO(Quad)
 MPI_COLLECTIVE_PROTO(ValueInt<Quad>)
 MPI_COLLECTIVE_PROTO(ValueInt<Complex<Quad>>)
 MPI_COLLECTIVE_PROTO(Entry<Quad>)
@@ -215,7 +224,7 @@ MPI_COLLECTIVE_PROTO(Entry<Complex<Quad>>)
 #ifdef HYDROGEN_HAVE_MPC
 MPI_COLLECTIVE_PROTO(BigInt)
 MPI_COLLECTIVE_PROTO(BigFloat)
-MPI_COLLECTIVE_PROTO(Complex<BigFloat>)
+MPI_COLLECTIVE_COMPLEX_PROTO(BigFloat)
 MPI_COLLECTIVE_PROTO(ValueInt<BigInt>)
 MPI_COLLECTIVE_PROTO(ValueInt<BigFloat>)
 MPI_COLLECTIVE_PROTO(ValueInt<Complex<BigFloat>>)
@@ -226,5 +235,7 @@ MPI_COLLECTIVE_PROTO(Entry<Complex<BigFloat>>)
 
 #undef MPI_COLLECTIVE_PROTO
 #undef MPI_COLLECTIVE_PROTO_DEV
+#undef MPI_COLLECTIVE_COMPLEX_PROTO
+#undef MPI_COLLECTIVE_COMPLEX_PROTO_DEV
 } // namespace mpi
 } // namespace El
