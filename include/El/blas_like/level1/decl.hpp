@@ -372,7 +372,7 @@ void Copy( const AbstractMatrix<T>& A, AbstractMatrix<T>& B );
 template<typename T>
 void Copy( const Matrix<T>& A, Matrix<T>& B );
 template<typename S,typename T,
-         typename=EnableIf<CanCast<S,T>>>
+         typename=EnableIf<And<CanCast<S,T>,Not<IsSame<S,T>>>>>
 void Copy( const Matrix<S>& A, Matrix<T>& B );
 
 #ifdef HYDROGEN_HAVE_CUDA
@@ -392,17 +392,17 @@ template <typename T>
 void CopyAsync(AbstractDistMatrix<T> const& A, AbstractDistMatrix<T>& B);
 
 template<typename S,typename T,
-         typename=EnableIf<CanCast<S,T>>>
+         typename=EnableIf<And<CanCast<S,T>,Not<IsSame<S,T>>>>>
 void Copy( const ElementalMatrix<S>& A, ElementalMatrix<T>& B );
 
 template<typename S,typename T,
-         typename=EnableIf<CanCast<S,T>>>
+         typename=EnableIf<And<CanCast<S,T>,Not<IsSame<S,T>>>>>
 void Copy( const BlockMatrix<S>& A, BlockMatrix<T>& B );
 
 template<typename T>
 void Copy( const AbstractDistMatrix<T>& A, AbstractDistMatrix<T>& B );
 template<typename S,typename T,
-         typename=EnableIf<CanCast<S,T>>>
+         typename=EnableIf<And<CanCast<S,T>,Not<IsSame<S,T>>>>>
 void Copy( const AbstractDistMatrix<S>& A, AbstractDistMatrix<T>& B );
 
 template<typename T>
