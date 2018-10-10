@@ -392,11 +392,11 @@ template <typename T>
 void CopyAsync(AbstractDistMatrix<T> const& A, AbstractDistMatrix<T>& B);
 
 template<typename S,typename T,
-         typename=EnableIf<And<CanCast<S,T>,Not<IsSame<S,T>>>>>
+         typename=EnableIf<CanCast<S,T>>>
 void Copy( const ElementalMatrix<S>& A, ElementalMatrix<T>& B );
 
 template<typename S,typename T,
-         typename=EnableIf<And<CanCast<S,T>,Not<IsSame<S,T>>>>>
+         typename=EnableIf<CanCast<S,T>>>
 void Copy( const BlockMatrix<S>& A, BlockMatrix<T>& B );
 
 template<typename T>
