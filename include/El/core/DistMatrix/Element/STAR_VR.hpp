@@ -58,6 +58,8 @@ public:
 
     template <Dist colDist, Dist rowDist, Device Dev2,
               typename=EnableIf<And<Not<SameDevice<Dev,Dev2>>,
+                                    Not<And<SameDist<STAR,colDist>,
+                                            SameDist<VR,rowDist>>>,
                                     IsDeviceValidType<Ring,Dev2>>>>
     DistMatrix(DistMatrix<Ring,colDist,rowDist,ELEMENT,Dev2> const& A);
 
@@ -119,6 +121,8 @@ public:
 
     template <Dist colDist, Dist rowDist, Device Dev2,
               typename=EnableIf<And<Not<SameDevice<Dev,Dev2>>,
+                                    Not<And<SameDist<STAR,colDist>,
+                                            SameDist<VR,rowDist>>>,
                                     IsDeviceValidType<Ring,Dev2>>>>
     type& operator=(DistMatrix<Ring,colDist,rowDist,ELEMENT,Dev2> const& A);
 
