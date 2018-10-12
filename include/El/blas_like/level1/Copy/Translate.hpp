@@ -44,8 +44,8 @@ void Translate(
     if(!g.InGrid())
         return;
 
-    SyncInfo<D1> syncInfoA(A.LockedMatrix());
-    SyncInfo<D2> syncInfoB(B.LockedMatrix());
+    SyncInfo<D1> syncInfoA = SyncInfoFromMatrix(A.LockedMatrix());
+    //SyncInfo<D2> syncInfoB = SyncInfoFromMatrix(B.LockedMatrix());
 
     const bool aligned = colAlign == B.ColAlign() && rowAlign == B.RowAlign();
     if(aligned && root == B.Root())

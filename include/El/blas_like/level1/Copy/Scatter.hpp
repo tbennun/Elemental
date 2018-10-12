@@ -46,8 +46,8 @@ void Scatter
     if (target == mpi::UNDEFINED)
         return;
 
-    SyncInfo<D> syncInfoA(A.LockedMatrix()),
-        syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
+    SyncInfo<D> syncInfoA = SyncInfoFromMatrix(A.LockedMatrix()),
+        syncInfoB = SyncInfoFromMatrix(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
 
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 

@@ -345,7 +345,7 @@ EL_NO_RELEASE_EXCEPT
        if(!this->Grid().InGrid())
           LogicError("Get should only be called in-grid");
     )
-    SyncInfo<D> syncInfoA(matrix_);
+    SyncInfo<D> syncInfoA = SyncInfoFromMatrix(matrix_);
 
     T value;
     if(CrossRank() == this->Root())
@@ -369,7 +369,7 @@ EL_NO_RELEASE_EXCEPT
       if(!this->Grid().InGrid())
           LogicError("Get should only be called in-grid");
    )
-    SyncInfo<D> syncInfoA(matrix_);
+    SyncInfo<D> syncInfoA = SyncInfoFromMatrix(matrix_);
     Base<T> value;
     if(CrossRank() == this->Root())
     {
@@ -392,7 +392,7 @@ EL_NO_RELEASE_EXCEPT
       if(!this->Grid().InGrid())
           LogicError("Get should only be called in-grid");
    )
-    SyncInfo<D> syncInfoA(matrix_);
+    SyncInfo<D> syncInfoA = SyncInfoFromMatrix(matrix_);
     Base<T> value;
     if(IsComplex<T>::value)
     {
@@ -611,7 +611,7 @@ void BDM::ProcessQueues(bool includeViewers)
 
     // Exchange and unpack the data
     // ============================
-    SyncInfo<D> syncInfoA(matrix_);
+    SyncInfo<D> syncInfoA = SyncInfoFromMatrix(matrix_);
 
     auto recvBuf = mpi::AllToAll(sendBuf, sendCounts, sendOffs, comm);
     Int recvBufSize = recvBuf.size();
@@ -688,7 +688,7 @@ void BDM::ProcessPullQueue(T* pullBuf, bool includeViewers) const
             ++recvCounts[owner];
         }
     }
-    SyncInfo<D> syncInfoA(matrix_);
+    SyncInfo<D> syncInfoA = SyncInfoFromMatrix(matrix_);
 
     vector<int> recvOffs;
     Scan(recvCounts, recvOffs);

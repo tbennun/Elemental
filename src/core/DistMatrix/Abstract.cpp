@@ -127,7 +127,7 @@ AbstractDistMatrix<T>::MakeSizeConsistent(bool includingViewers)
 #ifdef HYDROGEN_HAVE_CUDA
         else if (this->GetLocalDevice() == Device::GPU)
         {
-            SyncInfo<Device::GPU> syncInfo(
+            auto syncInfo = SyncInfoFromMatrix(
                 static_cast<::El::Matrix<T,Device::GPU> const&>(
                     this->LockedMatrix()));
             mpi::Broadcast(message, msgSize, Root(), CrossComm(),
@@ -146,7 +146,7 @@ AbstractDistMatrix<T>::MakeSizeConsistent(bool includingViewers)
 #ifdef HYDROGEN_HAVE_CUDA
         else if (this->GetLocalDevice() == Device::GPU)
         {
-            SyncInfo<Device::GPU> syncInfo(
+            auto syncInfo = SyncInfoFromMatrix(
                 static_cast<::El::Matrix<T,Device::GPU> const&>(
                     this->LockedMatrix()));
             mpi::Broadcast(message, msgSize, vcRoot, grid.ViewingComm(),

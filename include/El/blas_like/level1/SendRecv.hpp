@@ -53,7 +53,7 @@ void SendRecv
     const Int sizeA = heightA*widthA;
     const Int sizeB = heightB*widthB;
 
-    SyncInfo<D> syncInfoA(A), syncInfoB(B);
+    SyncInfo<D> syncInfoA = SyncInfoFromMatrix(A), syncInfoB = SyncInfoFromMatrix(B);
 
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 

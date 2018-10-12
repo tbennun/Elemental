@@ -130,7 +130,7 @@ void TransposeAxpy(S alphaS,
                   << "  However, the type should be real anyway." << std::endl;
 #endif // !EL_RELEASE
 
-    SyncInfo<Device::GPU> syncInfoA(X), syncInfoB(Y);
+    auto syncInfoA = SyncInfoFromMatrix(X), syncInfoB = SyncInfoFromMatrix(Y);
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 
     // Keep the old stream so we can restore it. I don't know if this

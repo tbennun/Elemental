@@ -22,8 +22,8 @@ void RowAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
     const Int width = A.Width();
     B.AlignColsAndResize(A.ColAlign(), height, width, false, false);
 
-    SyncInfo<D> syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
-        syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
+    SyncInfo<D> syncInfoA = SyncInfoFromMatrix(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
+        syncInfoB = SyncInfoFromMatrix(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
 
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 

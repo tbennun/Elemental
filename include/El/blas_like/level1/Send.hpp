@@ -20,7 +20,7 @@ void Send(Matrix<T,D> const& A, mpi::Comm comm, int destination)
     const Int width = A.Width();
     const Int size = height*width;
 
-    SyncInfo<D> syncInfoA{A};
+    SyncInfo<D> syncInfoA = SyncInfoFromMatrix(A);
 
     if( height == A.LDim() )
     {

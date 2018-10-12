@@ -79,7 +79,7 @@ ValueInt<Base<Ring>> VectorMaxAbsLoc( const AbstractDistMatrix<Ring>& x )
         LogicError("VectorMaxAbsLoc: Only implemented for CPU matrices.");
 
     auto syncInfoA =
-        SyncInfo<Device::CPU>(
+        SyncInfoFromMatrix(
             static_cast<Matrix<Ring,Device::CPU> const&>(
                 x.LockedMatrix()));
 
@@ -185,7 +185,7 @@ Entry<Base<Ring>> MaxAbsLoc( const AbstractDistMatrix<Ring>& A )
     typedef Base<Ring> RealRing;
 
     auto syncInfoA =
-        SyncInfo<Device::CPU>(
+        SyncInfoFromMatrix(
             static_cast<Matrix<Ring,Device::CPU> const&>(
                 A.LockedMatrix()));
 
@@ -304,7 +304,7 @@ Entry<Base<Ring>> SymmetricMaxAbsLoc
     typedef Base<Ring> RealRing;
 
     auto syncInfoA =
-        SyncInfo<Device::CPU>(
+        SyncInfoFromMatrix(
             static_cast<Matrix<Ring,Device::CPU> const&>(
                 A.LockedMatrix()));
 

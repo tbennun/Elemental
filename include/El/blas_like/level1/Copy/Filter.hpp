@@ -24,7 +24,7 @@ void Filter
     if( !B.Participating() )
         return;
 
-    SyncInfo<D> syncInfoA(A.LockedMatrix()), syncInfoB(B.LockedMatrix());
+    SyncInfo<D> syncInfoA = SyncInfoFromMatrix(A.LockedMatrix()), syncInfoB = SyncInfoFromMatrix(B.LockedMatrix());
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 
     const Int colShift = B.ColShift();

@@ -37,8 +37,8 @@ void ColAllGather_impl(const ElementalMatrix<T>& A, ElementalMatrix<T>& B)
 
     // FIXME (trb): Actually sync properly after calls that use these!
     SyncInfo<D>
-        syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
-        syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
+        syncInfoA = SyncInfoFromMatrix(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
+        syncInfoB = SyncInfoFromMatrix(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
 
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 

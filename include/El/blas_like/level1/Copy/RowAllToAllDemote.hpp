@@ -38,7 +38,7 @@ void RowAllToAllDemote(
     const Int maxLocalWidth = MaxLength(width,rowStride);
     const Int portionSize = mpi::Pad(maxLocalHeight*maxLocalWidth);
 
-    SyncInfo<D> syncInfoA(A.LockedMatrix()), syncInfoB(B.LockedMatrix());
+    SyncInfo<D> syncInfoA = SyncInfoFromMatrix(A.LockedMatrix()), syncInfoB = SyncInfoFromMatrix(B.LockedMatrix());
 
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 

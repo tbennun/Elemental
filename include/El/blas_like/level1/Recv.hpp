@@ -20,7 +20,7 @@ void Recv(Matrix<T,D>& A, mpi::Comm comm, int source)
     const Int width = A.Width();
     const Int size = height*width;
 
-    SyncInfo<D> syncInfoA{A};
+    SyncInfo<D> syncInfoA = SyncInfoFromMatrix(A);
 
     if( height == A.LDim() )
     {

@@ -273,13 +273,13 @@ inline void Comm::Reset()
 }
 
 // Some SyncInfo stuff
-SyncInfo<Device::CPU> SyncInfoFromComm(
+inline SyncInfo<Device::CPU> SyncInfoFromComm(
     Al::MPIBackend::comm_type const&, SyncInfo<Device::CPU> const&)
 {
     return SyncInfo<Device::CPU>{};
 }
 
-SyncInfo<Device::GPU> SyncInfoFromComm(
+inline SyncInfo<Device::GPU> SyncInfoFromComm(
     Al::CUDACommunicator const& comm, SyncInfo<Device::GPU> const& other)
 {
     return SyncInfo<Device::GPU>{comm.get_stream(), other.event_};

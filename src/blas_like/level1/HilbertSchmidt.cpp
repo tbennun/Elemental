@@ -65,7 +65,7 @@ Ring HilbertSchmidt
         LogicError("HilbertSchmidt: Only implemented for CPU matrices.");
 
     auto syncInfoA =
-        SyncInfo<Device::CPU>(
+        SyncInfoFromMatrix(
             static_cast<Matrix<Ring,Device::CPU> const&>(
                 A.LockedMatrix()));
 

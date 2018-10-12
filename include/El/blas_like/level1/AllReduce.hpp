@@ -23,11 +23,11 @@ void AllReduce(Matrix<T,D>& A, mpi::Comm comm, mpi::Op op)
     const Int size = height*width;
     if(height == A.LDim())
     {
-        mpi::AllReduce(A.Buffer(), size, op, comm, SyncInfo<D>(A));
+        mpi::AllReduce(A.Buffer(), size, op, comm, SyncInfoFromMatrix(A));
     }
     else
     {
-        SyncInfo<D> syncInfoA(A);
+        SyncInfo<D> syncInfoA = SyncInfoFromMatrix(A);
 
         simple_buffer<T,D> buf(size, syncInfoA);
 

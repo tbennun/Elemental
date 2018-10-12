@@ -38,7 +38,7 @@ void ColAllToAllPromote
     const Int maxLocalWidth = MaxLength(width,colStrideUnion);
     const Int portionSize = mpi::Pad( maxLocalHeight*maxLocalWidth );
 
-    SyncInfo<D> syncInfoA(A.LockedMatrix()), syncInfoB(A.LockedMatrix());
+    SyncInfo<D> syncInfoA = SyncInfoFromMatrix(A.LockedMatrix()), syncInfoB = SyncInfoFromMatrix(A.LockedMatrix());
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 
     if( colDiff == 0 )

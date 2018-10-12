@@ -85,9 +85,8 @@ T Dotu( const ElementalMatrix<T>& A, const ElementalMatrix<T>& B )
         LogicError("Dotu: Only implemented for CPU matrices.");
     }
 
-    SyncInfo<Device::CPU> syncInfoA(
-        static_cast<Matrix<T,Device::CPU> const&>(
-            A.LockedMatrix()));
+    auto syncInfoA = SyncInfoFromMatrix(
+        static_cast<Matrix<T,Device::CPU> const&>(A.LockedMatrix()));
 
     T innerProd;
     if( A.Participating() )

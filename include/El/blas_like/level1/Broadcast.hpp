@@ -23,7 +23,7 @@ void Broadcast_impl( Matrix<T,D>& A, mpi::Comm comm, int rank )
     const Int height = A.Height();
     const Int width = A.Width();
     const Int size = height*width;
-    SyncInfo<D> syncInfoA(A);
+    SyncInfo<D> syncInfoA = SyncInfoFromMatrix(A);
 
     if( height == A.LDim() )
     {
@@ -87,7 +87,7 @@ void Broadcast_impl( AbstractDistMatrix<T>& A, mpi::Comm comm, int rank )
     const Int localWidth = A.LocalWidth();
     const Int localSize = localHeight*localWidth;
 
-    SyncInfo<D> syncInfoA(
+    SyncInfo<D> syncInfoA = SyncInfoFromMatrix(
         static_cast<Matrix<T,D> const&>(A.LockedMatrix()));
 
     if( localHeight == A.LDim() )

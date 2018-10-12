@@ -37,8 +37,9 @@ void Gather(
     B.SetGrid(A.Grid());
     B.Resize(height, width);
 
-    SyncInfo<D> syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
-        syncInfoB(B.LockedMatrix());
+    auto syncInfoA = SyncInfoFromMatrix(
+        static_cast<Matrix<T,D> const&>(A.LockedMatrix()));
+    auto syncInfoB = SyncInfoFromMatrix(B.LockedMatrix());
     SyncInfo<Device::CPU> syncInfoCPU;
 
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);

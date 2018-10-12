@@ -126,7 +126,8 @@ template<typename T,
 void MemZero( T* buffer, size_t numEntries )
 {
     // This can be optimized/generalized later
-    std::memset( buffer, 0, numEntries*sizeof(T) );
+    std::memset( reinterpret_cast<unsigned char*>(buffer), 0,
+                 numEntries*sizeof(T) );
 }
 template<typename T,
          typename/*=DisableIf<IsPacked<T>>*/,
