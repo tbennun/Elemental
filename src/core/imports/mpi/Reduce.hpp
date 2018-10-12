@@ -14,23 +14,8 @@ void Reduce(T const* sbuf, T* rbuf, int count, Op op,
     EL_DEBUG_CSE
 
     using Backend = BestBackend<T,D,Collective::REDUCE>;
-    Al::Reduce<Backend>(
-        sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
-        root, comm.template GetComm<Backend>());
-}
-
-#ifdef HYDROGEN_HAVE_CUDA
-template <typename T,
-          typename/*=EnableIf<IsAluminumSupported<T,D,COLL>>*/>
-void Reduce(T const* sbuf, T* rbuf, int count, Op op,
-            int root, Comm comm, SyncInfo<Device::GPU> const& syncInfo)
-{
-    EL_DEBUG_CSE
-
-    using Backend = BestBackend<T,Device::GPU,Collective::REDUCE>;
-    SyncInfo<Device::GPU> alSyncInfo(
-        comm.template GetComm<Backend>().get_stream(),
-        syncInfo.event_);
+    auto alSyncInfo =
+        SyncInfoFromComm(comm.template GetComm<Backend>(), syncInfo);
 
     auto syncHelper = MakeMultiSync(alSyncInfo, syncInfo);
 
@@ -38,13 +23,9 @@ void Reduce(T const* sbuf, T* rbuf, int count, Op op,
         sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         root, comm.template GetComm<Backend>());
 }
-#endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>*/,
-          typename/*=EnableIf<IsPacked<T>>*/>
+template <typename T, Device D, typename, typename, typename, typename, typename>
 void Reduce(T const* sbuf, T* rbuf, int count, Op op,
             int root, Comm comm, SyncInfo<D> const& syncInfo)
 {
@@ -68,10 +49,7 @@ void Reduce(T const* sbuf, T* rbuf, int count, Op op,
             sbuf, rbuf, count, TypeMap<T>(), opC, root, comm.comm));
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>*/,
-          typename/*=EnableIf<IsPacked<T>>*/>
+template <typename T, Device D, typename, typename, typename, typename>
 void Reduce(const Complex<T>* sbuf, Complex<T>* rbuf, int count, Op op,
             int root, Comm comm, SyncInfo<D> const& syncInfo)
 {
@@ -112,11 +90,7 @@ void Reduce(const Complex<T>* sbuf, Complex<T>* rbuf, int count, Op op,
 #endif
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>*/,
-          typename/*=DisableIf<IsPacked<T>>*/,
-          typename/*=void*/>
+template <typename T, Device D, typename, typename, typename>
 void Reduce(T const* sbuf, T* rbuf, int count, Op op,
             int root, Comm comm, SyncInfo<D> const& syncInfo)
 {
@@ -150,10 +124,7 @@ void Reduce(T const* sbuf, T* rbuf, int count, Op op,
         Deserialize(count, packedRecv, rbuf);
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<Not<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>*/,
-          typename/*=void*/, typename/*=void*/, typename/*=void*/>
+template <typename T, Device D, typename, typename>
 void Reduce(T const*, T*, int, Op, int, Comm, SyncInfo<D> const&)
 {
     LogicError("Reduce: Bad device/type combination.");
@@ -186,28 +157,13 @@ T Reduce(T sb, int root, Comm comm, SyncInfo<D> const& syncInfo)
 template <typename T, Device D,
           typename/*=EnableIf<IsAluminumSupported<T,D,COLL>>*/>
 void Reduce(T* buf, int count, Op op,
-            int root, Comm comm, SyncInfo<D> const& /*syncInfo*/)
+            int root, Comm comm, SyncInfo<D> const& syncInfo)
 {
     EL_DEBUG_CSE
 
     using Backend = BestBackend<T,D,Collective::REDUCE>;
-    Al::Reduce<Backend>(
-        buf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
-        root, comm.template GetComm<Backend>());
-}
-
-#ifdef HYDROGEN_HAVE_CUDA
-template <typename T,
-          typename/*=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>*/>
-void Reduce(T* buf, int count, Op op,
-            int root, Comm comm, SyncInfo<Device::GPU> const& syncInfo)
-{
-    EL_DEBUG_CSE
-
-    using Backend = BestBackend<T,Device::GPU,Collective::REDUCE>;
-    SyncInfo<Device::GPU> alSyncInfo(
-        comm.template GetComm<Backend>().get_stream(),
-        syncInfo.event_);
+    auto alSyncInfo =
+        SyncInfoFromComm(comm.template GetComm<Backend>(), syncInfo);
 
     auto syncHelper = MakeMultiSync(alSyncInfo, syncInfo);
 
@@ -215,13 +171,9 @@ void Reduce(T* buf, int count, Op op,
         buf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         root, comm.template GetComm<Backend>());
 }
-#endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                    Not<IsAluminumSupported<T,D,COLL>>>>*/,
-          typename/*=EnableIf<IsPacked<T>>>*/>
+template <typename T, Device D, typename, typename, typename, typename, typename>
 void Reduce(T* buf, int count, Op op, int root, Comm comm,
             SyncInfo<D> const& syncInfo)
 {
@@ -251,10 +203,7 @@ void Reduce(T* buf, int count, Op op, int root, Comm comm,
                 buf, 0, count, TypeMap<T>(), opC, root, comm.comm));
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                    Not<IsAluminumSupported<T,D,COLL>>>>*/,
-          typename/*=EnableIf<IsPacked<T>>>*/>
+template <typename T, Device D, typename, typename, typename, typename>
 void Reduce(Complex<T>* buf, int count, Op op, int root, Comm comm,
             SyncInfo<D> const& syncInfo)
 {
@@ -320,11 +269,7 @@ void Reduce(Complex<T>* buf, int count, Op op, int root, Comm comm,
 #endif
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>*/,
-          typename/*=DisableIf<IsPacked<T>>*/,
-          typename/*=void*/>
+template <typename T, Device D, typename, typename, typename>
 void Reduce(T* buf, int count, Op op, int root, Comm comm,
             SyncInfo<D> const& syncInfo)
 {
@@ -359,10 +304,7 @@ void Reduce(T* buf, int count, Op op, int root, Comm comm,
         Deserialize(count, packedRecv, buf);
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<Not<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>*/,
-          typename/*=void*/, typename/*=void*/, typename/*=void*/>
+template <typename T, Device D, typename, typename>
 void Reduce(T*, int, Op, int, Comm, SyncInfo<D> const&)
 {
     LogicError("Reduce: Bad device/type combination.");
@@ -375,38 +317,23 @@ void Reduce(T* buf, int count, int root, Comm comm,
     Reduce(buf, count, SUM, root, std::move(comm), syncInfo);
 }
 
-#define MPI_REDUCE_COMMOM_PROTO_DEV(T,D) \
+#define MPI_REDUCE_PROTO_DEV(T,D)                                       \
+    template void Reduce(                                               \
+        T const*, T*, int, Op, int, Comm, SyncInfo<D> const&);          \
+    template void Reduce(T*, int, Op, int, Comm, SyncInfo<D> const&);   \
     template void Reduce(                                               \
         T const*, T*, int, int, Comm, SyncInfo<D> const&);              \
     template T Reduce(T, Op, int, Comm, SyncInfo<D> const&);            \
     template T Reduce(T, int, Comm, SyncInfo<D> const&);                \
     template void Reduce(T*, int, int, Comm, SyncInfo<D> const&);
 
-#define MPI_REDUCE_PROTO_DEV(T,D)                                       \
-    template void Reduce(                                               \
-        T const*, T*, int, Op, int, Comm, SyncInfo<D> const&);          \
-    template void Reduce(T*, int, Op, int, Comm, SyncInfo<D> const&);   \
-    MPI_REDUCE_COMMOM_PROTO_DEV(T,D)
-#define MPI_REDUCE_COMPLEX_PROTO_DEV(T,D)                               \
-    template void Reduce<T>(                                            \
-        Complex<T> const*, Complex<T>*, int, Op, int, Comm,             \
-        SyncInfo<D> const&);                                            \
-    template void Reduce<T>(Complex<T>*, int, Op, int, Comm,            \
-                         SyncInfo<D> const&);                           \
-    MPI_REDUCE_COMMOM_PROTO_DEV(Complex<T>,D)
-
 #ifndef HYDROGEN_HAVE_CUDA
 #define MPI_REDUCE_PROTO(T)                     \
     MPI_REDUCE_PROTO_DEV(T,Device::CPU)
-#define MPI_REDUCE_COMPLEX_PROTO(T)                     \
-    MPI_REDUCE_COMPLEX_PROTO_DEV(T,Device::CPU)
 #else
 #define MPI_REDUCE_PROTO(T)                     \
     MPI_REDUCE_PROTO_DEV(T,Device::CPU)         \
     MPI_REDUCE_PROTO_DEV(T,Device::GPU)
-#define MPI_REDUCE_COMPLEX_PROTO(T)                     \
-    MPI_REDUCE_COMPLEX_PROTO_DEV(T,Device::CPU)         \
-    MPI_REDUCE_COMPLEX_PROTO_DEV(T,Device::GPU)
 #endif // HYDROGEN_HAVE_CUDA
 
 MPI_REDUCE_PROTO(byte)
@@ -422,12 +349,12 @@ MPI_REDUCE_PROTO(unsigned long long)
 #endif
 MPI_REDUCE_PROTO(ValueInt<Int>)
 MPI_REDUCE_PROTO(Entry<Int>)
-MPI_REDUCE_COMPLEX_PROTO(float)
+MPI_REDUCE_PROTO(Complex<float>)
 MPI_REDUCE_PROTO(ValueInt<float>)
 MPI_REDUCE_PROTO(ValueInt<Complex<float>>)
 MPI_REDUCE_PROTO(Entry<float>)
 MPI_REDUCE_PROTO(Entry<Complex<float>>)
-MPI_REDUCE_COMPLEX_PROTO(double)
+MPI_REDUCE_PROTO(Complex<double>)
 MPI_REDUCE_PROTO(ValueInt<double>)
 MPI_REDUCE_PROTO(ValueInt<Complex<double>>)
 MPI_REDUCE_PROTO(Entry<double>)
@@ -435,8 +362,8 @@ MPI_REDUCE_PROTO(Entry<Complex<double>>)
 #ifdef HYDROGEN_HAVE_QD
 MPI_REDUCE_PROTO(DoubleDouble)
 MPI_REDUCE_PROTO(QuadDouble)
-MPI_REDUCE_COMPLEX_PROTO(DoubleDouble)
-MPI_REDUCE_COMPLEX_PROTO(QuadDouble)
+MPI_REDUCE_PROTO(Complex<DoubleDouble>)
+MPI_REDUCE_PROTO(Complex<QuadDouble>)
 MPI_REDUCE_PROTO(ValueInt<DoubleDouble>)
 MPI_REDUCE_PROTO(ValueInt<QuadDouble>)
 MPI_REDUCE_PROTO(ValueInt<Complex<DoubleDouble>>)
@@ -448,7 +375,7 @@ MPI_REDUCE_PROTO(Entry<Complex<QuadDouble>>)
 #endif
 #ifdef HYDROGEN_HAVE_QUADMATH
 MPI_REDUCE_PROTO(Quad)
-MPI_REDUCE_COMPLEX_PROTO(Quad)
+MPI_REDUCE_PROTO(Complex<Quad>)
 MPI_REDUCE_PROTO(ValueInt<Quad>)
 MPI_REDUCE_PROTO(ValueInt<Complex<Quad>>)
 MPI_REDUCE_PROTO(Entry<Quad>)
@@ -457,7 +384,7 @@ MPI_REDUCE_PROTO(Entry<Complex<Quad>>)
 #ifdef HYDROGEN_HAVE_MPC
 MPI_REDUCE_PROTO(BigInt)
 MPI_REDUCE_PROTO(BigFloat)
-MPI_REDUCE_COMPLEX_PROTO(BigFloat)
+MPI_REDUCE_PROTO(Complex<BigFloat>)
 MPI_REDUCE_PROTO(ValueInt<BigInt>)
 MPI_REDUCE_PROTO(ValueInt<BigFloat>)
 MPI_REDUCE_PROTO(ValueInt<Complex<BigFloat>>)

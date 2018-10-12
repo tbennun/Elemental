@@ -8,49 +8,27 @@ namespace mpi
 //
 
 #ifdef HYDROGEN_HAVE_ALUMINUM
-template <typename T, Device D,
-          typename/*=EnableIf<IsAluminumDeviceType<T,D>>*/>
+template <typename T, Device D, typename>
 void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
-               SyncInfo<D> const&)
+               SyncInfo<D> const& syncInfo)
 {
     EL_DEBUG_CSE
-    if (count == 0)
-        return;
-
-    // FIXME Synchronize
-    using Backend = BestBackend<T,D,Collective::ALLREDUCE>;
-    Al::Allreduce<Backend>(
-        sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
-        comm.template GetComm<Backend>());
-}
-
-#ifdef HYDROGEN_HAVE_CUDA
-template <typename T,
-          typename/*=EnableIf<IsAluminumDeviceType<T,D>>*/>
-void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
-               SyncInfo<Device::GPU> const& syncInfo)
-{
-    EL_DEBUG_CSE
-    if (count == 0)
-        return;
-
     using Backend = BestBackend<T,Device::GPU,Collective::ALLREDUCE>;
-    SyncInfo<Device::GPU> alSyncInfo(comm.template GetComm<Backend>().get_stream(),
-                                     syncInfo.event_);
+
+    if (count == 0)
+        return;
+
+    auto alSyncInfo =
+        SyncInfoFromComm(comm.template GetComm<Backend>(), syncInfo);
 
     auto syncHelper = MakeMultiSync(alSyncInfo, syncInfo);
-
     Al::Allreduce<Backend>(
         sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         comm.template GetComm<Backend>());
 }
-#endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                  Not<IsAluminumDeviceType<T,D>>>>*/,
-          typename/*=EnableIf<IsPacked<T>>*/>
+template <typename T, Device D, typename, typename, typename, typename, typename>
 void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
                SyncInfo<D> const& syncInfo)
 {
@@ -71,14 +49,12 @@ void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
             count, TypeMap<T>(), NativeOp<T>(op), comm.comm));
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumDeviceType<T,D>>>>*/,
-          typename/*=EnableIf<IsPacked<T>>*/>
+template <typename T, Device D, typename, typename, typename, typename>
 void AllReduce(Complex<T> const* sbuf, Complex<T>* rbuf, int count, Op op,
                Comm comm, SyncInfo<D> const& syncInfo)
 {
     EL_DEBUG_CSE
+
     if (count == 0)
         return;
 
@@ -112,11 +88,7 @@ void AllReduce(Complex<T> const* sbuf, Complex<T>* rbuf, int count, Op op,
 #endif
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumDeviceType<T,D>>>>*/,
-          typename/*=DisableIf<IsPacked<T>>*/,
-          typename/*=void*/>
+template <typename T, Device D, typename, typename, typename>
 void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
                SyncInfo<D> const& syncInfo)
 {
@@ -142,10 +114,7 @@ void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
     Deserialize(count, packedRecv, rbuf);
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<Not<IsDeviceValidType<T,D>>,
-                                Not<IsAluminumDeviceType<T,D>>>>*/,
-          typename/*=void*/, typename/*=void*/, typename/*=void*/>
+template <typename T, Device D, typename, typename>
 void AllReduce(T const*, T*, int, Op, Comm, SyncInfo<D> const&)
 {
     LogicError("AllReduce: Bad device/type combination.");
@@ -159,46 +128,25 @@ void AllReduce(T const*, T*, int, Op, Comm, SyncInfo<D> const&)
 template <typename T, Device D,
           typename/*=EnableIf<IsAluminumDeviceType<T,D>>*/>
 void AllReduce(T* buf, int count, Op op, Comm comm,
-               SyncInfo<D> const& /*syncInfo*/)
+               SyncInfo<D> const& syncInfo)
 {
     EL_DEBUG_CSE
-    if (count == 0)
-        return;
-
-    // FIXME Synchronize
     using Backend = BestBackend<T,D,Collective::ALLREDUCE>;
-    Al::Allreduce<Backend>(
-        buf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
-        comm.template GetComm<Backend>());
-}
 
-#ifdef HYDROGEN_HAVE_CUDA
-template <typename T,
-          typename/*=EnableIf<IsAluminumDeviceType<T,D>>*/>
-void AllReduce(T* buf, int count, Op op, Comm comm,
-               SyncInfo<Device::GPU> const& syncInfo)
-{
-    EL_DEBUG_CSE
     if (count == 0)
         return;
 
-    using Backend = BestBackend<T,Device::GPU,Collective::ALLREDUCE>;
-    SyncInfo<Device::GPU> alSyncInfo(comm.template GetComm<Backend>().get_stream(),
-                                     syncInfo.event_);
+    auto alSyncInfo =
+        SyncInfoFromComm(comm.template GetComm<Backend>(), syncInfo);
 
     auto syncHelper = MakeMultiSync(alSyncInfo, syncInfo);
-
     Al::Allreduce<Backend>(
         buf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         comm.template GetComm<Backend>());
 }
-#endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumDeviceType<T,D>>>>*/,
-          typename/*=EnableIf<IsPacked<T>>*/>
+template <typename T, Device D, typename, typename, typename, typename, typename>
 void AllReduce(T* buf, int count, Op op, Comm comm,
                SyncInfo<D> const& syncInfo)
 {
@@ -218,10 +166,7 @@ void AllReduce(T* buf, int count, Op op, Comm comm,
             count, TypeMap<T>(), NativeOp<T>(op), comm.comm));
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumDeviceType<T,D>>>>*/,
-          typename/*=EnableIf<IsPacked<T>>*/>
+template <typename T, Device D, typename, typename, typename, typename>
 void AllReduce(Complex<T>* buf, int count, Op op, Comm comm,
                SyncInfo<D> const& syncInfo)
 {
@@ -259,11 +204,7 @@ void AllReduce(Complex<T>* buf, int count, Op op, Comm comm,
 #endif
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumDeviceType<T,D>>>>*/,
-          typename/*=DisableIf<IsPacked<T>>*/,
-          typename/*=void*/>
+template <typename T, Device D, typename, typename, typename>
 void AllReduce(T* buf, int count, Op op, Comm comm,
                SyncInfo<D> const& syncInfo)
 {
@@ -289,10 +230,7 @@ void AllReduce(T* buf, int count, Op op, Comm comm,
     Deserialize(count, packedRecv, buf);
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<Not<IsDeviceValidType<T,D>>,
-                                Not<IsAluminumDeviceType<T,D>>>>*/,
-          typename/*=void*/, typename/*=void*/, typename/*=void*/>
+template <typename T, Device D, typename, typename>
 void AllReduce(T*, int, Op, Comm, SyncInfo<D> const&)
 {
     LogicError("AllReduce: Bad device/type combination.");
@@ -318,39 +256,23 @@ void AllReduce(T* buf, int count, Comm comm, SyncInfo<D> const& syncInfo)
 EL_NO_RELEASE_EXCEPT
 { AllReduce(buf, count, SUM, std::move(comm), syncInfo); }
 
-#define MPI_ALLREDUCE_COMMON_PROTO_DEV(T,D)                             \
+#define MPI_ALLREDUCE_PROTO_DEV(T,D)                                    \
+    template void AllReduce(                                            \
+        const T*, T*, int, Op, Comm, SyncInfo<D> const&);               \
+    template void AllReduce(T*, int, Op, Comm, SyncInfo<D> const&);     \
     template void AllReduce(                                            \
         const T*, T*, int, Comm, SyncInfo<D> const&);                   \
     template T AllReduce(T, Op, Comm, SyncInfo<D> const&);              \
     template T AllReduce(T, Comm, SyncInfo<D> const&);                  \
     template void AllReduce(T*, int, Comm, SyncInfo<D> const&);
 
-#define MPI_ALLREDUCE_PROTO_DEV(T,D)                                    \
-    template void AllReduce(                                            \
-        const T*, T*, int, Op, Comm, SyncInfo<D> const&);               \
-    template void AllReduce(T*, int, Op, Comm, SyncInfo<D> const&);     \
-    MPI_ALLREDUCE_COMMON_PROTO_DEV(T,D)
-
-#define MPI_ALLREDUCE_COMPLEX_PROTO_DEV(T,D)                            \
-    template void AllReduce<T>(                                         \
-        const Complex<T>*, Complex<T>*, int, Op, Comm,                  \
-        SyncInfo<D> const&);                                            \
-    template void AllReduce<T>(                                         \
-        Complex<T>*, int, Op, Comm, SyncInfo<D> const&);                \
-    MPI_ALLREDUCE_COMMON_PROTO_DEV(Complex<T>,D)
-
 #ifndef HYDROGEN_HAVE_CUDA
 #define MPI_ALLREDUCE_PROTO(T)             \
     MPI_ALLREDUCE_PROTO_DEV(T,Device::CPU)
-#define MPI_ALLREDUCE_COMPLEX_PROTO(T)             \
-    MPI_ALLREDUCE_COMPLEX_PROTO_DEV(T,Device::CPU)
 #else
 #define MPI_ALLREDUCE_PROTO(T)             \
     MPI_ALLREDUCE_PROTO_DEV(T,Device::CPU) \
     MPI_ALLREDUCE_PROTO_DEV(T,Device::GPU)
-#define MPI_ALLREDUCE_COMPLEX_PROTO(T)             \
-    MPI_ALLREDUCE_COMPLEX_PROTO_DEV(T,Device::CPU) \
-    MPI_ALLREDUCE_COMPLEX_PROTO_DEV(T,Device::GPU)
 #endif // HYDROGEN_HAVE_CUDA
 
 MPI_ALLREDUCE_PROTO(byte)
@@ -366,12 +288,12 @@ MPI_ALLREDUCE_PROTO(unsigned long long)
 #endif
 MPI_ALLREDUCE_PROTO(ValueInt<Int>)
 MPI_ALLREDUCE_PROTO(Entry<Int>)
-MPI_ALLREDUCE_COMPLEX_PROTO(float)
+MPI_ALLREDUCE_PROTO(Complex<float>)
 MPI_ALLREDUCE_PROTO(ValueInt<float>)
 MPI_ALLREDUCE_PROTO(ValueInt<Complex<float>>)
 MPI_ALLREDUCE_PROTO(Entry<float>)
 MPI_ALLREDUCE_PROTO(Entry<Complex<float>>)
-MPI_ALLREDUCE_COMPLEX_PROTO(double)
+MPI_ALLREDUCE_PROTO(Complex<double>)
 MPI_ALLREDUCE_PROTO(ValueInt<double>)
 MPI_ALLREDUCE_PROTO(ValueInt<Complex<double>>)
 MPI_ALLREDUCE_PROTO(Entry<double>)
@@ -379,8 +301,8 @@ MPI_ALLREDUCE_PROTO(Entry<Complex<double>>)
 #ifdef HYDROGEN_HAVE_QD
 MPI_ALLREDUCE_PROTO(DoubleDouble)
 MPI_ALLREDUCE_PROTO(QuadDouble)
-MPI_ALLREDUCE_COMPLEX_PROTO(DoubleDouble)
-MPI_ALLREDUCE_COMPLEX_PROTO(QuadDouble)
+MPI_ALLREDUCE_PROTO(Complex<DoubleDouble>)
+MPI_ALLREDUCE_PROTO(Complex<QuadDouble>)
 MPI_ALLREDUCE_PROTO(ValueInt<DoubleDouble>)
 MPI_ALLREDUCE_PROTO(ValueInt<QuadDouble>)
 MPI_ALLREDUCE_PROTO(ValueInt<Complex<DoubleDouble>>)
@@ -392,7 +314,7 @@ MPI_ALLREDUCE_PROTO(Entry<Complex<QuadDouble>>)
 #endif
 #ifdef HYDROGEN_HAVE_QUADMATH
 MPI_ALLREDUCE_PROTO(Quad)
-MPI_ALLREDUCE_COMPLEX_PROTO(Quad)
+MPI_ALLREDUCE_PROTO(Complex<Quad>)
 MPI_ALLREDUCE_PROTO(ValueInt<Quad>)
 MPI_ALLREDUCE_PROTO(ValueInt<Complex<Quad>>)
 MPI_ALLREDUCE_PROTO(Entry<Quad>)
@@ -401,7 +323,7 @@ MPI_ALLREDUCE_PROTO(Entry<Complex<Quad>>)
 #ifdef HYDROGEN_HAVE_MPC
 MPI_ALLREDUCE_PROTO(BigInt)
 MPI_ALLREDUCE_PROTO(BigFloat)
-MPI_ALLREDUCE_COMPLEX_PROTO(BigFloat)
+MPI_ALLREDUCE_PROTO(Complex<BigFloat>)
 MPI_ALLREDUCE_PROTO(ValueInt<BigInt>)
 MPI_ALLREDUCE_PROTO(ValueInt<BigFloat>)
 MPI_ALLREDUCE_PROTO(ValueInt<Complex<BigFloat>>)

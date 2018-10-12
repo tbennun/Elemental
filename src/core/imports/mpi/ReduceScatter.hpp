@@ -16,28 +16,12 @@ void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
                    SyncInfo<D> const& syncInfo)
 {
     EL_DEBUG_CSE
-
-    using Backend = BestBackend<T,D,Collective::REDUCESCATTER>;
-    Al::Reduce_scatter<Backend>(
-        sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
-        comm.template GetComm<Backend>());
-}
-
-#ifdef HYDROGEN_HAVE_CUDA
-template <typename T,
-          typename/*=EnableIf<IsAluminumSupported<T,D,
-                                  Collectives::REDUCESCATTER>>*/>
-void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
-                   SyncInfo<Device::GPU> const& syncInfo)
-{
-    EL_DEBUG_CSE
     if (count == 0)
         return;
 
-    using Backend = BestBackend<T,Device::GPU,Collective::REDUCESCATTER>;
-    SyncInfo<Device::GPU> alSyncInfo(
-        comm.template GetComm<Backend>().get_stream(),
-        syncInfo.event_);
+    using Backend = BestBackend<T,D,Collective::REDUCESCATTER>;
+    auto alSyncInfo =
+        SyncInfoFromComm(comm.template GetComm<Backend>(), syncInfo);
 
     auto syncHelper = MakeMultiSync(alSyncInfo, syncInfo);
 
@@ -45,13 +29,9 @@ void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
         sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         comm.template GetComm<Backend>());
 }
-#endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                  Not<IsAluminumSupported<T,D>>>>*/,
-          typename/*=EnableIf<IsPacked<T>>*/>
+template <typename T, Device D, typename, typename, typename, typename, typename>
 void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
                     SyncInfo<D> const& syncInfo)
 {
@@ -81,10 +61,7 @@ void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
 #endif
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D>>>>*/,
-          typename/*=EnableIf<IsPacked<T>>*/>
+template <typename T, Device D, typename, typename, typename, typename>
 void ReduceScatter(Complex<T> const* sbuf, Complex<T>* rbuf,
                    int count, Op op, Comm comm, SyncInfo<D> const& syncInfo)
 {
@@ -122,11 +99,7 @@ void ReduceScatter(Complex<T> const* sbuf, Complex<T>* rbuf,
 #endif
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>*/,
-          typename/*=DisableIf<IsPacked<T>>*/,
-          typename/*=void*/>
+template <typename T, Device D, typename, typename, typename>
 void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
                    SyncInfo<D> const& syncInfo)
 {
@@ -165,10 +138,7 @@ void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
 #endif
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<Not<IsDeviceValidType<T,D>>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>*/,
-          typename/*=void*/, typename/*=void*/, typename/*=void*/>
+template <typename T, Device D, typename, typename>
 void ReduceScatter(T const*, T*, int, Op, Comm, SyncInfo<D> const&)
 {
     LogicError("ReduceScatter: Bad device/type combination.");
@@ -183,33 +153,15 @@ template <typename T, Device D,
           typename/*=EnableIf<IsAluminumSupported<T,D,
                                   Collectives::REDUCESCATTER>>*/>
 void ReduceScatter(T* buf, int count, Op op, Comm comm,
-                   SyncInfo<D> const& /*syncInfo*/)
+                   SyncInfo<D> const& syncInfo)
 {
     EL_DEBUG_CSE
     if (count == 0)
         return;
 
-    // FIXME Synchronize
     using Backend = BestBackend<T,D,Collective::REDUCESCATTER>;
-    Al::Reduce_scatter<Backend>(
-        buf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
-        comm.template GetComm<Backend>());
-}
-
-#ifdef HYDROGEN_HAVE_CUDA
-template <typename T,
-          typename/*=EnableIf<IsAluminumSupported<T,Device::GPU,
-                                  Collectives::REDUCESCATTER>>*/>
-void ReduceScatter(T* buf, int count, Op op, Comm comm,
-                   SyncInfo<Device::GPU> const& syncInfo)
-{
-    EL_DEBUG_CSE
-    if (count == 0)
-        return;
-
-    using Backend = BestBackend<T,Device::GPU,Collective::REDUCESCATTER>;
-    SyncInfo<Device::GPU> alSyncInfo(comm.template GetComm<Backend>().get_stream(),
-                                     syncInfo.event_);
+    auto alSyncInfo =
+        SyncInfoFromComm(comm.template GetComm<Backend>(), syncInfo);
 
     auto syncHelper = MakeMultiSync(alSyncInfo, syncInfo);
 
@@ -217,13 +169,9 @@ void ReduceScatter(T* buf, int count, Op op, Comm comm,
         buf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
         comm.template GetComm<Backend>());
 }
-#endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D>>>>*/,
-          typename/*=EnableIf<IsPacked<T>>*/>
+template <typename T, Device D, typename, typename, typename, typename, typename>
 void ReduceScatter(T* buf, int count, Op op, Comm comm,
                SyncInfo<D> const& syncInfo)
 {
@@ -252,10 +200,7 @@ void ReduceScatter(T* buf, int count, Op op, Comm comm,
 #endif
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D>>>>*/,
-          typename/*=EnableIf<IsPacked<T>>*/>
+template <typename T, Device D, typename, typename, typename, typename>
 void ReduceScatter(Complex<T>* buf, int count, Op op, Comm comm,
                    SyncInfo<D> const& syncInfo)
 {
@@ -292,11 +237,7 @@ void ReduceScatter(Complex<T>* buf, int count, Op op, Comm comm,
 #endif
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D>>>>*/,
-          typename/*=DisableIf<IsPacked<T>>*/,
-          typename/*=void*/>
+template <typename T, Device D, typename, typename, typename>
 void ReduceScatter(T* buf, int count, Op op, Comm comm,
                    SyncInfo<D> const& syncInfo)
 {
@@ -332,10 +273,7 @@ void ReduceScatter(T* buf, int count, Op op, Comm comm,
 #endif
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<Not<IsDeviceValidType<T,D>>,
-                                Not<IsAluminumSupported<T,D>>>>*/,
-          typename/*=void*/, typename/*=void*/, typename/*=void*/>
+template <typename T, Device D, typename, typename>
 void ReduceScatter(T*, int, Op, Comm, SyncInfo<D> const&)
 {
     LogicError("ReduceScatter: Bad device/type combination.");
@@ -370,39 +308,23 @@ void ReduceScatter(T* buf, int rc, Comm comm, SyncInfo<D> const& syncInfo)
     ReduceScatter(buf, rc, SUM, comm, syncInfo);
 }
 
-#define MPI_REDUCESCATTER_COMMON_PROTO_DEV(T,D) \
+#define MPI_REDUCESCATTER_PROTO_DEV(T,D)                                \
+    template void ReduceScatter(T const*, T*, int rc, Op op, Comm,      \
+                                SyncInfo<D> const&);                    \
+    template void ReduceScatter(T*, int, Op, Comm, SyncInfo<D> const&); \
     template void ReduceScatter(T const*, T*, int rc, Comm,             \
                                 SyncInfo<D> const&);                    \
     template T ReduceScatter(T, Op, Comm, SyncInfo<D> const&);          \
     template T ReduceScatter(T, Comm, SyncInfo<D> const&);              \
     template void ReduceScatter(T*, int, Comm, SyncInfo<D> const&);
 
-#define MPI_REDUCESCATTER_PROTO_DEV(T,D)                                \
-    template void ReduceScatter(T const*, T*, int rc, Op op, Comm,      \
-                                SyncInfo<D> const&);                    \
-    template void ReduceScatter(T*, int, Op, Comm, SyncInfo<D> const&); \
-    MPI_REDUCESCATTER_COMMON_PROTO_DEV(T,D)
-
-#define MPI_REDUCESCATTER_COMPLEX_PROTO_DEV(T,D)                        \
-    template void ReduceScatter<T>(Complex<T> const*, Complex<T>*,      \
-                                   int rc, Op op, Comm,                 \
-                                   SyncInfo<D> const&);                 \
-    template void ReduceScatter<T>(Complex<T>*, int, Op, Comm,          \
-                                   SyncInfo<D> const&);                 \
-    MPI_REDUCESCATTER_COMMON_PROTO_DEV(Complex<T>,D)
-
 #ifndef HYDROGEN_HAVE_CUDA
 #define MPI_REDUCESCATTER_PROTO(T)             \
     MPI_REDUCESCATTER_PROTO_DEV(T,Device::CPU)
-#define MPI_REDUCESCATTER_COMPLEX_PROTO(T)             \
-    MPI_REDUCESCATTER_COMPLEX_PROTO_DEV(T,Device::CPU)
 #else
 #define MPI_REDUCESCATTER_PROTO(T)             \
     MPI_REDUCESCATTER_PROTO_DEV(T,Device::CPU) \
     MPI_REDUCESCATTER_PROTO_DEV(T,Device::GPU)
-#define MPI_REDUCESCATTER_COMPLEX_PROTO(T)             \
-    MPI_REDUCESCATTER_COMPLEX_PROTO_DEV(T,Device::CPU) \
-    MPI_REDUCESCATTER_COMPLEX_PROTO_DEV(T,Device::GPU)
 #endif // HYDROGEN_HAVE_CUDA
 
 MPI_REDUCESCATTER_PROTO(byte)
@@ -418,12 +340,12 @@ MPI_REDUCESCATTER_PROTO(unsigned long long)
 #endif
 MPI_REDUCESCATTER_PROTO(ValueInt<Int>)
 MPI_REDUCESCATTER_PROTO(Entry<Int>)
-MPI_REDUCESCATTER_COMPLEX_PROTO(float)
+MPI_REDUCESCATTER_PROTO(Complex<float>)
 MPI_REDUCESCATTER_PROTO(ValueInt<float>)
 MPI_REDUCESCATTER_PROTO(ValueInt<Complex<float>>)
 MPI_REDUCESCATTER_PROTO(Entry<float>)
 MPI_REDUCESCATTER_PROTO(Entry<Complex<float>>)
-MPI_REDUCESCATTER_COMPLEX_PROTO(double)
+MPI_REDUCESCATTER_PROTO(Complex<double>)
 MPI_REDUCESCATTER_PROTO(ValueInt<double>)
 MPI_REDUCESCATTER_PROTO(ValueInt<Complex<double>>)
 MPI_REDUCESCATTER_PROTO(Entry<double>)
@@ -431,8 +353,8 @@ MPI_REDUCESCATTER_PROTO(Entry<Complex<double>>)
 #ifdef HYDROGEN_HAVE_QD
 MPI_REDUCESCATTER_PROTO(DoubleDouble)
 MPI_REDUCESCATTER_PROTO(QuadDouble)
-MPI_REDUCESCATTER_COMPLEX_PROTO(DoubleDouble)
-MPI_REDUCESCATTER_COMPLEX_PROTO(QuadDouble)
+MPI_REDUCESCATTER_PROTO(Complex<DoubleDouble>)
+MPI_REDUCESCATTER_PROTO(Complex<QuadDouble>)
 MPI_REDUCESCATTER_PROTO(ValueInt<DoubleDouble>)
 MPI_REDUCESCATTER_PROTO(ValueInt<QuadDouble>)
 MPI_REDUCESCATTER_PROTO(ValueInt<Complex<DoubleDouble>>)
@@ -444,7 +366,7 @@ MPI_REDUCESCATTER_PROTO(Entry<Complex<QuadDouble>>)
 #endif
 #ifdef HYDROGEN_HAVE_QUADMATH
 MPI_REDUCESCATTER_PROTO(Quad)
-MPI_REDUCESCATTER_COMPLEX_PROTO(Quad)
+MPI_REDUCESCATTER_PROTO(Complex<Quad>)
 MPI_REDUCESCATTER_PROTO(ValueInt<Quad>)
 MPI_REDUCESCATTER_PROTO(ValueInt<Complex<Quad>>)
 MPI_REDUCESCATTER_PROTO(Entry<Quad>)
@@ -453,7 +375,7 @@ MPI_REDUCESCATTER_PROTO(Entry<Complex<Quad>>)
 #ifdef HYDROGEN_HAVE_MPC
 MPI_REDUCESCATTER_PROTO(BigInt)
 MPI_REDUCESCATTER_PROTO(BigFloat)
-MPI_REDUCESCATTER_COMPLEX_PROTO(BigFloat)
+MPI_REDUCESCATTER_PROTO(Complex<BigFloat>)
 MPI_REDUCESCATTER_PROTO(ValueInt<BigInt>)
 MPI_REDUCESCATTER_PROTO(ValueInt<BigFloat>)
 MPI_REDUCESCATTER_PROTO(ValueInt<Complex<BigFloat>>)

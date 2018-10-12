@@ -16,37 +16,16 @@ void Scatter(
 
     using Backend = BestBackend<T,D,Collective::GATHER>;
 
-    // FIXME: Synchronization here??
-    Al::Scatter<Backend>(sbuf, rbuf, sc, root, comm.template GetComm<Backend>());
-}
-
-#ifdef HYDROGEN_HAVE_CUDA
-template <typename T,
-          typename/*=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>*/>
-void Scatter(
-    const T* sbuf, int sc,
-    T* rbuf, int rc, int root, Comm comm,
-    SyncInfo<Device::GPU> const& syncInfo )
-{
-    EL_DEBUG_CSE
-
-    using Backend = BestBackend<T,Device::GPU,Collective::GATHER>;
-    SyncInfo<Device::GPU> alSyncInfo(comm.template GetComm<Backend>().get_stream(),
-                                     syncInfo.event_);
+    auto alSyncInfo =
+        SyncInfoFromComm(comm.template GetComm<Backend>(), syncInfo);
 
     auto multisync = MakeMultiSync(alSyncInfo, syncInfo);
-    std::cout << "ALUMINUM SCATTER" << std::endl;
-    Al::Scatter<Backend>(
-        sbuf, rbuf, sc, root, comm.template GetComm<Backend>());
+    Al::Scatter<Backend>(sbuf, rbuf, sc, root, comm.template GetComm<Backend>());
 }
-
-#endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM
 
 template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>*/,
-          typename/*=EnableIf<IsPacked<T>>*/>
+          typename, typename, typename, typename, typename>
 void Scatter(
     const T* sbuf, int sc,
     T* rbuf, int rc, int root, Comm comm,
@@ -68,12 +47,9 @@ void Scatter(
             rbuf, rc, TypeMap<T>(), root, comm.comm));
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>*/,
-          typename/*=EnableIf<IsPacked<T>>*/>
+template <typename T, Device D, typename, typename, typename, typename>
 void Scatter(
-    const Complex<T>* sbuf, int sc,
+    Complex<T> const* sbuf, int sc,
     Complex<T>* rbuf, int rc, int root, Comm comm,
     SyncInfo<D> const& syncInfo)
 {
@@ -104,11 +80,7 @@ void Scatter(
 #endif
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>*/,
-          typename/*=DisableIf<IsPacked<T>>*/,
-          typename/*=void*/>
+template <typename T, Device D, typename, typename, typename>
 void Scatter(
     const T* sbuf, int sc,
     T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& syncInfo )
@@ -139,10 +111,7 @@ void Scatter(
     Deserialize( rc, packedRecv, rbuf );
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<Not<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>*/,
-          typename/*=void*/, typename/*=void*/, typename/*=void*/>
+template <typename T, Device D, typename, typename>
 void Scatter(const T*, int, T*, int, int, Comm, SyncInfo<D> const&)
 {
     LogicError("Scatter: Bad device/type combination.");
@@ -151,23 +120,14 @@ void Scatter(const T*, int, T*, int, int, Comm, SyncInfo<D> const&)
 #define MPI_COLLECTIVE_PROTO_DEV(T,D) \
     template void Scatter(const T* sbuf, int sc, T* rbuf, int rc, int root, \
                           Comm comm, SyncInfo<D> const&);
-#define MPI_COLLECTIVE_COMPLEX_PROTO_DEV(T,D)                           \
-    template void Scatter<T>(const Complex<T>* sbuf, int sc,            \
-                             Complex<T>* rbuf, int rc, int root, Comm comm, \
-                             SyncInfo<D> const&);
 
 #ifdef HYDROGEN_HAVE_CUDA
 #define MPI_COLLECTIVE_PROTO(T) \
     MPI_COLLECTIVE_PROTO_DEV(T,Device::CPU) \
     MPI_COLLECTIVE_PROTO_DEV(T,Device::GPU)
-#define MPI_COLLECTIVE_COMPLEX_PROTO(T) \
-    MPI_COLLECTIVE_COMPLEX_PROTO_DEV(T,Device::CPU) \
-    MPI_COLLECTIVE_COMPLEX_PROTO_DEV(T,Device::GPU)
 #else
 #define MPI_COLLECTIVE_PROTO(T) \
     MPI_COLLECTIVE_PROTO_DEV(T,Device::CPU)
-#define MPI_COLLECTIVE_COMPLEX_PROTO(T) \
-    MPI_COLLECTIVE_COMPLEX_PROTO_DEV(T,Device::CPU)
 #endif
 
 MPI_COLLECTIVE_PROTO(byte)
@@ -183,12 +143,12 @@ MPI_COLLECTIVE_PROTO(unsigned long long)
 #endif
 MPI_COLLECTIVE_PROTO(ValueInt<Int>)
 MPI_COLLECTIVE_PROTO(Entry<Int>)
-MPI_COLLECTIVE_COMPLEX_PROTO(float)
+MPI_COLLECTIVE_PROTO(Complex<float>)
 MPI_COLLECTIVE_PROTO(ValueInt<float>)
 MPI_COLLECTIVE_PROTO(ValueInt<Complex<float>>)
 MPI_COLLECTIVE_PROTO(Entry<float>)
 MPI_COLLECTIVE_PROTO(Entry<Complex<float>>)
-MPI_COLLECTIVE_COMPLEX_PROTO(double)
+MPI_COLLECTIVE_PROTO(Complex<double>)
 MPI_COLLECTIVE_PROTO(ValueInt<double>)
 MPI_COLLECTIVE_PROTO(ValueInt<Complex<double>>)
 MPI_COLLECTIVE_PROTO(Entry<double>)
@@ -196,8 +156,8 @@ MPI_COLLECTIVE_PROTO(Entry<Complex<double>>)
 #ifdef HYDROGEN_HAVE_QD
 MPI_COLLECTIVE_PROTO(DoubleDouble)
 MPI_COLLECTIVE_PROTO(QuadDouble)
-MPI_COLLECTIVE_COMPLEX_PROTO(DoubleDouble)
-MPI_COLLECTIVE_COMPLEX_PROTO(QuadDouble)
+MPI_COLLECTIVE_PROTO(Complex<DoubleDouble>)
+MPI_COLLECTIVE_PROTO(Complex<QuadDouble>)
 MPI_COLLECTIVE_PROTO(ValueInt<DoubleDouble>)
 MPI_COLLECTIVE_PROTO(ValueInt<QuadDouble>)
 MPI_COLLECTIVE_PROTO(ValueInt<Complex<DoubleDouble>>)
@@ -209,7 +169,7 @@ MPI_COLLECTIVE_PROTO(Entry<Complex<QuadDouble>>)
 #endif
 #ifdef HYDROGEN_HAVE_QUADMATH
 MPI_COLLECTIVE_PROTO(Quad)
-MPI_COLLECTIVE_COMPLEX_PROTO(Quad)
+MPI_COLLECTIVE_PROTO(Complex<Quad>)
 MPI_COLLECTIVE_PROTO(ValueInt<Quad>)
 MPI_COLLECTIVE_PROTO(ValueInt<Complex<Quad>>)
 MPI_COLLECTIVE_PROTO(Entry<Quad>)
@@ -218,7 +178,7 @@ MPI_COLLECTIVE_PROTO(Entry<Complex<Quad>>)
 #ifdef HYDROGEN_HAVE_MPC
 MPI_COLLECTIVE_PROTO(BigInt)
 MPI_COLLECTIVE_PROTO(BigFloat)
-MPI_COLLECTIVE_COMPLEX_PROTO(BigFloat)
+MPI_COLLECTIVE_PROTO(Complex<BigFloat>)
 MPI_COLLECTIVE_PROTO(ValueInt<BigInt>)
 MPI_COLLECTIVE_PROTO(ValueInt<BigFloat>)
 MPI_COLLECTIVE_PROTO(ValueInt<Complex<BigFloat>>)

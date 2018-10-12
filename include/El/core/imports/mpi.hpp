@@ -272,6 +272,19 @@ inline void Comm::Reset()
     internal::ResetAllPtrs(al_comms);
 }
 
+// Some SyncInfo stuff
+SyncInfo<Device::CPU> SyncInfoFromComm(
+    Al::MPIBackend::comm_type const&, SyncInfo<Device::CPU> const&)
+{
+    return SyncInfo<Device::CPU>{};
+}
+
+SyncInfo<Device::GPU> SyncInfoFromComm(
+    Al::CUDACommunicator const& comm, SyncInfo<Device::GPU> const& other)
+{
+    return SyncInfo<Device::GPU>{comm.get_stream(), other.event_};
+}
+
 #endif // HYDROGEN_HAVE_ALUMINUM
 
 inline bool operator==( const Comm& a, const Comm& b ) EL_NO_EXCEPT
@@ -792,58 +805,48 @@ void TaggedSendRecv(
 // If the tags are irrelevant
 #define COLL Collective::SENDRECV
 
-#ifdef HYDROGEN_HAVE_ALUMINUM
+// Aluminum
 template <typename T, Device D,
           typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
 void SendRecv(const T* sbuf, int sc, int to,
               T* rbuf, int rc, int from, Comm comm,
               SyncInfo<D> const& syncInfo);
 
+// Aluminum in-place
 template <typename T, Device D,
           typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
 void SendRecv(T* buf, int count, int to, int from, Comm comm,
               SyncInfo<D> const& syncInfo);
 
-#ifdef HYDROGEN_HAVE_CUDA
-template <typename T,
-          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
+// Non-aluminum, not-device-ok
+template <typename T, Device D,
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=DisableIf<IsDeviceValidType<T,D>>>
 void SendRecv(const T* sbuf, int sc, int to,
               T* rbuf, int rc, int from, Comm comm,
-              SyncInfo<Device::GPU> const& syncInfo);
-template <typename T,
-          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
-void SendRecv(T* buf, int count, int to, int from, Comm comm,
-              SyncInfo<Device::GPU> const& syncInfo);
-#endif // HYDROGEN_HAVE_CUDA
-#endif // HYDROGEN_HAVE_ALUMINUM
+              SyncInfo<D> const& syncInfo);
 
+// Non-aluminum, device-ok
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<T,D>>,
           typename=void>
 void SendRecv(const T* sbuf, int sc, int to,
               T* rbuf, int rc, int from, Comm comm,
               SyncInfo<D> const& syncInfo);
 
+// Non-aluminum, non-device-ok
 template <typename T, Device D,
-          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=void, typename=void>
-void SendRecv(const T* sbuf, int sc, int to,
-              T* rbuf, int rc, int from, Comm comm,
-              SyncInfo<D> const& syncInfo);
-
-template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=void>
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=DisableIf<IsDeviceValidType<T,D>>>
 void SendRecv( T* buf, int count, int to, int from, Comm comm,
                SyncInfo<D> const& syncInfo);
 
+// Non-aluminum, device-ok
 template <typename T, Device D,
-          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=void, typename=void>
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=void>
 void SendRecv( T* buf, int count, int to, int from, Comm comm,
                SyncInfo<D> const& syncInfo);
 
@@ -886,52 +889,56 @@ void TaggedSendRecv(
 // Broadcast
 // ---------
 #define COLL Collective::BROADCAST
+#define COLLECTIVE_SIGNATURE                            \
+    void Broadcast(                                     \
+        T* buffer, int count, int root, Comm comm,      \
+        SyncInfo<D> const&)
+#define COLLECTIVE_SIGNATURE_COMPLEX                            \
+    void Broadcast(                                             \
+        Complex<T>* buffer, int count, int root, Comm comm,     \
+        SyncInfo<D> const&)
 
-#ifdef HYDROGEN_HAVE_ALUMINUM
+// Aluminum
 template <typename T, Device D,
           typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
-void Broadcast(T* buffer, int count, int root, Comm comm, SyncInfo<D> const&);
+COLLECTIVE_SIGNATURE;
 
-#ifdef HYDROGEN_HAVE_CUDA
-template <typename T,
-          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
-void Broadcast(T* buffer, int count, int root, Comm comm,
-               SyncInfo<Device::GPU> const& syncInfo);
-#endif // HYDROGEN_HAVE_CUDA
-#endif // HYDROGEN_HAVE_ALUMINUM
-
+// Non-aluminum, not-device-ok
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=EnableIf<IsPacked<T>>>
-void Broadcast(T* buffer, int count, int root, Comm comm,
-               SyncInfo<D> const& syncInfo);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=DisableIf<IsDeviceValidType<T,D>>>
+COLLECTIVE_SIGNATURE;
 
+// Non-aluminum, device-ok, not-packed
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=EnableIf<IsPacked<T>>>
-void Broadcast(Complex<T>* buffer, int count, int root, Comm comm,
-               SyncInfo<D> const& syncInfo);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=DisableIf<IsPacked<T>>>
+COLLECTIVE_SIGNATURE;
 
+// Non-aluminum, device-ok, packed, complex
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=DisableIf<IsPacked<T>>,
+          typename=DisableIf<IsAluminumSupported<Complex<T>,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<Complex<T>,D>>,
+          typename=EnableIf<IsPacked<T>>,
           typename=void>
-void Broadcast(T* buffer, int count, int root, Comm comm,
-               SyncInfo<D> const& syncInfo);
+COLLECTIVE_SIGNATURE_COMPLEX;
 
+// Non-aluminum, device-ok, packed, real
 template <typename T, Device D,
-          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=void, typename=void, typename=void>
-void Broadcast(T*, int, int, Comm, SyncInfo<D> const&);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsPacked<T>>,
+          typename=DisableIf<IsComplex<T>>,
+          typename=void>
+COLLECTIVE_SIGNATURE;
 
 // If the message length is one
 template<typename T, Device D>
 void Broadcast( T& b, int root, Comm comm, SyncInfo<D> const& );
 
+#undef COLLECTIVE_SIGNATURE_COMPLEX
+#undef COLLECTIVE_SIGNATURE
 #undef COLL // Collective::BROADCAST
 
 // Non-blocking broadcast
@@ -959,23 +966,21 @@ void IBroadcast( T& b, int root, Comm comm, Request<T>& request );
 // ------
 
 #define COLL Collective::GATHER
-#ifdef HYDROGEN_HAVE_ALUMINUM
+#define COLLECTIVE_SIGNATURE                    \
+    void Gather(                                \
+        const T* sbuf, int sc,                  \
+        T* rbuf, int rc, int root, Comm comm,   \
+        SyncInfo<D> const& syncInfo)
+#define COLLECTIVE_SIGNATURE_COMPLEX                     \
+    void Gather(                                         \
+        const Complex<T>* sbuf, int sc,                  \
+        Complex<T>* rbuf, int rc, int root, Comm comm,   \
+        SyncInfo<D> const& syncInfo)
+
+// Aluminum
 template <typename T, Device D,
           typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
-void Gather(
-    const T* sbuf, int sc,
-    T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& syncInfo);
-
-#ifdef HYDROGEN_HAVE_CUDA
-template <typename T,
-          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
-void Gather(
-    const T* sbuf, int sc,
-    T* rbuf, int rc, int root, Comm comm,
-    SyncInfo<Device::GPU> const& syncInfo);
-#endif // HYDROGEN_HAVE_CUDA
-#endif // HYDROGEN_HAVE_ALUMINUM
-
+COLLECTIVE_SIGNATURE;
 
 // Even though EL_AVOID_COMPLEX_MPI being defined implies that an std::vector
 // copy of the input data will be created, and the memory allocation can clearly
@@ -983,41 +988,39 @@ void Gather(
 // Linux platforms due to the "optimistic" allocation policy. Therefore we will
 // go ahead and allow std::terminate to be called should such an std::bad_alloc
 // exception occur in a Release build
-template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=EnableIf<IsPacked<T>>>
-void Gather(
-    const T* sbuf, int sc,
-    T* rbuf, int rc, int root, Comm comm,
-    SyncInfo<D> const& syncInfo);
 
+// Non-aluminum, not-device-ok
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=EnableIf<IsPacked<T>>>
-void Gather(
-    const Complex<T>* sbuf, int sc,
-    Complex<T>* rbuf, int rc, int root, Comm comm,
-    SyncInfo<D> const& syncInfo);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=DisableIf<IsDeviceValidType<T,D>>>
+COLLECTIVE_SIGNATURE;
 
+// Non-aluminum, device-ok, not-packed
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=DisableIf<IsPacked<T>>,
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=DisableIf<IsPacked<T>>>
+COLLECTIVE_SIGNATURE;
+
+// Non-aluminum, device-ok, packed, complex
+template <typename T, Device D,
+          typename=DisableIf<IsAluminumSupported<Complex<T>,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<Complex<T>,D>>,
+          typename=EnableIf<IsPacked<T>>,
           typename=void>
-void Gather(
-    const T* sbuf, int sc,
-    T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& syncInfo );
+COLLECTIVE_SIGNATURE_COMPLEX;
 
+// Non-aluminum, device-ok, packed, real
 template <typename T, Device D,
-          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=void, typename=void, typename=void>
-void Gather(
-    const T* sbuf, int sc,
-    T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& syncInfo );
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsPacked<T>>,
+          typename=DisableIf<IsComplex<T>>,
+          typename=void>
+COLLECTIVE_SIGNATURE;
 
+#undef COLLECTIVE_SIGNATURE_COMPLEX
+#undef COLLECTIVE_SIGNATURE
 #undef COLL /* Collective::GATHER */
 
 // Non-blocking gather
@@ -1072,55 +1075,52 @@ EL_NO_RELEASE_EXCEPT;
 // NOTE: See the corresponding note for Gather on std::bad_alloc exceptions
 
 #define COLL Collective::ALLGATHER
+#define COLLECTIVE_SIGNATURE                                    \
+    void AllGather(                                             \
+        T const* sbuf, int sc, T* rbuf, int rc, Comm comm,      \
+        SyncInfo<D> const& syncInfo)
+#define COLLECTIVE_SIGNATURE_COMPLEX                                    \
+    void AllGather(                                                     \
+        Complex<T> const* sbuf, int sc, Complex<T>* rbuf, int rc, Comm comm, \
+        SyncInfo<D> const& syncInfo)
 
-#ifdef HYDROGEN_HAVE_ALUMINUM
+// Aluminum
 template <typename T, Device D,
           typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
-void AllGather(
-    const T* sbuf, int sc, T* rbuf, int rc, Comm comm,
-    SyncInfo<D> const& syncInfo);
+COLLECTIVE_SIGNATURE;
 
-#ifdef HYDROGEN_HAVE_CUDA
-template <typename T,
-          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
-void AllGather(
-    const T* sbuf, int sc, T* rbuf, int rc, Comm comm,
-    SyncInfo<Device::GPU> const& syncInfo);
-#endif // HYDROGEN_HAVE_CUDA
-#endif // HYDROGEN_HAVE_ALUMINUM
-
+// Non-aluminum, not-device-ok
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=EnableIf<IsPacked<T>>>
-void AllGather(
-    const T* sbuf, int sc, T* rbuf, int rc, Comm comm,
-    SyncInfo<D> const& syncInfo);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=DisableIf<IsDeviceValidType<T,D>>>
+COLLECTIVE_SIGNATURE;
 
+// Non-aluminum, device-ok, not-packed
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=EnableIf<IsPacked<T>>>
-void AllGather(
-    const Complex<T>* sbuf, int sc,
-    Complex<T>* rbuf, int rc, Comm comm,
-    SyncInfo<D> const& syncInfo);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=DisableIf<IsPacked<T>>>
+COLLECTIVE_SIGNATURE;
 
+// Non-aluminum, device-ok, packed, complex
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=DisableIf<IsPacked<T>>,
+          typename=DisableIf<IsAluminumSupported<Complex<T>,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<Complex<T>,D>>,
+          typename=EnableIf<IsPacked<T>>,
           typename=void>
-void AllGather(
-    T const* sbuf, int sc, T* rbuf, int rc, Comm comm,
-    SyncInfo<D> const& syncInfo);
+COLLECTIVE_SIGNATURE_COMPLEX;
 
+// Non-aluminum, device-ok, packed, real
 template <typename T, Device D,
-          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=void, typename=void, typename=void>
-void AllGather(T const*, int, T*, int, Comm, SyncInfo<D> const&);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsPacked<T>>,
+          typename=DisableIf<IsComplex<T>>,
+          typename=void>
+COLLECTIVE_SIGNATURE;
 
+#undef COLLECTIVE_SIGNATURE_COMPLEX
+#undef COLLECTIVE_SIGNATURE
 #undef COLL // Collective::ALLGATHER
 
 // AllGather with variable recv sizes
@@ -1149,58 +1149,51 @@ EL_NO_RELEASE_EXCEPT;
 // Scatter
 // -------
 #define COLL Collective::SCATTER
+#define COLLECTIVE_SIGNATURE                    \
+    void Scatter(                               \
+        const T* sbuf, int sc,                  \
+        T* rbuf, int rc, int root, Comm comm,   \
+        SyncInfo<D> const& syncInfo)
+#define COLLECTIVE_SIGNATURE_COMPLEX                    \
+    void Scatter(                                       \
+        const Complex<T>* sbuf, int sc,                 \
+        Complex<T>* rbuf, int rc, int root, Comm comm,  \
+        SyncInfo<D> const& syncInfo)
 
-#ifdef HYDROGEN_HAVE_ALUMINUM
+// Aluminum
 template <typename T, Device D,
           typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
-void Scatter(
-    const T* sbuf, int sc,
-    T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& syncInfo);
+COLLECTIVE_SIGNATURE;
 
-#ifdef HYDROGEN_HAVE_CUDA
-template <typename T,
-          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
-void Scatter(
-    const T* sbuf, int sc,
-    T* rbuf, int rc, int root, Comm comm,
-    SyncInfo<Device::GPU> const& syncInfo);
-#endif // HYDROGEN_HAVE_CUDA
-#endif // HYDROGEN_HAVE_ALUMINUM
-
+// Non-aluminum, not-device-ok
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=EnableIf<IsPacked<T>>>
-void Scatter(
-    const T* sbuf, int sc,
-    T* rbuf, int rc, int root, Comm comm,
-    SyncInfo<D> const& syncInfo);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=DisableIf<IsDeviceValidType<T,D>>>
+COLLECTIVE_SIGNATURE;
 
+// Non-aluminum, device-ok, not-packed
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=EnableIf<IsPacked<T>>>
-void Scatter(
-    const Complex<T>* sbuf, int sc,
-    Complex<T>* rbuf, int rc, int root, Comm comm,
-    SyncInfo<D> const& syncInfo);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=DisableIf<IsPacked<T>>>
+COLLECTIVE_SIGNATURE;
 
+// Non-aluminum, device-ok, packed, complex
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=DisableIf<IsPacked<T>>,
+          typename=DisableIf<IsAluminumSupported<Complex<T>,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<Complex<T>,D>>,
+          typename=EnableIf<IsPacked<T>>,
           typename=void>
-void Scatter(
-    const T* sbuf, int sc,
-    T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& syncInfo );
+COLLECTIVE_SIGNATURE_COMPLEX;
 
+// Non-aluminum, device-ok, packed, real
 template <typename T, Device D,
-          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=void, typename=void, typename=void>
-void Scatter(
-    const T* sbuf, int sc,
-    T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& syncInfo );
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsPacked<T>>,
+          typename=DisableIf<IsComplex<T>>,
+          typename=void>
+COLLECTIVE_SIGNATURE;
 
 // In-place option
 template <typename Real, Device D,
@@ -1217,6 +1210,8 @@ template <typename T, Device D,
 void Scatter( T* buf, int sc, int rc, int root, Comm comm, SyncInfo<D> const& )
 EL_NO_RELEASE_EXCEPT;
 
+#undef COLLECTIVE_SIGNATURE_COMPLEX
+#undef COLLECTIVE_SIGNATURE
 #undef COLL // Collective::SCATTER
 
 // TODO(poulson): MPI_Scatterv support
@@ -1225,50 +1220,52 @@ EL_NO_RELEASE_EXCEPT;
 // --------
 // NOTE: See the corresponding note on std::bad_alloc for Gather
 #define COLL Collective::ALLTOALL
+#define COLLECTIVE_SIGNATURE                                    \
+    void AllToAll(                                              \
+        T const* sbuf, int sc, T* rbuf, int rc, Comm comm,      \
+        SyncInfo<D> const&)
+#define COLLECTIVE_SIGNATURE_COMPLEX                                    \
+    void AllToAll(                                                      \
+        Complex<T> const* sbuf, int sc, Complex<T>* rbuf, int rc,       \
+        Comm comm, SyncInfo<D> const&)
 
-#ifdef HYDROGEN_HAVE_ALUMINUM
+// Aluminum
 template <typename T, Device D,
           typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
-void AllToAll(T const* sbuf, int sc, T* rbuf, int rc, Comm comm,
-              SyncInfo<D> const&);
+COLLECTIVE_SIGNATURE;
 
-#ifdef HYDROGEN_HAVE_CUDA
-template <typename T,
-          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
-void AllToAll(T const* sbuf, int sc, T* rbuf, int rc, Comm comm,
-              SyncInfo<Device::GPU> const& syncInfo);
-#endif // HYDROGEN_HAVE_CUDA
-#endif // HYDROGEN_HAVE_ALUMINUM
-
+// Non-aluminum, not-device-ok
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=EnableIf<IsPacked<T>>>
-void AllToAll(T const* sbuf, int sc, T* rbuf, int rc, Comm comm,
-              SyncInfo<D> const& syncInfo);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=DisableIf<IsDeviceValidType<T,D>>>
+COLLECTIVE_SIGNATURE;
 
+// Non-aluminum, device-ok, not-packed
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=EnableIf<IsPacked<T>>>
-void AllToAll(Complex<T> const* sbuf,
-              int sc, Complex<T>* rbuf, int rc, Comm comm,
-              SyncInfo<D> const& syncInfo);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=DisableIf<IsPacked<T>>>
+COLLECTIVE_SIGNATURE;
 
+// Non-aluminum, device-ok, packed, complex
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=DisableIf<IsPacked<T>>,
+          typename=DisableIf<IsAluminumSupported<Complex<T>,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<Complex<T>,D>>,
+          typename=EnableIf<IsPacked<T>>,
           typename=void>
-void AllToAll(T const* sbuf, int sc, T* rbuf, int rc, Comm comm,
-              SyncInfo<D> const& syncInfo);
+COLLECTIVE_SIGNATURE_COMPLEX;
 
+// Non-aluminum, device-ok, packed, real
 template <typename T, Device D,
-          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=void, typename=void, typename=void>
-void AllToAll(T const*, int, T*, int, Comm, SyncInfo<D> const&);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsPacked<T>>,
+          typename=DisableIf<IsComplex<T>>,
+          typename=void>
+COLLECTIVE_SIGNATURE;
 
+#undef COLLECTIVE_SIGNATURE_COMPLEX
+#undef COLLECTIVE_SIGNATURE
 #undef COLL // Collective::ALLTOALL
 
 // AllToAll with non-uniform send/recv sizes
@@ -1304,48 +1301,52 @@ vector<T> AllToAll
 // Reduce
 // ------
 #define COLL Collective::REDUCE
+#define COLLECTIVE_SIGNATURE                                    \
+    void Reduce(                                                \
+        T const* sbuf, T* rbuf, int count, Op op,               \
+        int root, Comm comm, SyncInfo<D> const& syncInfo)
+#define COLLECTIVE_SIGNATURE_COMPLEX                                    \
+    void Reduce(                                                        \
+        Complex<T> const* sbuf, Complex<T>* rbuf, int count, Op op,     \
+        int root, Comm comm, SyncInfo<D> const& syncInfo)
 
-#ifdef HYDROGEN_HAVE_ALUMINUM
+// Aluminum
 template <typename T, Device D,
           typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
-void Reduce(T const* sbuf, T* rbuf, int count, Op op,
-            int root, Comm comm, SyncInfo<D> const& syncInfo);
+COLLECTIVE_SIGNATURE;
 
-#ifdef HYDROGEN_HAVE_CUDA
-template <typename T,
-          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
-void Reduce(T const* sbuf, T* rbuf, int count, Op op,
-            int root, Comm comm, SyncInfo<Device::GPU> const& syncInfo);
-#endif // HYDROGEN_HAVE_CUDA
-#endif // HYDROGEN_HAVE_ALUMINUM
-
+// Non-aluminum, not-device-ok
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=EnableIf<IsPacked<T>>>
-void Reduce(T const* sbuf, T* rbuf, int count, Op op,
-            int root, Comm comm, SyncInfo<D> const& syncInfo);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=DisableIf<IsDeviceValidType<T,D>>>
+COLLECTIVE_SIGNATURE;
 
+// Non-aluminum, device-ok, not-packed
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=EnableIf<IsPacked<T>>>
-void Reduce(const Complex<T>* sbuf, Complex<T>* rbuf, int count, Op op,
-            int root, Comm comm, SyncInfo<D> const& syncInfo);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=DisableIf<IsPacked<T>>>
+COLLECTIVE_SIGNATURE;
 
+// Non-aluminum, device-ok, packed, complex
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=DisableIf<IsPacked<T>>,
+          typename=DisableIf<IsAluminumSupported<Complex<T>,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<Complex<T>,D>>,
+          typename=EnableIf<IsPacked<T>>,
           typename=void>
-void Reduce(T const* sbuf, T* rbuf, int count, Op op,
-            int root, Comm comm, SyncInfo<D> const& syncInfo);
+COLLECTIVE_SIGNATURE_COMPLEX;
 
+// Non-aluminum, device-ok, packed, real
 template <typename T, Device D,
-          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=void, typename=void, typename=void>
-void Reduce(T const*, T*, int, Op, int, Comm, SyncInfo<D> const&);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsPacked<T>>,
+          typename=DisableIf<IsComplex<T>>,
+          typename=void>
+COLLECTIVE_SIGNATURE;
+
+#undef COLLECTIVE_SIGNATURE_COMPLEX
+#undef COLLECTIVE_SIGNATURE
 
 template <typename T, Device D,class OpClass,
          typename=DisableIf<IsData<OpClass>>>
@@ -1391,48 +1392,49 @@ T Reduce( T sb, int root, Comm comm, SyncInfo<D> const& syncInfo );
 
 // Single-buffer reduce
 // --------------------
+#define COLLECTIVE_SIGNATURE                                    \
+    void Reduce(                                                \
+        T* buf, int count, Op op,                               \
+        int root, Comm comm, SyncInfo<D> const& syncInfo)
+#define COLLECTIVE_SIGNATURE_COMPLEX                                    \
+    void Reduce(                                                        \
+        Complex<T>* buf, int count, Op op,                              \
+        int root, Comm comm, SyncInfo<D> const& syncInfo)
 
-#ifdef HYDROGEN_HAVE_ALUMINUM
+// Aluminum
 template <typename T, Device D,
           typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
-void Reduce(T* buf, int count, Op op,
-            int root, Comm comm, SyncInfo<D> const& syncInfo);
+COLLECTIVE_SIGNATURE;
 
-#ifdef HYDROGEN_HAVE_CUDA
-template <typename T,
-          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
-void Reduce(T* buf, int count, Op op,
-            int root, Comm comm, SyncInfo<Device::GPU> const& syncInfo);
-#endif // HYDROGEN_HAVE_CUDA
-#endif // HYDROGEN_HAVE_ALUMINUM
-
+// Non-aluminum, not-device-ok
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=EnableIf<IsPacked<T>>>
-void Reduce(T* buf, int count, Op op,
-            int root, Comm comm, SyncInfo<D> const& syncInfo);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=DisableIf<IsDeviceValidType<T,D>>>
+COLLECTIVE_SIGNATURE;
 
+// Non-aluminum, device-ok, not-packed
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=EnableIf<IsPacked<T>>>
-void Reduce(Complex<T>* buf, int count, Op op,
-            int root, Comm comm, SyncInfo<D> const& syncInfo);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=DisableIf<IsPacked<T>>>
+COLLECTIVE_SIGNATURE;
 
+// Non-aluminum, device-ok, packed, complex
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=DisableIf<IsPacked<T>>,
+          typename=DisableIf<IsAluminumSupported<Complex<T>,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<Complex<T>,D>>,
+          typename=EnableIf<IsPacked<T>>,
           typename=void>
-void Reduce(T* buf, int count, Op op,
-            int root, Comm comm, SyncInfo<D> const& syncInfo);
+COLLECTIVE_SIGNATURE_COMPLEX;
 
+// Non-aluminum, device-ok, packed, real
 template <typename T, Device D,
-          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=void, typename=void, typename=void>
-void Reduce(T*, int, Op, int, Comm, SyncInfo<D> const&);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsPacked<T>>,
+          typename=DisableIf<IsComplex<T>>,
+          typename=void>
+COLLECTIVE_SIGNATURE;
 
 template <typename T, Device D,class OpClass,
          typename=DisableIf<IsData<OpClass>>>
@@ -1452,95 +1454,106 @@ template <typename T, Device D>
 void Reduce( T* buf, int count, int root, Comm comm,
              SyncInfo<D> const& syncInfo );
 
+#undef COLLECTIVE_SIGNATURE_COMPLEX
+#undef COLLECTIVE_SIGNATURE
 #undef COLL // Collective::REDUCE
 
 // AllReduce
 // ---------
 
 #define COLL Collective::ALLREDUCE
+#define COLLECTIVE_SIGNATURE                                    \
+    void AllReduce(                                             \
+        T const* sbuf, T* rbuf, int count, Op op, Comm comm,    \
+        SyncInfo<D> const&)
+#define COLLECTIVE_SIGNATURE_COMPLEX                                    \
+    void AllReduce(                                                     \
+        Complex<T> const* sbuf, Complex<T>* rbuf, int count, Op op,     \
+        Comm comm, SyncInfo<D> const&)
 
+// Aluminum
 template <typename T, Device D,
           typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
-void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
-               SyncInfo<D> const&);
+COLLECTIVE_SIGNATURE;
 
-#ifdef HYDROGEN_HAVE_CUDA
-template <typename T,
-          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
-void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
-               SyncInfo<Device::GPU> const&);
-#endif // HYDROGEN_HAVE_CUDA
-
+// Non-aluminum, not-device-ok
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=EnableIf<IsPacked<T>>>
-void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
-               SyncInfo<D> const& syncInfo);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=DisableIf<IsDeviceValidType<T,D>>>
+COLLECTIVE_SIGNATURE;
 
+// Non-aluminum, device-ok, not-packed
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=EnableIf<IsPacked<T>>>
-void AllReduce(Complex<T> const* sbuf, Complex<T>* rbuf, int count, Op op,
-               Comm comm, SyncInfo<D> const& syncInfo);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=DisableIf<IsPacked<T>>>
+COLLECTIVE_SIGNATURE;
 
+// Non-aluminum, device-ok, packed, complex
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=DisableIf<IsPacked<T>>,
+          typename=DisableIf<IsAluminumSupported<Complex<T>,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<Complex<T>,D>>,
+          typename=EnableIf<IsPacked<T>>,
           typename=void>
-void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
-               SyncInfo<D> const& syncInfo);
+COLLECTIVE_SIGNATURE_COMPLEX;
 
+// Non-aluminum, device-ok, packed, real
 template <typename T, Device D,
-          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=void, typename=void, typename=void>
-void AllReduce(T const*, T*, int, Op, Comm, SyncInfo<D> const&);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsPacked<T>>,
+          typename=DisableIf<IsComplex<T>>,
+          typename=void>
+COLLECTIVE_SIGNATURE;
+
+#undef COLLECTIVE_SIGNATURE_COMPLEX
+#undef COLLECTIVE_SIGNATURE
 
 //
 // The "IN_PLACE" allreduce
 //
 
+#define COLLECTIVE_SIGNATURE                            \
+    void AllReduce(T* buf, int count, Op op, Comm comm, \
+                   SyncInfo<D> const& syncInfo)
+#define COLLECTIVE_SIGNATURE_COMPLEX                             \
+    void AllReduce(Complex<T>* buf, int count, Op op, Comm comm, \
+                   SyncInfo<D> const& syncInfo)
+
+// Aluminum
 template <typename T, Device D,
           typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
-void AllReduce(T* buf, int count, Op op, Comm comm,
-               SyncInfo<D> const& /*syncInfo*/);
-#ifdef HYDROGEN_HAVE_CUDA
-template <typename T,
-          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
-void AllReduce(T* buf, int count, Op op, Comm comm,
-               SyncInfo<Device::GPU> const& /*syncInfo*/);
-#endif // HYDROGEN_HAVE_CUDA
+COLLECTIVE_SIGNATURE;
 
+// Non-aluminum, not-device-ok
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=EnableIf<IsPacked<T>>>
-void AllReduce(T* buf, int count, Op op, Comm comm,
-               SyncInfo<D> const& syncInfo);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=DisableIf<IsDeviceValidType<T,D>>>
+COLLECTIVE_SIGNATURE;
 
+// Non-aluminum, device-ok, not-packed
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=EnableIf<IsPacked<T>>>
-void AllReduce(Complex<T>* buf, int count, Op op, Comm comm,
-               SyncInfo<D> const& syncInfo);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=DisableIf<IsPacked<T>>>
+COLLECTIVE_SIGNATURE;
 
+// Non-aluminum, device-ok, packed, complex
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=DisableIf<IsPacked<T>>,
+          typename=DisableIf<IsAluminumSupported<Complex<T>,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<Complex<T>,D>>,
+          typename=EnableIf<IsPacked<T>>,
           typename=void>
-void AllReduce(T* buf, int count, Op op, Comm comm,
-               SyncInfo<D> const& syncInfo);
+COLLECTIVE_SIGNATURE_COMPLEX;
 
+// Non-aluminum, device-ok, packed, real
 template <typename T, Device D,
-          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=void, typename=void, typename=void>
-void AllReduce(T*, int, Op, Comm, SyncInfo<D> const&);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsPacked<T>>,
+          typename=DisableIf<IsComplex<T>>,
+          typename=void>
+COLLECTIVE_SIGNATURE;
 
 template <typename T, Device D>
 void AllReduce(const T* sbuf, T* rbuf, int count, Comm comm,
@@ -1555,55 +1568,59 @@ T AllReduce(T sb, Comm comm, SyncInfo<D> const& syncInfo);
 template <typename T, Device D>
 void AllReduce(T* buf, int count, Comm comm, SyncInfo<D> const& syncInfo);
 
+#undef COLLECTIVE_SIGNATURE_COMPLEX
+#undef COLLECTIVE_SIGNATURE
 #undef COLL // Collective::ALLREDUCE
 
 // ReduceScatter
 // -------------
 #define COLL Collective::REDUCESCATTER
+#define COLLECTIVE_SIGNATURE                                    \
+    void ReduceScatter(                                         \
+        T const* sbuf, T* rbuf, int rc, Op op, Comm comm,       \
+        SyncInfo<D> const& syncInfo )
+#define COLLECTIVE_SIGNATURE_COMPLEX                                    \
+    void ReduceScatter(                                                 \
+        Complex<T> const* sbuf, Complex<T>* rbuf, int rc, Op op,        \
+            Comm comm, SyncInfo<D> const& syncInfo )
 
-#ifdef HYDROGEN_HAVE_ALUMINUM
+// Aluminum
 template <typename T, Device D,
           typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
-void ReduceScatter( T const* sbuf, T* rbuf, int rc, Op op, Comm comm,
-                    SyncInfo<D> const& syncInfo );
-#ifdef HYDROGEN_HAVE_CUDA
-template <typename T,
-          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
-void ReduceScatter( T const* sbuf, T* rbuf, int rc, Op op, Comm comm,
-                    SyncInfo<Device::GPU> const& syncInfo );
-#endif // HYDROGEN_HAVE_CUDA
-#endif // HYDROGEN_HAVE_ALUMINUM
+COLLECTIVE_SIGNATURE;
 
-template<typename T, Device D,
-         typename=EnableIf<And<IsDeviceValidType<T,D>,
-                               Not<IsAluminumSupported<T,D,COLL>>>>,
-         typename=EnableIf<IsPacked<T>>>
-void ReduceScatter(
-    T const* sbuf, T* rbuf, int rc, Op op, Comm comm,
-    SyncInfo<D> const& syncInfo );
-
-template<typename T, Device D,
-         typename=EnableIf<And<IsDeviceValidType<T,D>,
-                               Not<IsAluminumSupported<T,D,COLL>>>>,
-         typename=EnableIf<IsPacked<T>>>
-void ReduceScatter(
-    Complex<T> const* sbuf, Complex<T>* rbuf, int rc, Op op, Comm comm,
-    SyncInfo<D> const& syncInfo );
-
+// Non-aluminum, not-device-ok
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=DisableIf<IsPacked<T>>,
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=DisableIf<IsDeviceValidType<T,D>>>
+COLLECTIVE_SIGNATURE;
+
+// Non-aluminum, device-ok, not-packed
+template <typename T, Device D,
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=DisableIf<IsPacked<T>>>
+COLLECTIVE_SIGNATURE;
+
+// Non-aluminum, device-ok, packed, complex
+template <typename T, Device D,
+          typename=DisableIf<IsAluminumSupported<Complex<T>,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<Complex<T>,D>>,
+          typename=EnableIf<IsPacked<T>>,
           typename=void>
-void ReduceScatter(
-    T const* sbuf, T* rbuf, int rc, Op op, Comm comm,
-    SyncInfo<D> const& syncInfo );
+COLLECTIVE_SIGNATURE_COMPLEX;
 
+// Non-aluminum, device-ok, packed, real
 template <typename T, Device D,
-          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=void, typename=void, typename=void>
-void ReduceScatter(T const*, T*, int, Op, Comm, SyncInfo<D> const&);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsPacked<T>>,
+          typename=DisableIf<IsComplex<T>>,
+          typename=void>
+COLLECTIVE_SIGNATURE;
+
+#undef COLLECTIVE_SIGNATURE_COMPLEX
+#undef COLLECTIVE_SIGNATURE
 
 // FIXME: WHAT TO DO HERE??
 template<typename T, Device D, class OpClass,
@@ -1627,46 +1644,49 @@ void ReduceScatter( T const* sbuf, T* rbuf, int rc, Comm comm,
 // Single-buffer ReduceScatter
 // ---------------------------
 
-#ifdef HYDROGEN_HAVE_ALUMINUM
+#define COLLECTIVE_SIGNATURE                    \
+    void ReduceScatter(                         \
+        T* buf, int count, Op op, Comm comm,    \
+        SyncInfo<D> const& syncInfo)
+#define COLLECTIVE_SIGNATURE_COMPLEX                     \
+    void ReduceScatter(                                  \
+        Complex<T>* buf, int count, Op op, Comm comm,    \
+        SyncInfo<D> const& syncInfo)
+
+// Aluminum
 template <typename T, Device D,
           typename=EnableIf<IsAluminumSupported<T,D,COLL>>>
-void ReduceScatter(T* buf, int count, Op op, Comm comm,
-                   SyncInfo<D> const& syncInfo);
-#ifdef HYDROGEN_HAVE_CUDA
-template <typename T,
-          typename=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>>
-void ReduceScatter( T* buf, int count, Op op, Comm comm,
-                    SyncInfo<Device::GPU> const& syncInfo );
-#endif // HYDROGEN_HAVE_CUDA
-#endif // HYDROGEN_HAVE_ALUMINUM
+COLLECTIVE_SIGNATURE;
 
+// Non-aluminum, not-device-ok
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=EnableIf<IsPacked<T>>>
-void ReduceScatter(T* buf, int count, Op op, Comm comm,
-                   SyncInfo<D> const& syncInfo);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=DisableIf<IsDeviceValidType<T,D>>>
+COLLECTIVE_SIGNATURE;
 
+// Non-aluminum, device-ok, not-packed
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=EnableIf<IsPacked<T>>>
-void ReduceScatter(Complex<T>* buf, int count, Op op, Comm comm,
-                   SyncInfo<D> const& syncInfo);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=DisableIf<IsPacked<T>>>
+COLLECTIVE_SIGNATURE;
 
+// Non-aluminum, device-ok, packed, complex
 template <typename T, Device D,
-          typename=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=DisableIf<IsPacked<T>>,
+          typename=DisableIf<IsAluminumSupported<Complex<T>,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<Complex<T>,D>>,
+          typename=EnableIf<IsPacked<T>>,
           typename=void>
-void ReduceScatter(T* buf, int count, Op op, Comm comm,
-                   SyncInfo<D> const& syncInfo);
+COLLECTIVE_SIGNATURE_COMPLEX;
 
+// Non-aluminum, device-ok, packed, real
 template <typename T, Device D,
-          typename=EnableIf<And<Not<IsDeviceValidType<T,D>>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>,
-          typename=void, typename=void, typename=void>
-void ReduceScatter(T*, int, Op, Comm, SyncInfo<D> const&);
+          typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
+          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsPacked<T>>,
+          typename=DisableIf<IsComplex<T>>,
+          typename=void>
+COLLECTIVE_SIGNATURE;
 
 // FIXME: WHAT TO DO HERE??
 template<typename T, Device D, class OpClass,
@@ -1686,6 +1706,8 @@ void ReduceScatter(
 template <typename T, Device D>
 void ReduceScatter(T* buf, int rc, Comm comm, SyncInfo<D> const&);
 
+#undef COLLECTIVE_SIGNATURE_COMPLEX
+#undef COLLECTIVE_SIGNATURE
 #undef COLL // Collective::REDUCESCATTER
 
 // Variable-length ReduceScatter

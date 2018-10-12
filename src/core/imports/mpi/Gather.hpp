@@ -15,38 +15,16 @@ void Gather(
     EL_DEBUG_CSE
 
     using Backend = BestBackend<T,D,Collective::GATHER>;
-
-    // FIXME: Synchronization here??
-    Al::Gather<Backend>(sbuf, rbuf, sc, root, comm.template GetComm<Backend>());
-}
-
-#ifdef HYDROGEN_HAVE_CUDA
-template <typename T,
-          typename/*=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>*/>
-void Gather(
-    const T* sbuf, int sc,
-    T* rbuf, int rc, int root, Comm comm,
-    SyncInfo<Device::GPU> const& syncInfo )
-{
-    EL_DEBUG_CSE
-
-    using Backend = BestBackend<T,Device::GPU,Collective::GATHER>;
-    SyncInfo<Device::GPU> alSyncInfo(comm.template GetComm<Backend>().get_stream(),
-                                     syncInfo.event_);
+    auto alSyncInfo =
+        SyncInfoFromComm(comm.template GetComm<Backend>(), syncInfo);
 
     auto multisync = MakeMultiSync(alSyncInfo, syncInfo);
-    std::cout << "ALUMINUM GATHER" << std::endl;
     Al::Gather<Backend>(
         sbuf, rbuf, sc, root, comm.template GetComm<Backend>());
 }
-
-#endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>*/,
-          typename/*=EnableIf<IsPacked<T>>*/>
+template <typename T, Device D, typename, typename, typename, typename, typename>
 void Gather(
     const T* sbuf, int sc,
     T* rbuf, int rc, int root, Comm comm,
@@ -71,10 +49,7 @@ void Gather(
             rbuf, rc, TypeMap<T>(), root, comm.comm));
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>*/,
-          typename/*=EnableIf<IsPacked<T>>*/>
+template <typename T, Device D, typename, typename, typename, typename>
 void Gather(
     const Complex<T>* sbuf, int sc,
     Complex<T>* rbuf, int rc, int root, Comm comm,
@@ -108,11 +83,7 @@ void Gather(
 #endif
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>*/,
-          typename/*=DisableIf<IsPacked<T>>*/,
-          typename/*=void*/>
+template <typename T, Device D, typename, typename, typename>
 void Gather(
     const T* sbuf, int sc,
     T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& syncInfo )
@@ -145,10 +116,7 @@ void Gather(
         Deserialize( totalRecv, packedRecv, rbuf );
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<Not<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>*/,
-          typename/*=void*/, typename/*=void*/, typename/*=void*/>
+template <typename T, Device D, typename, typename>
 void Gather(const T*, int, T*, int, int, Comm, SyncInfo<D> const&)
 {
     LogicError("Gather: Bad device/type combination.");
@@ -159,8 +127,8 @@ void Gather(const T*, int, T*, int, int, Comm, SyncInfo<D> const&)
                          Comm comm, SyncInfo<D> const&);
 
 #define MPI_COLLECTIVE_COMPLEX_PROTO_DEV(T,D) \
-    template void Gather<T>(const Complex<T>* sbuf, int sc, Complex<T>* rbuf, \
-                            int rc, int root, Comm comm, SyncInfo<D> const&);
+    template void Gather(const Complex<T>* sbuf, int sc, Complex<T>* rbuf, \
+                         int rc, int root, Comm comm, SyncInfo<D> const&);
 
 #ifdef HYDROGEN_HAVE_CUDA
 #define MPI_COLLECTIVE_PROTO(T) \

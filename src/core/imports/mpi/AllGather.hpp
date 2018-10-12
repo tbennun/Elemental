@@ -10,40 +10,22 @@ template <typename T, Device D,
           typename/*=EnableIf<IsAluminumSupported<T,D,COLL>>*/>
 void AllGather(
     const T* sbuf, int sc, T* rbuf, int rc, Comm comm,
-    SyncInfo<D> const& /*syncInfo*/)
-{
-    EL_DEBUG_CSE
-
-    // FIXME: Synchronization here??
-    using Backend = BestBackend<T,D,Collective::ALLGATHER>;
-    Al::Allgather<Backend>(sbuf, rbuf, sc, comm.template GetComm<Backend>());
-}
-
-#ifdef HYDROGEN_HAVE_CUDA
-template <typename T,
-          typename/*=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>*/>
-void AllGather(
-    const T* sbuf, int sc, T* rbuf, int rc, Comm comm,
-    SyncInfo<Device::GPU> const& syncInfo)
+    SyncInfo<D> const& syncInfo)
 {
     EL_DEBUG_CSE
 
     using Backend = BestBackend<T,Device::GPU,Collective::ALLGATHER>;
-    SyncInfo<Device::GPU> alSyncInfo(comm.template GetComm<Backend>().get_stream(),
-                                     syncInfo.event_);
+    auto alSyncInfo =
+        SyncInfoFromComm(comm.template GetComm<Backend>(), syncInfo);
 
     auto multisync = MakeMultiSync(alSyncInfo, syncInfo);
 
     Al::Allgather<Backend>(
         sbuf, rbuf, sc, comm.template GetComm<Backend>());
 }
-#endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>*/,
-          typename/*=EnableIf<IsPacked<T>>*/>
+template <typename T, Device D, typename, typename, typename, typename, typename>
 void AllGather(
     const T* sbuf, int sc, T* rbuf, int rc, Comm comm,
     SyncInfo<D> const& syncInfo)
@@ -75,12 +57,9 @@ void AllGather(
 #endif
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>*/,
-          typename/*=EnableIf<IsPacked<T>>*/>
+template <typename T, Device D, typename, typename, typename, typename>
 void AllGather(
-    const Complex<T>* sbuf, int sc,
+    Complex<T> const* sbuf, int sc,
     Complex<T>* rbuf, int rc, Comm comm,
     SyncInfo<D> const& syncInfo)
 {
@@ -108,7 +87,8 @@ void AllGather(
 #ifdef EL_AVOID_COMPLEX_MPI
     CheckMpi(
         MPI_Allgather(
-            sbuf, 2*sc, TypeMap<T>(), rbuf, 2*rc, TypeMap<T>(), comm.comm));
+            sbuf, 2*sc, TypeMap<T>(), rbuf, 2*rc,
+            TypeMap<T>(), comm.comm));
 #else
     CheckMpi(
         MPI_Allgather(
@@ -118,11 +98,7 @@ void AllGather(
 #endif
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>*/,
-          typename/*=DisableIf<IsPacked<T>>*/,
-          typename/*=void*/>
+template <typename T, Device D, typename, typename, typename>
 void AllGather(
     T const* sbuf, int sc, T* rbuf, int rc, Comm comm,
     SyncInfo<D> const& syncInfo)
@@ -149,10 +125,7 @@ void AllGather(
     Deserialize(totalRecv, packedRecv, rbuf);
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<Not<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>*/,
-          typename/*=void*/, typename/*=void*/, typename/*=void*/>
+template <typename T, Device D, typename, typename>
 void AllGather(
     T const*, int, T*, int, Comm, SyncInfo<D> const&)
 {
@@ -163,22 +136,13 @@ void AllGather(
     template void AllGather(const T* sbuf, int sc, T* rbuf, int rc, Comm comm, \
                             SyncInfo<D> const&);
 
-#define MPI_ALLGATHER_COMPLEX_PROTO_DEV(T,D) \
-    template void AllGather<T>(const Complex<T>*, int, Complex<T>*, int, Comm, \
-                               SyncInfo<D> const&);
-
 #ifndef HYDROGEN_HAVE_CUDA
 #define MPI_ALLGATHER_PROTO(T) \
     MPI_ALLGATHER_PROTO_DEV(T,Device::CPU)
-#define MPI_ALLGATHER_COMPLEX_PROTO(T) \
-    MPI_ALLGATHER_COMPLEX_PROTO_DEV(T,Device::CPU)
 #else
 #define MPI_ALLGATHER_PROTO(T)             \
     MPI_ALLGATHER_PROTO_DEV(T,Device::CPU) \
     MPI_ALLGATHER_PROTO_DEV(T,Device::GPU)
-#define MPI_ALLGATHER_COMPLEX_PROTO(T)     \
-    MPI_ALLGATHER_COMPLEX_PROTO_DEV(T,Device::CPU) \
-    MPI_ALLGATHER_COMPLEX_PROTO_DEV(T,Device::GPU)
 #endif // HYDROGEN_HAVE_CUDA
 
 MPI_ALLGATHER_PROTO(byte)
@@ -194,12 +158,12 @@ MPI_ALLGATHER_PROTO(unsigned long long)
 #endif
 MPI_ALLGATHER_PROTO(ValueInt<Int>)
 MPI_ALLGATHER_PROTO(Entry<Int>)
-MPI_ALLGATHER_COMPLEX_PROTO(float)
+MPI_ALLGATHER_PROTO(Complex<float>)
 MPI_ALLGATHER_PROTO(ValueInt<float>)
 MPI_ALLGATHER_PROTO(ValueInt<Complex<float>>)
 MPI_ALLGATHER_PROTO(Entry<float>)
 MPI_ALLGATHER_PROTO(Entry<Complex<float>>)
-MPI_ALLGATHER_COMPLEX_PROTO(double)
+MPI_ALLGATHER_PROTO(Complex<double>)
 MPI_ALLGATHER_PROTO(ValueInt<double>)
 MPI_ALLGATHER_PROTO(ValueInt<Complex<double>>)
 MPI_ALLGATHER_PROTO(Entry<double>)
@@ -207,8 +171,8 @@ MPI_ALLGATHER_PROTO(Entry<Complex<double>>)
 #ifdef HYDROGEN_HAVE_QD
 MPI_ALLGATHER_PROTO(DoubleDouble)
 MPI_ALLGATHER_PROTO(QuadDouble)
-MPI_ALLGATHER_COMPLEX_PROTO(DoubleDouble)
-MPI_ALLGATHER_COMPLEX_PROTO(QuadDouble)
+MPI_ALLGATHER_PROTO(Complex<DoubleDouble>)
+MPI_ALLGATHER_PROTO(Complex<QuadDouble>)
 MPI_ALLGATHER_PROTO(ValueInt<DoubleDouble>)
 MPI_ALLGATHER_PROTO(ValueInt<QuadDouble>)
 MPI_ALLGATHER_PROTO(ValueInt<Complex<DoubleDouble>>)
@@ -220,7 +184,7 @@ MPI_ALLGATHER_PROTO(Entry<Complex<QuadDouble>>)
 #endif
 #ifdef HYDROGEN_HAVE_QUADMATH
 MPI_ALLGATHER_PROTO(Quad)
-MPI_ALLGATHER_COMPLEX_PROTO(Quad)
+MPI_ALLGATHER_PROTO(Complex<Quad>)
 MPI_ALLGATHER_PROTO(ValueInt<Quad>)
 MPI_ALLGATHER_PROTO(ValueInt<Complex<Quad>>)
 MPI_ALLGATHER_PROTO(Entry<Quad>)
@@ -229,7 +193,7 @@ MPI_ALLGATHER_PROTO(Entry<Complex<Quad>>)
 #ifdef HYDROGEN_HAVE_MPC
 MPI_ALLGATHER_PROTO(BigInt)
 MPI_ALLGATHER_PROTO(BigFloat)
-MPI_ALLGATHER_COMPLEX_PROTO(BigFloat)
+MPI_ALLGATHER_PROTO(Complex<BigFloat>)
 MPI_ALLGATHER_PROTO(ValueInt<BigInt>)
 MPI_ALLGATHER_PROTO(ValueInt<BigFloat>)
 MPI_ALLGATHER_PROTO(ValueInt<Complex<BigFloat>>)

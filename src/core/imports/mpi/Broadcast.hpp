@@ -10,40 +10,22 @@ namespace mpi
 #ifdef HYDROGEN_HAVE_ALUMINUM
 template <typename T, Device D,
           typename/*=EnableIf<IsAluminumSupported<T,D,COLL>>*/>
-void Broadcast(T* buffer, int count, int root, Comm comm, SyncInfo<D> const&)
+void Broadcast(T* buffer, int count, int root, Comm comm,
+               SyncInfo<D> const& syncInfo)
 {
     EL_DEBUG_CSE
 
     using Backend = BestBackend<T,D,Collective::BROADCAST>;
-
-    // FIXME What kind of synchronization needs to happen here??
-    Al::Bcast<Backend>(buffer, count, root, comm.template GetComm<Backend>());
-}
-
-#ifdef HYDROGEN_HAVE_CUDA
-template <typename T,
-          typename/*=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>*/>
-void Broadcast(T* buffer, int count, int root, Comm comm,
-               SyncInfo<Device::GPU> const& syncInfo)
-{
-    EL_DEBUG_CSE
-
-    using Backend = BestBackend<T,Device::GPU,Collective::BROADCAST>;
-    SyncInfo<Device::GPU> alSyncInfo(comm.template GetComm<Backend>().get_stream(),
-                                     syncInfo.event_);
-
+    auto alSyncInfo =
+        SyncInfoFromComm(comm.template GetComm<Backend>(), syncInfo);
     auto multisync = MakeMultiSync(alSyncInfo, syncInfo);
 
     Al::Bcast<Backend>(
         buffer, count, root, comm.template GetComm<Backend>());
 }
-#endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>*/,
-          typename/*=EnableIf<IsPacked<T>>*/>
+template <typename T, Device D, typename, typename, typename, typename, typename>
 void Broadcast(T* buffer, int count, int root, Comm comm,
                SyncInfo<D> const& syncInfo)
 {
@@ -66,10 +48,7 @@ void Broadcast(T* buffer, int count, int root, Comm comm,
     CheckMpi(MPI_Bcast(buffer, count, TypeMap<T>(), root, comm.comm));
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>*/,
-          typename/*=EnableIf<IsPacked<T>>*/>
+template <typename T, Device D, typename, typename, typename, typename>
 void Broadcast(Complex<T>* buffer, int count, int root, Comm comm,
                SyncInfo<D> const& syncInfo)
 {
@@ -96,11 +75,7 @@ void Broadcast(Complex<T>* buffer, int count, int root, Comm comm,
 #endif
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>*/,
-          typename/*=DisableIf<IsPacked<T>>*/,
-          typename/*=void*/>
+template <typename T, Device D, typename, typename, typename>
 void Broadcast(T* buffer, int count, int root, Comm comm,
                SyncInfo<D> const& syncInfo)
 {
@@ -126,10 +101,7 @@ void Broadcast(T* buffer, int count, int root, Comm comm,
     Deserialize(count, packedBuf, buffer);
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<Not<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>*/,
-          typename/*=void*/, typename/*=void*/, typename/*=void*/>
+template <typename T, Device D, typename, typename>
 void Broadcast(T*, int, int, Comm, SyncInfo<D> const&)
 {
     LogicError("Broadcast: Bad device/type combination.");
@@ -143,22 +115,13 @@ void Broadcast( T& b, int root, Comm comm, SyncInfo<D> const& syncInfo )
     template void Broadcast(T*, int, int, Comm, SyncInfo<D> const&);       \
     template void Broadcast(T&, int, Comm, SyncInfo<D> const&);
 
-#define MPI_BROADCAST_COMPLEX_PROTO_DEV(T,D)                            \
-    template void Broadcast<T>(Complex<T>*, int, int, Comm, SyncInfo<D> const&); \
-    template void Broadcast(Complex<T>&, int, Comm, SyncInfo<D> const&);
-
 #ifndef HYDROGEN_HAVE_CUDA
 #define MPI_BROADCAST_PROTO(T)                  \
     MPI_BROADCAST_PROTO_DEV(T,Device::CPU)
-#define MPI_BROADCAST_COMPLEX_PROTO(T)                  \
-    MPI_BROADCAST_COMPLEX_PROTO_DEV(T,Device::CPU)
 #else
 #define MPI_BROADCAST_PROTO(T)                  \
     MPI_BROADCAST_PROTO_DEV(T,Device::CPU)      \
     MPI_BROADCAST_PROTO_DEV(T,Device::GPU)
-#define MPI_BROADCAST_COMPLEX_PROTO(T)                  \
-    MPI_BROADCAST_COMPLEX_PROTO_DEV(T,Device::CPU)      \
-    MPI_BROADCAST_COMPLEX_PROTO_DEV(T,Device::GPU)
 #endif // HYDROGEN_HAVE_CUDA
 
 MPI_BROADCAST_PROTO(byte)
@@ -174,12 +137,12 @@ MPI_BROADCAST_PROTO(unsigned long long)
 #endif
 MPI_BROADCAST_PROTO(ValueInt<Int>)
 MPI_BROADCAST_PROTO(Entry<Int>)
-MPI_BROADCAST_COMPLEX_PROTO(float)
+MPI_BROADCAST_PROTO(Complex<float>)
 MPI_BROADCAST_PROTO(ValueInt<float>)
 MPI_BROADCAST_PROTO(ValueInt<Complex<float>>)
 MPI_BROADCAST_PROTO(Entry<float>)
 MPI_BROADCAST_PROTO(Entry<Complex<float>>)
-MPI_BROADCAST_COMPLEX_PROTO(double)
+MPI_BROADCAST_PROTO(Complex<double>)
 MPI_BROADCAST_PROTO(ValueInt<double>)
 MPI_BROADCAST_PROTO(ValueInt<Complex<double>>)
 MPI_BROADCAST_PROTO(Entry<double>)
@@ -187,8 +150,8 @@ MPI_BROADCAST_PROTO(Entry<Complex<double>>)
 #ifdef HYDROGEN_HAVE_QD
 MPI_BROADCAST_PROTO(DoubleDouble)
 MPI_BROADCAST_PROTO(QuadDouble)
-MPI_BROADCAST_COMPLEX_PROTO(DoubleDouble)
-MPI_BROADCAST_COMPLEX_PROTO(QuadDouble)
+MPI_BROADCAST_PROTO(Complex<DoubleDouble>)
+MPI_BROADCAST_PROTO(Complex<QuadDouble>)
 MPI_BROADCAST_PROTO(ValueInt<DoubleDouble>)
 MPI_BROADCAST_PROTO(ValueInt<QuadDouble>)
 MPI_BROADCAST_PROTO(ValueInt<Complex<DoubleDouble>>)
@@ -200,7 +163,7 @@ MPI_BROADCAST_PROTO(Entry<Complex<QuadDouble>>)
 #endif
 #ifdef HYDROGEN_HAVE_QUADMATH
 MPI_BROADCAST_PROTO(Quad)
-MPI_BROADCAST_COMPLEX_PROTO(Quad)
+MPI_BROADCAST_PROTO(Complex<Quad>)
 MPI_BROADCAST_PROTO(ValueInt<Quad>)
 MPI_BROADCAST_PROTO(ValueInt<Complex<Quad>>)
 MPI_BROADCAST_PROTO(Entry<Quad>)
@@ -209,7 +172,7 @@ MPI_BROADCAST_PROTO(Entry<Complex<Quad>>)
 #ifdef HYDROGEN_HAVE_MPC
 MPI_BROADCAST_PROTO(BigInt)
 MPI_BROADCAST_PROTO(BigFloat)
-MPI_BROADCAST_COMPLEX_PROTO(BigFloat)
+MPI_BROADCAST_PROTO(Complex<BigFloat>)
 MPI_BROADCAST_PROTO(ValueInt<BigInt>)
 MPI_BROADCAST_PROTO(ValueInt<BigFloat>)
 MPI_BROADCAST_PROTO(ValueInt<Complex<BigFloat>>)
