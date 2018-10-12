@@ -29,10 +29,6 @@ namespace El
 template <Device D> struct SyncInfo
 {
     SyncInfo() {}
-
-    template <typename T>
-    SyncInfo(Matrix<T,D> const&) {}
-
 };// struct SyncInfo<D>
 
 template <Device D>
@@ -47,10 +43,6 @@ template <Device D>
 void Synchronize(SyncInfo<D> const&)
 {}
 
-template <typename T, Device D>
-void SetSyncInfo(Matrix<T,D>&, SyncInfo<D> const&)
-{}
-
 #ifdef HYDROGEN_HAVE_CUDA
 
 template <>
@@ -61,23 +53,10 @@ struct SyncInfo<Device::GPU>
     SyncInfo(cudaStream_t stream, cudaEvent_t event)
         : stream_{stream}, event_{event} {}
 
-    template <typename T>
-    SyncInfo(Matrix<T,Device::GPU> const& A)
-        : stream_{A.Stream()}, event_{A.Event()} {}
-
     cudaStream_t stream_;
     cudaEvent_t event_;
 };// struct SyncInfo<Device::GPU>
 
-template <typename T>
-void SetSyncInfo(
-    Matrix<T,Device::GPU>& mat, SyncInfo<Device::GPU> const& syncInfo)
-{
-    if (syncInfo.stream_ != nullptr)
-        mat.SetStream(syncInfo.stream_);
-    if (syncInfo.event_ != nullptr)
-        mat.SetEvent(syncInfo.event_);
-}
 
 inline void AddSynchronizationPoint(SyncInfo<Device::GPU> const& syncInfo)
 {
@@ -87,13 +66,13 @@ inline void AddSynchronizationPoint(SyncInfo<Device::GPU> const& syncInfo)
 inline void AddSynchronizationPoint(
     SyncInfo<Device::CPU> const& A, SyncInfo<Device::GPU> const& B)
 {
-    LogicError("I don't know what should happen here.");
+    throw std::logic_error("I don't know what should happen here.");
 }
 
 inline void AddSynchronizationPoint(
     SyncInfo<Device::GPU> const& A, SyncInfo<Device::CPU> const& B)
 {
-    LogicError("I don't know what should happen here.");
+    throw std::logic_error("I don't know what should happen here.");
 }
 
 // This captures the work done on A and forces B to wait for completion

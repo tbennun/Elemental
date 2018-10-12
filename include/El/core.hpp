@@ -242,13 +242,7 @@ template<typename T> struct IsStdField<Complex<T>>
 #endif // HYDROGEN_HAVE_CUB
 
 #include <El/core/Device.hpp>
-
-// FIXME FIXME FIXME
-namespace El
-{
-template <Device D>
-struct SyncInfo;
-}
+#include <El/core/SyncInfo.hpp>
 
 #include <El/core/imports/mpi.hpp>
 #include <El/core/imports/choice.hpp>
@@ -282,7 +276,6 @@ class DistMatrix;
 
 } // namespace El
 
-#include <El/core/SyncInfo.hpp>
 
 #include <El/core/Memory.hpp>
 #include <El/core/SimpleBuffer.hpp>
