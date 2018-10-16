@@ -14,7 +14,7 @@ void AllGather(
 {
     EL_DEBUG_CSE
 
-    using Backend = BestBackend<T,Device::GPU,Collective::ALLGATHER>;
+    using Backend = BestBackend<T,D,Collective::ALLGATHER>;
     auto alSyncInfo =
         SyncInfoFromComm(comm.template GetComm<Backend>(), syncInfo);
 

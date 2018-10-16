@@ -13,7 +13,7 @@ void AllReduce(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
                SyncInfo<D> const& syncInfo)
 {
     EL_DEBUG_CSE
-    using Backend = BestBackend<T,Device::GPU,Collective::ALLREDUCE>;
+    using Backend = BestBackend<T,D,Collective::ALLREDUCE>;
 
     if (count == 0)
         return;
