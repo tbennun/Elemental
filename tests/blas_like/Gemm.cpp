@@ -82,6 +82,10 @@ void TestGemm
     }
 
     Timer timer;
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    float cudaTime;
 
     // Test the variant of Gemm that keeps A stationary
     C = COrig;
@@ -89,13 +93,31 @@ void TestGemm
     PushIndent();
     mpi::Barrier(g.Comm());
     timer.Start();
+    if (D == Device::GPU)
+        cudaEventRecord(start, GPUManager::Stream());
     Gemm(orientA, orientB, alpha, A, B, beta, C, GEMM_SUMMA_A);
+    if (D == Device::GPU)
+    {
+        cudaEventRecord(stop, GPUManager::Stream());
+        cudaEventSynchronize(stop);
+        cudaEventElapsedTime(&cudaTime, start, stop);
+    }
+
     mpi::Barrier(g.Comm());
     runTime = timer.Stop();
     realGFlops = 2.*double(m)*double(n)*double(k)/(1.e9*runTime);
     gFlops = (IsComplex<T>::value ? 4*realGFlops : realGFlops);
-    OutputFromRoot
-        (g.Comm(),"Finished in ",runTime," seconds (",gFlops," GFlop/s)");
+    if (D == Device::CPU)
+      OutputFromRoot
+          (g.Comm(),"Finished in ",runTime," seconds (",gFlops," GFlop/s)");
+    else if (D == Device::GPU)
+    {
+        runTime = cudaTime * 1e-3;
+        realGFlops = 2.*double(m)*double(n)*double(k)/(1.e9*runTime);
+        gFlops = (IsComplex<T>::value ? 4*realGFlops : realGFlops);
+        OutputFromRoot(g.Comm(),"Finished in ",runTime,
+                       " seconds (",gFlops," GFlop/s)");
+    }
     if (print)
         Print(C, BuildString("C := ",alpha," A B + ",beta," C"));
     if (correctness)
@@ -108,13 +130,32 @@ void TestGemm
     PushIndent();
     mpi::Barrier(g.Comm());
     timer.Start();
+    if (D == Device::GPU)
+        cudaEventRecord(start, GPUManager::Stream());
     Gemm(orientA, orientB, alpha, A, B, beta, C, GEMM_SUMMA_B);
+    if (D == Device::GPU)
+    {
+        cudaEventRecord(stop, GPUManager::Stream());
+        cudaEventSynchronize(stop);
+        cudaEventElapsedTime(&cudaTime, start, stop);
+    }
+
     mpi::Barrier(g.Comm());
     runTime = timer.Stop();
     realGFlops = 2.*double(m)*double(n)*double(k)/(1.e9*runTime);
     gFlops = (IsComplex<T>::value ? 4*realGFlops : realGFlops);
-    OutputFromRoot
-        (g.Comm(),"Finished in ",runTime," seconds (",gFlops," GFlop/s)");
+
+    if (D == Device::CPU)
+      OutputFromRoot
+          (g.Comm(),"Finished in ",runTime," seconds (",gFlops," GFlop/s)");
+    else if (D == Device::GPU)
+    {
+        runTime = cudaTime * 1e-3;
+        realGFlops = 2.*double(m)*double(n)*double(k)/(1.e9*runTime);
+        gFlops = (IsComplex<T>::value ? 4*realGFlops : realGFlops);
+        OutputFromRoot(g.Comm(),"Finished in ",runTime,
+                       " seconds (",gFlops," GFlop/s)");
+    }
     if (print)
         Print(C, BuildString("C := ",alpha," A B + ",beta," C"));
     if (correctness)
@@ -127,13 +168,31 @@ void TestGemm
     PushIndent();
     mpi::Barrier(g.Comm());
     timer.Start();
+    if (D == Device::GPU)
+        cudaEventRecord(start, GPUManager::Stream());
     Gemm(orientA, orientB, alpha, A, B, beta, C, GEMM_SUMMA_C);
+    if (D == Device::GPU)
+    {
+        cudaEventRecord(stop, GPUManager::Stream());
+        cudaEventSynchronize(stop);
+        cudaEventElapsedTime(&cudaTime, start, stop);
+    }
+
     mpi::Barrier(g.Comm());
     runTime = timer.Stop();
     realGFlops = 2.*double(m)*double(n)*double(k)/(1.e9*runTime);
     gFlops = (IsComplex<T>::value ? 4*realGFlops : realGFlops);
-    OutputFromRoot
-        (g.Comm(),"Finished in ",runTime," seconds (",gFlops," GFlop/s)");
+    if (D == Device::CPU)
+        OutputFromRoot
+            (g.Comm(),"Finished in ",runTime," seconds (",gFlops," GFlop/s)");
+    else if (D == Device::GPU)
+    {
+        runTime = cudaTime * 1e-3;
+        realGFlops = 2.*double(m)*double(n)*double(k)/(1.e9*runTime);
+        gFlops = (IsComplex<T>::value ? 4*realGFlops : realGFlops);
+        OutputFromRoot(g.Comm(),"Finished in ",runTime,
+                       " seconds (",gFlops," GFlop/s)");
+    }
     if (print)
         Print(C, BuildString("C := ",alpha," A B + ",beta," C"));
     if (correctness)
@@ -149,13 +208,32 @@ void TestGemm
         C = COrig;
         mpi::Barrier(g.Comm());
         timer.Start();
+        if (D == Device::GPU)
+            cudaEventRecord(start, GPUManager::Stream());
         Gemm(NORMAL, NORMAL, alpha, A, B, beta, C, GEMM_SUMMA_DOT);
+        if (D == Device::GPU)
+        {
+            cudaEventRecord(stop, GPUManager::Stream());
+            cudaEventSynchronize(stop);
+            cudaEventElapsedTime(&cudaTime, start, stop);
+        }
+
         mpi::Barrier(g.Comm());
         runTime = timer.Stop();
         realGFlops = 2.*double(m)*double(n)*double(k)/(1.e9*runTime);
         gFlops = (IsComplex<T>::value ? 4*realGFlops : realGFlops);
-        OutputFromRoot
-            (g.Comm(),"Finished in ",runTime," seconds (",gFlops," GFlop/s)");
+        if (D == Device::CPU)
+            OutputFromRoot
+                (g.Comm(),"Finished in ",runTime," seconds (",gFlops,
+                 " GFlop/s)");
+        else if (D == Device::GPU)
+        {
+            runTime = cudaTime * 1e-3;
+            realGFlops = 2.*double(m)*double(n)*double(k)/(1.e9*runTime);
+            gFlops = (IsComplex<T>::value ? 4*realGFlops : realGFlops);
+            OutputFromRoot(g.Comm(),"Finished in ",runTime,
+                           " seconds (",gFlops," GFlop/s)");
+        }
         if (print)
             Print(C, BuildString("C := ",alpha," A B + ",beta," C"));
         if (correctness)
@@ -164,6 +242,8 @@ void TestGemm
         PopIndent();
     }
     PopIndent();
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
 }
 
 int
