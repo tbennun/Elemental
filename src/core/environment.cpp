@@ -58,16 +58,6 @@ void PrintConfig( ostream& os )
 #else
       "  Avoiding complex MPI:         NO\n"
 #endif
-#ifdef EL_HAVE_MPI_REDUCE_SCATTER_BLOCK
-      "  Have MPI_Reducescatter_block: YES\n"
-#else
-      "  Have MPI_Reducescatter_block: NO\n"
-#endif
-#ifdef EL_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE
-      "  AllReduce ReduceScatterBlock: YES\n"
-#else
-      "  AllReduce ReduceScatterBlock: NO\n"
-#endif
 #ifdef EL_USE_BYTE_ALLGATHERS
       "  Use byte AllGathers:          YES\n"
 #else

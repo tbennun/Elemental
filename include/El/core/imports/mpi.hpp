@@ -29,21 +29,6 @@ using std::vector;
 namespace mpi
 {
 
-#if defined(EL_HAVE_MPI3_NONBLOCKING_COLLECTIVES) || \
-    defined(EL_HAVE_MPIX_NONBLOCKING_COLLECTIVES)
-#define EL_HAVE_NONBLOCKING 1
-#else
-#define EL_HAVE_NONBLOCKING 0
-#endif
-
-#ifdef EL_HAVE_NONBLOCKING_COLLECTIVES
-#ifdef EL_HAVE_MPI3_NONBLOCKING_COLLECTIVES
-#define EL_NONBLOCKING_COLL(name) MPI_ ## name
-#else
-#define EL_NONBLOCKING_COLL(name) MPIX_ ## name
-#endif
-#endif
-
 // Yes, I realize there's some code duplication here, but it's SO MUCH
 // EASIER for the human to read I really don't care... The
 // preprocessor is the only thing that could care, but it doesn't get
@@ -332,17 +317,10 @@ struct Request
 // Standard constants
 extern const int ANY_SOURCE;
 extern const int ANY_TAG;
-#ifdef EL_HAVE_MPI_QUERY_THREAD
 extern const int THREAD_SINGLE;
 extern const int THREAD_FUNNELED;
 extern const int THREAD_SERIALIZED;
 extern const int THREAD_MULTIPLE;
-#else
-extern const int THREAD_SINGLE;
-extern const int THREAD_FUNNELED;
-extern const int THREAD_SERIALIZED;
-extern const int THREAD_MULTIPLE;
-#endif
 
 extern const int UNDEFINED;
 extern const Group GROUP_NULL;

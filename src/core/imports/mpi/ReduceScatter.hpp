@@ -68,17 +68,9 @@ void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
 
     Synchronize(syncInfo);
 
-#ifdef EL_HAVE_MPI_REDUCE_SCATTER_BLOCK
     CheckMpi(
         MPI_Reduce_scatter_block(
             sbuf, rbuf, count, TypeMap<T>(), NativeOp<T>(op), comm.comm));
-#else
-    LogicError("ReduceScatter: Let Tom know if you go down this code path.");
-
-    const int commSize = Size(comm);
-    Reduce(sbuf, count*commSize, op, 0, comm);
-    Scatter(sbuf, count, rbuf, count, 0, comm);
-#endif
 }
 
 template <typename T, Device D,
@@ -101,7 +93,6 @@ void ReduceScatter(Complex<T> const* sbuf, Complex<T>* rbuf,
 
     Synchronize(syncInfo);
 
-#ifdef EL_HAVE_MPI_REDUCE_SCATTER_BLOCK
 # ifdef EL_AVOID_COMPLEX_MPI
     CheckMpi(
         MPI_Reduce_scatter_block(
@@ -113,13 +104,6 @@ void ReduceScatter(Complex<T> const* sbuf, Complex<T>* rbuf,
             TypeMap<Complex<T>>(), NativeOp<Complex<T>>(op),
             comm.comm));
 # endif
-#else
-    LogicError("ReduceScatter: Let Tom know if you go down this code path.");
-
-    const int commSize = Size(comm);
-    Reduce(sbuf, count*commSize, op, 0, comm);
-    Scatter(sbuf, count, rbuf, count, 0, comm);
-#endif
 }
 
 template <typename T, Device D,
@@ -138,8 +122,6 @@ void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
     const int totalSend = count*commSize;
     const int totalRecv = count;
 
-#if defined(EL_HAVE_MPI_REDUCE_SCATTER_BLOCK)
-
 #ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     ENSURE_HOST_SEND_BUFFER(sbuf, totalSend, syncInfo);
     ENSURE_HOST_RECV_BUFFER(rbuf, totalRecv, syncInfo);
@@ -157,12 +139,6 @@ void ReduceScatter(T const* sbuf, T* rbuf, int count, Op op, Comm comm,
             NativeOp<T>(op), comm.comm));
 
     Deserialize(totalRecv, packedRecv, rbuf);
-#else
-    LogicError("ReduceScatter: Let Tom know if you go down this code path.");
-
-    Reduce(sbuf, totalSend, op, 0, comm);
-    Scatter(sbuf, count, rbuf, count, 0, comm);
-#endif
 }
 
 template <typename T, Device D,
@@ -239,17 +215,10 @@ void ReduceScatter(T* buf, int count, Op op, Comm comm,
 
     Synchronize(syncInfo);
 
-#ifdef EL_HAVE_MPI_REDUCE_SCATTER_BLOCK
     CheckMpi(
         MPI_Reduce_scatter_block(
             MPI_IN_PLACE, buf, count,
             TypeMap<T>(), NativeOp<T>(op), comm.comm));
-#else
-    LogicError("ReduceScatter: Let Tom know if you go down this code path.");
-    const int commSize = Size(comm);
-    Reduce(buf, count*commSize, op, 0, comm);
-    Scatter(buf, count, count, 0, comm);
-#endif
 }
 
 template <typename T, Device D,
@@ -271,24 +240,17 @@ void ReduceScatter(Complex<T>* buf, int count, Op op, Comm comm,
 
     Synchronize(syncInfo);
 
-#ifdef EL_HAVE_MPI_REDUCE_SCATTER_BLOCK
-# ifdef EL_AVOID_COMPLEX_MPI
+#ifdef EL_AVOID_COMPLEX_MPI
     CheckMpi(
         MPI_Reduce_scatter_block(
             MPI_IN_PLACE, buf, 2*count,
             TypeMap<T>(), NativeOp<T>(op), comm.comm));
-# else
+#else
     CheckMpi(
         MPI_Reduce_scatter_block(
             MPI_IN_PLACE, buf, count,
             TypeMap<Complex<T>>(),
             NativeOp<Complex<T>>(op), comm.comm));
-# endif
-#else
-    LogicError("ReduceScatter: Let Tom know if you go down this code path.");
-    const int commSize = Size(comm);
-    Reduce(buf, count*commSize, op, 0, comm);
-    Scatter(buf, count, count, 0, comm);
 #endif
 }
 
@@ -314,7 +276,6 @@ void ReduceScatter(T* buf, int count, Op op, Comm comm,
 
     Synchronize(syncInfo);
 
-#ifdef EL_HAVE_MPI_REDUCE_SCATTER_BLOCK
     std::vector<byte> packedSend, packedRecv;
     Serialize(totalSend, buf, packedSend);
 
@@ -325,11 +286,6 @@ void ReduceScatter(T* buf, int count, Op op, Comm comm,
             NativeOp<T>(op), comm.comm));
 
     Deserialize(totalRecv, packedRecv, buf);
-#else
-    LogicError("ReduceScatter: Let Tom know if you go down this code path.");
-    Reduce(buf, totalSend, op, 0, comm);
-    Scatter(buf, count, count, 0, comm);
-#endif
 }
 
 template <typename T, Device D,
@@ -395,10 +351,8 @@ MPI_REDUCESCATTER_PROTO(long int)
 MPI_REDUCESCATTER_PROTO(unsigned long)
 MPI_REDUCESCATTER_PROTO(float)
 MPI_REDUCESCATTER_PROTO(double)
-#ifdef EL_HAVE_MPI_LONG_LONG
 MPI_REDUCESCATTER_PROTO(long long int)
 MPI_REDUCESCATTER_PROTO(unsigned long long)
-#endif
 MPI_REDUCESCATTER_PROTO(ValueInt<Int>)
 MPI_REDUCESCATTER_PROTO(Entry<Int>)
 MPI_REDUCESCATTER_PROTO(Complex<float>)

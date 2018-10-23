@@ -27,18 +27,12 @@ namespace mpi
 
 const int ANY_SOURCE = MPI_ANY_SOURCE;
 const int ANY_TAG = MPI_ANY_TAG;
-#ifdef EL_HAVE_MPI_QUERY_THREAD
 const int THREAD_SINGLE = MPI_THREAD_SINGLE;
 const int THREAD_FUNNELED = MPI_THREAD_FUNNELED;
 const int THREAD_SERIALIZED = MPI_THREAD_SERIALIZED;
 const int THREAD_MULTIPLE = MPI_THREAD_MULTIPLE;
-#else
-const int THREAD_SINGLE = 0;
-const int THREAD_FUNNELED = 1;
-const int THREAD_SERIALIZED = 2;
-const int THREAD_MULTIPLE = 3;
-#endif
 const int UNDEFINED = MPI_UNDEFINED;
+
 #ifdef HYDROGEN_HAVE_ALUMINUM
 const Comm COMM_NULL(internal::DelayCtorType{}, MPI_COMM_NULL);
 const Comm COMM_SELF(internal::DelayCtorType{}, MPI_COMM_SELF);
@@ -48,6 +42,7 @@ const Comm COMM_NULL = MPI_COMM_NULL;
 const Comm COMM_SELF = MPI_COMM_SELF;
 const Comm COMM_WORLD = MPI_COMM_WORLD;
 #endif
+
 const ErrorHandler ERRORS_RETURN = MPI_ERRORS_RETURN;
 const ErrorHandler ERRORS_ARE_FATAL = MPI_ERRORS_ARE_FATAL;
 const Group GROUP_NULL = MPI_GROUP_NULL;
@@ -91,12 +86,7 @@ int InitializeThread( int& argc, char**& argv, int required ) EL_NO_EXCEPT
 {
     int provided;
 
-#ifdef EL_HAVE_MPI_INIT_THREAD
     MPI_Init_thread( &argc, &argv, required, &provided );
-#else
-    MPI_Init( &argc, &argv );
-    provided = 0; // equivalent to MPI_THREAD_SINGLE
-#endif
 
 #ifdef HYDROGEN_HAVE_ALUMINUM
     Al::Initialize(argc, argv);
@@ -136,11 +126,7 @@ bool Finalized() EL_NO_EXCEPT
 int QueryThread() EL_NO_EXCEPT
 {
     int provided;
-#ifdef EL_HAVE_MPI_QUERY_THREAD
     MPI_Query_thread( &provided );
-#else
-    provided = 0; // equivalent to MPI_THREAD_SINGLE
-#endif
     return provided;
 }
 
@@ -236,11 +222,7 @@ void ErrorHandlerSet( Comm comm, ErrorHandler errorHandler )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-#ifdef EL_HAVE_MPI_COMM_SET_ERRHANDLER
     EL_CHECK_MPI_NO_DATA( MPI_Comm_set_errhandler( comm.comm, errorHandler ) );
-#else
-    EL_CHECK_MPI_NO_DATA( MPI_Errhandler_set( comm.comm, errorHandler ) );
-#endif
 }
 
 // Cartesian communicator routines
@@ -2447,10 +2429,8 @@ MPI_PROTO(int)
 MPI_PROTO(unsigned)
 MPI_PROTO(long int)
 MPI_PROTO(unsigned long)
-#ifdef EL_HAVE_MPI_LONG_LONG
 MPI_PROTO(long long int)
 MPI_PROTO(unsigned long long)
-#endif
 MPI_PROTO(ValueInt<Int>)
 MPI_PROTO(Entry<Int>)
 MPI_PROTO(float)
