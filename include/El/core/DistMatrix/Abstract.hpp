@@ -292,8 +292,8 @@ public:
     // =====================
     virtual bool DiagonalAlignedWith
     (const El::DistData& d, Int offset=0) const = 0;
-    virtual int DiagonalRoot(Int offset=0) const EL_NO_EXCEPT = 0;
-    virtual int DiagonalAlign(Int offset=0) const EL_NO_EXCEPT = 0;
+    virtual int DiagonalRoot(Int offset=0) const = 0;
+    virtual int DiagonalAlign(Int offset=0) const = 0;
 
     virtual Device GetLocalDevice() const EL_NO_EXCEPT = 0;
 
@@ -306,7 +306,7 @@ public:
      Dist colDist=MC, Dist rowDist=MR, DistWrap wrap=ELEMENT,
      Device dev=Device::CPU);
     static type* Instantiate(const El::DistData& data);
-  
+
 private:
     // Member variables
     // ================

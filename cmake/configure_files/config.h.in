@@ -87,17 +87,12 @@
 #cmakedefine EL_HAVE_OMP_SIMD
 #cmakedefine EL_HAVE_QT5
 #cmakedefine EL_AVOID_COMPLEX_MPI
-#cmakedefine EL_HAVE_CXX11RANDOM
-#cmakedefine EL_HAVE_STEADYCLOCK
-#cmakedefine EL_HAVE_NOEXCEPT
 #cmakedefine EL_USE_BYTE_ALLGATHERS
 #cmakedefine EL_USE_64BIT_INTS
 #cmakedefine EL_USE_64BIT_BLAS_INTS
 
 /* Sparse-direct configuration */
 #cmakedefine EL_USE_CUSTOM_ALLTOALLV
-#cmakedefine EL_HAVE_METIS
-#cmakedefine EL_HAVE_PARMETIS
 
 /* Advanced configuration options */
 #cmakedefine EL_ZERO_INIT

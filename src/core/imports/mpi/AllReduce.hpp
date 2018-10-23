@@ -300,22 +300,18 @@ void AllReduce(T*, int, Op, Comm, SyncInfo<D> const&)
 
 template<typename T, Device D>
 void AllReduce(const T* sbuf, T* rbuf, int count, Comm comm, SyncInfo<D> const& syncInfo)
-EL_NO_RELEASE_EXCEPT
 { AllReduce(sbuf, rbuf, count, SUM, std::move(comm), syncInfo); }
 
 template<typename T, Device D>
 T AllReduce(T sb, Op op, Comm comm, SyncInfo<D> const& syncInfo)
-EL_NO_RELEASE_EXCEPT
 { T rb; AllReduce(&sb, &rb, 1, op, std::move(comm), syncInfo); return rb; }
 
 template<typename T, Device D>
 T AllReduce(T sb, Comm comm, SyncInfo<D> const& syncInfo)
-EL_NO_RELEASE_EXCEPT
 { return AllReduce(sb, SUM, std::move(comm), syncInfo); }
 
 template<typename T, Device D>
 void AllReduce(T* buf, int count, Comm comm, SyncInfo<D> const& syncInfo)
-EL_NO_RELEASE_EXCEPT
 { AllReduce(buf, count, SUM, std::move(comm), syncInfo); }
 
 #define MPI_ALLREDUCE_PROTO_DEV(T,D)                                    \

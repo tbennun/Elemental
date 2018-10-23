@@ -29,7 +29,7 @@ public:
     bool Locked() const EL_NO_EXCEPT;
     bool IsEmpty() const EL_NO_EXCEPT;
     bool Contiguous() const EL_NO_EXCEPT;
-  
+
     void FixSize() EL_NO_EXCEPT;
 
     void Empty(bool freeMemory=true);
@@ -119,11 +119,11 @@ public:
 
     // Return a reference to a single entry without error-checking
     // -----------------------------------------------------------
-    virtual T const& CRef(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT = 0;
-    virtual T const& operator()(Int i, Int j=0) const EL_NO_RELEASE_EXCEPT = 0;
+    virtual T const& CRef(Int i, Int j=0) const = 0;
+    virtual T const& operator()(Int i, Int j=0) const = 0;
 
-    virtual T& Ref(Int i, Int j=0) EL_NO_RELEASE_EXCEPT = 0;
-    virtual T& operator()(Int i, Int j=0) EL_NO_RELEASE_EXCEPT = 0;
+    virtual T& Ref(Int i, Int j=0) = 0;
+    virtual T& operator()(Int i, Int j=0) = 0;
 
 protected:
 

@@ -391,7 +391,7 @@ template<typename T>
 int AbstractDistMatrix<T>::Root() const EL_NO_EXCEPT { return root_; }
 
 template<typename T>
-El::DistData AbstractDistMatrix<T>::DistData() const
+El::DistData AbstractDistMatrix<T>::DistData() const EL_NO_EXCEPT
 { return El::DistData(*this); }
 
 template<typename T>

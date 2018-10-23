@@ -623,6 +623,7 @@ template <typename T, Device D,
          typename/*=void*/>
 void TaggedSend( const T* buf, int count, int to, int tag, Comm comm,
                  SyncInfo<D> const& syncInfo)
+    EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
@@ -893,6 +894,7 @@ template <typename T, Device D,
          typename/*=void*/>
 void TaggedRecv( T* buf, int count, int from, int tag, Comm comm,
                  SyncInfo<D> const& syncInfo)
+    EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
@@ -1062,6 +1064,7 @@ void TaggedSendRecv(
     const T* sbuf, int sc, int to,   int stag,
     T* rbuf, int rc, int from, int rtag, Comm comm,
     SyncInfo<D> const& syncInfo)
+    EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
@@ -1229,7 +1232,7 @@ void IBroadcast
     ReserveSerialized( count, buf, request.buffer );
     EL_CHECK_MPI
     ( MPI_Ibcast
-      ( request.buffer.data(), count, TypeMap<Real>(), root, comm.comm,
+      ( request.buffer.data(), count, TypeMap<T>(), root, comm.comm,
         &request.backend ) );
 }
 
@@ -1297,8 +1300,8 @@ void IGather
     }
     EL_CHECK_MPI
     ( MPI_Igather
-      ( request.buffer.data(), sc, TypeMap<Real>(),
-        rbuf,                  rc, TypeMap<Real>(), root, comm.comm,
+      ( request.buffer.data(), sc, TypeMap<T>(),
+        rbuf,                  rc, TypeMap<T>(), root, comm.comm,
         &request.backend ) );
 }
 
