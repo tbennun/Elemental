@@ -203,7 +203,8 @@ if (${PROJECT_NAME}_ENABLE_CUDA)
 
       set_property(TARGET cuda::toolkit PROPERTY
         INTERFACE_LINK_LIBRARIES
-        "${CUDA_CUBLAS_LIBRARIES}" "${CUDA_LIBRARIES}" "${CUDA_CUDA_LIBRARY}" "${CUB_LIBRARIES}" "${NVML_LIBRARIES}")
+        "${CUDA_CUBLAS_LIBRARIES}" "${CUDA_LIBRARIES}" "${CUDA_CUDA_LIBRARY}"
+        "${CUB_LIBRARIES}" "${NVML_LIBRARIES}")
 
       set_property(TARGET cuda::toolkit PROPERTY
         INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CUDA>:-arch=sm_30>)
@@ -357,6 +358,7 @@ set(INCLUDE_INSTALL_DIRS "${CMAKE_SOURCE_DIR}/include"
   "${CMAKE_SOURCE_DIR}/include/El"
   "${CMAKE_BINARY_DIR}/include/El")
 set(LIB_INSTALL_DIR "${CMAKE_BINARY_DIR}")
+set(EXTRA_CMAKE_MODULE_DIR "${CMAKE_SOURCE_DIR}/cmake/modules")
 configure_package_config_file(cmake/configure_files/HydrogenConfig.cmake.in
   "${CMAKE_BINARY_DIR}/HydrogenConfig.cmake"
   INSTALL_DESTINATION "${CMAKE_BINARY_DIR}"
@@ -369,7 +371,7 @@ export(EXPORT HydrogenTargets NAMESPACE H:: FILE HydrogenTargets.cmake)
 set(INCLUDE_INSTALL_DIRS include)
 set(LIB_INSTALL_DIR lib)
 set(CMAKE_INSTALL_DIR lib/cmake/hydrogen)
-
+set(EXTRA_CMAKE_MODULE_DIR)
 configure_package_config_file(cmake/configure_files/HydrogenConfig.cmake.in
   "${CMAKE_BINARY_DIR}/cmake/HydrogenConfig.cmake"
   INSTALL_DESTINATION ${CMAKE_INSTALL_DIR}

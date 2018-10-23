@@ -1,3 +1,4 @@
+include(CheckCXXSourceCompiles)
 
 # Attempt to use the built-in module
 find_package(OpenMP COMPONENTS CXX)

@@ -28,15 +28,17 @@ if (NOT TARGET cuda::cub)
 endif (NOT TARGET cuda::cub)
 
 # Set the include directories for the target
-set_property(TARGET cuda::cub APPEND
-  PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${CUB_INCLUDE_PATH})
+if (CUB_INCLUDE_PATH)
+  set_property(TARGET cuda::cub
+    PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${CUB_INCLUDE_PATH})
+endif ()
 
 #
 # Cleanup
 #
 
 # Set the include directories
-mark_as_advanced(FORCE CUB_INCLUDE_DIRS)
+mark_as_advanced(FORCE CUB_INCLUDE_PATH)
 
 # Set the libraries
 set(CUB_LIBRARIES cuda::cub)
