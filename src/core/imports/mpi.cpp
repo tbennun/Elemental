@@ -1192,13 +1192,9 @@ void IBroadcast
 ( Real* buf, int count, int root, Comm comm, Request<Real>& request )
 {
     EL_DEBUG_CSE
-#ifdef EL_HAVE_NONBLOCKING_COLLECTIVES
     EL_CHECK_MPI
     ( MPI_Ibcast
       ( buf, count, TypeMap<Real>(), root, comm.comm, &request.backend ) );
-#else
-    LogicError("Elemental was not configured with non-blocking support");
-#endif
 }
 
 template <typename Real,
@@ -1208,7 +1204,6 @@ void IBroadcast
   Request<Complex<Real>>& request )
 {
     EL_DEBUG_CSE
-#ifdef EL_HAVE_NONBLOCKING_COLLECTIVES
 #ifdef EL_AVOID_COMPLEX_MPI
     EL_CHECK_MPI
     ( MPI_Ibcast
@@ -1219,9 +1214,6 @@ void IBroadcast
       ( buf, count, TypeMap<Complex<Real>>(), root, comm.comm,
         &request.backend ) );
 #endif
-#else
-    LogicError("Elemental was not configured with non-blocking support");
-#endif
 }
 
 template <typename T,
@@ -1231,7 +1223,6 @@ void IBroadcast
 ( T* buf, int count, int root, Comm comm, Request<T>& request )
 {
     EL_DEBUG_CSE
-#ifdef EL_HAVE_NONBLOCKING_COLLECTIVES
     request.receivingPacked = true;
     request.recvCount = count;
     request.unpackedRecvBuf = buf;
@@ -1240,9 +1231,6 @@ void IBroadcast
     ( MPI_Ibcast
       ( request.buffer.data(), count, TypeMap<Real>(), root, comm.comm,
         &request.backend ) );
-#else
-    LogicError("Elemental was not configured with non-blocking support");
-#endif
 }
 
 template <typename T>
@@ -1258,15 +1246,11 @@ void IGather
   Request<Real>& request )
 {
     EL_DEBUG_CSE
-#ifdef EL_HAVE_NONBLOCKING_COLLECTIVES
     EL_CHECK_MPI
     ( MPI_Igather
       ( const_cast<Real*>(sbuf), sc, TypeMap<Real>(),
         rbuf,                    rc, TypeMap<Real>(), root, comm.comm,
         &request.backend ) );
-#else
-    LogicError("Elemental was not configured with non-blocking support");
-#endif
 }
 
 template <typename Real,
@@ -1278,7 +1262,6 @@ void IGather
   Request<Complex<Real>>& request )
 {
     EL_DEBUG_CSE
-#ifdef EL_HAVE_NONBLOCKING_COLLECTIVES
 #ifdef EL_AVOID_COMPLEX_MPI
     EL_CHECK_MPI
     ( MPI_Igather
@@ -1292,9 +1275,6 @@ void IGather
         rbuf,                             rc, TypeMap<Complex<Real>>(),
         root, comm.comm, &request.backend ) );
 #endif
-#else
-    LogicError("Elemental was not configured with non-blocking support");
-#endif
 }
 
 template <typename T,
@@ -1307,7 +1287,6 @@ void IGather
   Request<T>& request )
 {
     EL_DEBUG_CSE
-#ifdef EL_HAVE_NONBLOCKING_COLLECTIVES
     if( mpi::Rank(comm) == root )
     {
         const int commSize = mpi::Size(comm);
@@ -1321,9 +1300,6 @@ void IGather
       ( request.buffer.data(), sc, TypeMap<Real>(),
         rbuf,                  rc, TypeMap<Real>(), root, comm.comm,
         &request.backend ) );
-#else
-    LogicError("Elemental was not configured with non-blocking support");
-#endif
 }
 
 template <typename Real, Device D,
