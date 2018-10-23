@@ -196,8 +196,8 @@ struct Comm
 #endif
 
     // These do soft copies
-    Comm(Comm const& comm_cpy) EL_NO_EXCEPT = default;
-    Comm& operator=(Comm const& comm_cpy) EL_NO_EXCEPT = default;
+    Comm(Comm const& comm_cpy) = default;
+    Comm& operator=(Comm const& comm_cpy) = default;
     Comm(Comm&& comm_cpy) EL_NO_EXCEPT = default;
     Comm& operator=(Comm&& comm_cpy) EL_NO_EXCEPT = default;
 
@@ -252,7 +252,7 @@ inline void Comm::Reinit()
     internal::ConstructAllComms(al_comms,comm);
 }
 
-inline void Comm::Reset()
+inline void Comm::Reset() EL_NO_EXCEPT
 {
     internal::ResetAllPtrs(al_comms);
 }

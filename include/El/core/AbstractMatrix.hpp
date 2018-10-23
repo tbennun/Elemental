@@ -44,8 +44,8 @@ public:
     virtual void SetMemoryMode(unsigned int mode) = 0;
     virtual unsigned int MemoryMode() const EL_NO_EXCEPT = 0;
 
-    virtual T* Buffer() EL_NO_EXCEPT = 0;
-    virtual T* Buffer(Int i, Int j) EL_NO_EXCEPT = 0;
+    virtual T* Buffer() EL_NO_RELEASE_EXCEPT = 0;
+    virtual T* Buffer(Int i, Int j) EL_NO_RELEASE_EXCEPT = 0;
     virtual T const* LockedBuffer() const EL_NO_EXCEPT = 0;
     virtual T const* LockedBuffer(Int i, Int j) const EL_NO_EXCEPT = 0;
 
@@ -64,31 +64,43 @@ public:
     //
 
     // Type conversion
-    operator Matrix<T, Device::CPU>& () {
-      if(this->GetDevice() != Device::CPU) {
-        LogicError("Illegal conversion from AbstractMatrix to incompatible CPU Matrix ref");
-      }
-      return static_cast<Matrix<T, Device::CPU>&>(*this);
+    operator Matrix<T, Device::CPU>& ()
+    {
+        if(this->GetDevice() != Device::CPU)
+        {
+            LogicError("Illegal conversion from AbstractMatrix to "
+                       "incompatible CPU Matrix reference.");
+        }
+        return static_cast<Matrix<T, Device::CPU>&>(*this);
     }
-    operator Matrix<T, Device::CPU>const& () const {
-      if(this->GetDevice() != Device::CPU) {
-        LogicError("Illegal conversion from AbstractMatrix to incompatible const CPU Matrix ref");
-      }
-      return static_cast<const Matrix<T, Device::CPU>&>(*this);
+    operator Matrix<T, Device::CPU>const& () const
+    {
+        if(this->GetDevice() != Device::CPU)
+        {
+            LogicError("Illegal conversion from AbstractMatrix to "
+                       "incompatible CPU Matrix const reference.");
+        }
+        return static_cast<const Matrix<T, Device::CPU>&>(*this);
     }
 
 #ifdef HYDROGEN_HAVE_CUDA
-    operator Matrix<T, Device::GPU>& () {
-      if(this->GetDevice() != Device::GPU) {
-        LogicError("Illegal conversion from AbstractMatrix to incompatible GPU Matrix ref");
-      }
-      return static_cast<Matrix<T, Device::GPU>&>(*this);
+    operator Matrix<T, Device::GPU>& ()
+    {
+        if(this->GetDevice() != Device::GPU)
+        {
+            LogicError("Illegal conversion from AbstractMatrix to "
+                       "incompatible GPU Matrix reference.");
+        }
+        return static_cast<Matrix<T, Device::GPU>&>(*this);
     }
-    operator Matrix<T, Device::GPU>const& () const {
-      if(this->GetDevice() != Device::GPU) {
-        LogicError("Illegal conversion from AbstractMatrix to incompatible const GPU Matrix ref");
-      }
-      return static_cast<const Matrix<T, Device::GPU>&>(*this);
+    operator Matrix<T, Device::GPU>const& () const
+    {
+        if(this->GetDevice() != Device::GPU)
+        {
+            LogicError("Illegal conversion from AbstractMatrix to "
+                       "incompatible GPU Matrix const reference.");
+        }
+        return static_cast<const Matrix<T, Device::GPU>&>(*this);
     }
 #endif // HYDROGEN_HAVE_CUDA
     // Rescaling
