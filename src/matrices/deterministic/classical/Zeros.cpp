@@ -13,6 +13,30 @@
 namespace El {
 
 template<typename T>
+void Zeros_seq( Matrix<T>& A, Int m, Int n )
+{
+    EL_DEBUG_CSE
+    A.Resize( m, n );
+    Zero_seq( A );
+}
+
+template<typename T>
+void Zeros_seq( AbstractMatrix<T>& A, Int m, Int n )
+{
+    EL_DEBUG_CSE
+    A.Resize( m, n );
+    Zero_seq( A );
+}
+
+template<typename T>
+void Zeros_seq( AbstractDistMatrix<T>& A, Int m, Int n )
+{
+    EL_DEBUG_CSE
+    A.Resize( m, n );
+    Zero_seq( A );
+}
+
+template<typename T>
 void Zeros( Matrix<T>& A, Int m, Int n )
 {
     EL_DEBUG_CSE
