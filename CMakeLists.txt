@@ -6,8 +6,9 @@ if (NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
 endif ()
 
-set(HYDROGEN_VERSION_MAJOR 0)
-set(HYDROGEN_VERSION_MINOR 1)
+set(HYDROGEN_VERSION_MAJOR 1)
+set(HYDROGEN_VERSION_MINOR 0)
+set(HYDROGEN_VERSION_PATCH 0)
 
 # Back-compatibility, until it's all sorted out
 set(EL_VERSION_MAJOR ${HYDROGEN_VERSION_MAJOR})
@@ -347,7 +348,7 @@ include (CMakePackageConfigHelpers)
 # Write the version file for both the build and the install tree
 write_basic_package_version_file(
   "${CMAKE_BINARY_DIR}/HydrogenConfigVersion.cmake"
-  VERSION "${HYDROGEN_VERSION_MAJOR}.${HYDROGEN_VERSION_MINOR}"
+  VERSION "${HYDROGEN_VERSION_MAJOR}.${HYDROGEN_VERSION_MINOR}.${HYDROGEN_VERSION_PATCH}"
   COMPATIBILITY AnyNewerVersion
   )
 
