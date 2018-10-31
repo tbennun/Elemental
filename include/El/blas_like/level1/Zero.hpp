@@ -19,6 +19,43 @@
 
 namespace El {
 
+template <typename T>
+void Zero_seq(AbstractMatrix<T>& A)
+{
+    EL_DEBUG_CSE
+    const Int height = A.Height();
+    const Int width = A.Width();
+    const Int size = height * width;
+    const Int ALDim = A.LDim();
+    T* ABuf = A.Buffer();
+
+    switch (A.GetDevice())
+    {
+    case Device::CPU:
+        if( width == 1 || ALDim == height )
+        {
+            MemZero( ABuf, size );
+        }
+        else
+        {
+            for( Int j=0; j<width; ++j )
+            {
+                MemZero( &ABuf[j*ALDim], height );
+            }
+        }
+        break;
+    default:
+        LogicError("Bad device type in Zero_seq. CPU only.");
+    }
+}
+
+template <typename T>
+void Zero_seq(AbstractDistMatrix<T>& A)
+{
+    EL_DEBUG_CSE
+    Zero_seq(A.Matrix());
+}
+
 template<typename T>
 void Zero( AbstractMatrix<T>& A )
 {
@@ -90,6 +127,8 @@ void Zero( AbstractDistMatrix<T>& A )
 #endif
 
 #define PROTO(T) \
+  EL_EXTERN template void Zero_seq( AbstractMatrix<T>& A ); \
+  EL_EXTERN template void Zero_seq( AbstractDistMatrix<T>& A ); \
   EL_EXTERN template void Zero( AbstractMatrix<T>& A ); \
   EL_EXTERN template void Zero( AbstractDistMatrix<T>& A );
 
