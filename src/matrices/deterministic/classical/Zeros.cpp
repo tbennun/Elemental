@@ -62,6 +62,9 @@ void Zeros( AbstractDistMatrix<T>& A, Int m, Int n )
 
 
 #define PROTO(T) \
+  template void Zeros_seq( Matrix<T>& A, Int m, Int n ); \
+  template void Zeros_seq( AbstractMatrix<T>& A, Int m, Int n ); \
+  template void Zeros_seq( AbstractDistMatrix<T>& A, Int m, Int n ); \
   template void Zeros( Matrix<T>& A, Int m, Int n ); \
   template void Zeros( AbstractMatrix<T>& A, Int m, Int n ); \
   template void Zeros( AbstractDistMatrix<T>& A, Int m, Int n );
