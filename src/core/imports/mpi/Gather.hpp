@@ -35,7 +35,6 @@ void Gather(
                                      syncInfo.event_);
 
     auto multisync = MakeMultiSync(alSyncInfo, syncInfo);
-    std::cout << "ALUMINUM GATHER" << std::endl;
     Al::Gather<Backend>(
         sbuf, rbuf, sc, root, comm.template GetComm<Backend>());
 }
