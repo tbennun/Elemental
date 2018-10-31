@@ -1,17 +1,67 @@
 cmake_minimum_required(VERSION 3.9)
 
-project(Hydrogen C CXX)
+project(Hydrogen CXX)
 
 if (NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
 endif ()
 
-set(HYDROGEN_VERSION_MAJOR 0)
-set(HYDROGEN_VERSION_MINOR 1)
+# Setup version information
+find_program(__GIT_EXECUTABLE git)
+mark_as_advanced(__GIT_EXECUTABLE)
+if (__GIT_EXECUTABLE)
+
+  execute_process(
+    COMMAND ${__GIT_EXECUTABLE} rev-parse --is-inside-work-tree
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    OUTPUT_VARIABLE __BUILDING_FROM_GIT_SOURCES
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+  if (__BUILDING_FROM_GIT_SOURCES)
+    execute_process(
+      COMMAND ${__GIT_EXECUTABLE} rev-parse --show-toplevel
+      WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+      OUTPUT_VARIABLE __GIT_TOPLEVEL_DIR
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(
+      COMMAND ${__GIT_EXECUTABLE} rev-parse --git-dir
+      WORKING_DIRECTORY "${__GIT_TOPLEVEL_DIR}"
+      OUTPUT_VARIABLE __GIT_GIT_DIR
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(
+      COMMAND ${__GIT_EXECUTABLE} --git-dir "${__GIT_GIT_DIR}" describe
+      --abbrev=7 --always --dirty --tags
+      WORKING_DIRECTORY "${__GIT_TOPLEVEL_DIR}"
+      OUTPUT_VARIABLE __GIT_DESCRIBE_VERSION
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(
+      COMMAND ${__GIT_EXECUTABLE} rev-list HEAD --max-count=1 --date-order
+      WORKING_DIRECTORY "${__GIT_TOPLEVEL_DIR}"
+      OUTPUT_VARIABLE __GIT_LATEST_COMMIT
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(
+      COMMAND ${__GIT_EXECUTABLE} rev-list hydrogen --max-count=1 --date-order
+      WORKING_DIRECTORY "${__GIT_TOPLEVEL_DIR}"
+      OUTPUT_VARIABLE __GIT_LATEST_HYDROGEN_COMMIT
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+    set(HYDROGEN_GIT_VERSION "${__GIT_DESCRIBE_VERSION}")
+    set(HYDROGEN_LATEST_SHA "${__GIT_LATEST_COMMIT}")
+    set(HYDROGEN_LATEST_HYDROGEN_SHA "${__GIT_LATEST_HYDROGEN_COMMIT}")
+  endif (__BUILDING_FROM_GIT_SOURCES)
+endif (__GIT_EXECUTABLE)
+
+# This must be set because version tags
+set(HYDROGEN_VERSION_MAJOR 1)
+set(HYDROGEN_VERSION_MINOR 0)
+set(HYDROGEN_VERSION_PATCH 0)
+set(HYDROGEN_VERSION
+  "${HYDROGEN_VERSION_MAJOR}.${HYDROGEN_VERSION_MINOR}.${HYDROGEN_VERSION_PATCH}")
 
 # Back-compatibility, until it's all sorted out
 set(EL_VERSION_MAJOR ${HYDROGEN_VERSION_MAJOR})
 set(EL_VERSION_MINOR ${HYDROGEN_VERSION_MINOR})
+set(EL_VERSION_PATCH ${HYDROGEN_VERSION_PATCH})
 
 string(TOUPPER "${PROJECT_NAME}" UPPER_PROJECT_NAME)
 
@@ -80,9 +130,6 @@ if (${PROJECT_NAME}_ENABLE_CUDA)
     ON)
 endif ()
 
-# Legacy options, with EL_ prefix intact
-option(BINARY_SUBDIRECTORIES "Install binaries into tree based on type" ON)
-
 #
 # MEMORY-RELATED OPTIONS
 #
@@ -102,10 +149,16 @@ endif ()
 
 option(${PROJECT_NAME}_ZERO_INIT "Initialize buffers to zero by default?" OFF)
 mark_as_advanced(${PROJECT_NAME}_ZERO_INIT)
+if (${PROJECT_NAME}_ZERO_INIT)
+  set(EL_ZERO_INIT ${${PROJECT_NAME}_ZERO_INIT})
+endif ()
 
 option(${PROJECT_NAME}_ENABLE_VALGRIND
   "Search for valgrind and enable related features" OFF)
 mark_as_advanced(${PROJECT_NAME}_ENABLE_VALGRIND)
+if (${PROJECT_NAME}_ENABLE_VALGRIND)
+  set(EL_ENABLE_VALGRIND ${${PROJECT_NAME}_ENABLE_VALGRIND})
+endif ()
 
 #
 # OpenMP
@@ -119,12 +172,6 @@ if (${PROJECT_NAME}_ENABLE_OPENMP)
     "Use taskloops instead of parallel for" OFF)
 endif ()
 
-# At one point, a bug was found in IBM's C++ compiler for Blue Gene/P,
-# where OpenMP statements of the form a[i] += alpha b[i], with complex data,
-# would segfault and/or return incorrect results
-option(${PROJECT_NAME}_AVOID_OMP_FMA "Avoid a bug in the IBM compilers." OFF)
-mark_as_advanced(${PROJECT_NAME}_AVOID_OMP_FMA)
-
 #
 # MPI
 #
@@ -133,42 +180,67 @@ mark_as_advanced(${PROJECT_NAME}_AVOID_OMP_FMA)
 # often buggy. We can avoid it by setting this to ON
 option(${PROJECT_NAME}_AVOID_CUDA_AWARE_MPI "Avoid CUDA-aware MPI" OFF)
 
-option(${PROJECT_NAME}_USE_CUSTOM_ALLTOALLV "Avoid MPI_Alltoallv for performance reasons" OFF)
+option(${PROJECT_NAME}_USE_CUSTOM_ALLTOALLV
+  "Avoid MPI_Alltoallv for performance reasons" OFF)
 mark_as_advanced(${PROJECT_NAME}_USE_CUSTOM_ALLTOALLV)
+if (${PROJECT_NAME}_USE_CUSTOM_ALLTOALLV)
+  set(EL_USE_CUSTOM_ALLTOALLV ${${PROJECT_NAME}_USE_CUSTOM_ALLTOALLV})
+endif ()
 
-# Since it is surprisingly common for MPI libraries to have bugs in their
-# support for complex data, the following option forces Elemental to cast
-# all possible MPI communications in terms of twice as many real units of data.
-option(${PROJECT_NAME}_AVOID_COMPLEX_MPI "Avoid potentially buggy complex MPI routines" OFF)
+# Since it is surprisingly common for MPI libraries to have bugs in
+# their support for complex data, the following option forces
+# Elemental to cast all possible MPI communications in terms of twice
+# as many real units of data.
+option(${PROJECT_NAME}_AVOID_COMPLEX_MPI
+  "Avoid potentially buggy complex MPI routines" OFF)
 mark_as_advanced(${PROJECT_NAME}_AVOID_COMPLEX_MPI)
+if (${PROJECT_NAME}_AVOID_COMPLEX_MPI)
+  set(EL_AVOID_COMPLEX_MPI ${${PROJECT_NAME}_AVOID_COMPLEX_MPI})
+endif ()
 
-# Due to a subtle flaw in the Blue Gene/P extensions for MPICH2, treating
-# floating-point data as a collection of byte-sized objects results in a
-# better algorithm being chosen for MPI_Allgather. This should not effect
-# performance on most machines.
-option(${PROJECT_NAME}_USE_BYTE_ALLGATHERS "Avoid BG/P allgather performance bug." OFF)
+# Due to a subtle flaw in the Blue Gene/P extensions for MPICH2,
+# treating floating-point data as a collection of byte-sized objects
+# results in a better algorithm being chosen for MPI_Allgather. This
+# should not effect performance on most machines.
+option(${PROJECT_NAME}_USE_BYTE_ALLGATHERS
+  "Avoid BG/P allgather performance bug." OFF)
 mark_as_advanced(${PROJECT_NAME}_USE_BYTE_ALLGATHERS)
+if (${PROJECT_NAME}_USE_BYTE_ALLGATHERS)
+  set(EL_USE_BYTE_ALLGATHERS ${${PROJECT_NAME}_USE_BYTE_ALLGATHERS})
+endif ()
 
 #
 # Runtime warnings
 #
 
-# Print a warning any time a redistribution is performed which unpacks a
-# large amount of data with a non-unit stride
-option(${PROJECT_NAME}_CACHE_WARNINGS "Warns when using cache-unfriendly routines" OFF)
+# Print a warning any time a redistribution is performed which unpacks
+# a large amount of data with a non-unit stride
+option(${PROJECT_NAME}_CACHE_WARNINGS
+  "Warns when using cache-unfriendly routines" OFF)
 mark_as_advanced(${PROJECT_NAME}_CACHE_WARNINGS)
+if (${PROJECT_NAME}_CACHE_WARNINGS)
+  set(EL_CACHE_WARNINGS ${${PROJECT_NAME}_CACHE_WARNINGS})
+endif ()
 
-# Print a warning when an improperly aligned redistribution is performed,
-# i.e., if an unnecessary permutation communication stage must take place
+# Print a warning when an improperly aligned redistribution is
+# performed, i.e., if an unnecessary permutation communication stage
+# must take place
 option(${PROJECT_NAME}_UNALIGNED_WARNINGS
-       "Warn when performing unaligned redistributions" OFF)
+  "Warn when performing unaligned redistributions" OFF)
 mark_as_advanced(${PROJECT_NAME}_UNALIGNED_WARNINGS)
+if (${PROJECT_NAME}_CACHE_WARNINGS)
+  set(EL_CACHE_WARNINGS ${${PROJECT_NAME}_UNALIGNED_WARNINGS})
+endif ()
 
-# Print a warning if an opportunity was missed to implement a redistribution
-# approach specifically for vectors (instead of matrices)
+# Print a warning if an opportunity was missed to implement a
+# redistribution approach specifically for vectors (instead of
+# matrices)
 option(${PROJECT_NAME}_VECTOR_WARNINGS
-       "Warn when vector redistribution chances are missed" OFF)
+  "Warn when vector redistribution chances are missed" OFF)
 mark_as_advanced(${PROJECT_NAME}_VECTOR_WARNINGS)
+if (${PROJECT_NAME}_VECTOR_WARNINGS)
+  set(EL_VECTOR_WARNINGS ${${PROJECT_NAME}_VECTOR_WARNINGS})
+endif ()
 
 #
 # Check the compiler features
@@ -216,7 +288,8 @@ if (${PROJECT_NAME}_ENABLE_CUDA)
 
   else ()
 
-    message(FATAL_ERROR "CUDA support not found. Disabling CUDA the features.")
+    message(FATAL_ERROR
+      "CUDA support not found. Disabling CUDA the features.")
     set(${PROJECT_NAME}_ENABLE_CUDA FALSE)
     set(HYDROGEN_HAVE_CUDA FALSE)
 
@@ -348,9 +421,8 @@ include (CMakePackageConfigHelpers)
 # Write the version file for both the build and the install tree
 write_basic_package_version_file(
   "${CMAKE_BINARY_DIR}/HydrogenConfigVersion.cmake"
-  VERSION "${HYDROGEN_VERSION_MAJOR}.${HYDROGEN_VERSION_MINOR}"
-  COMPATIBILITY AnyNewerVersion
-  )
+  VERSION "${HYDROGEN_VERSION}"
+  COMPATIBILITY AnyNewerVersion)
 
 # Write the configure file for the build tree
 set(INCLUDE_INSTALL_DIRS "${CMAKE_SOURCE_DIR}/include"
@@ -399,3 +471,110 @@ install(FILES
   DESTINATION ${CMAKE_INSTALL_DIR})
 install(DIRECTORY cmake/modules DESTINATION lib/cmake/hydrogen
   FILES_MATCHING PATTERN "*.cmake")
+
+# include(HydrogenConfigureSummary)
+# CMAKE_CXX_COMPILER
+# CMAKE_CUDA_COMPILER
+# CMAKE_CUDA_HOST_COMPILER
+# CMAKE_CXX_FLAGS
+# CMAKE_CUDA_COMPILER
+# CMAKE_INSTALL_PREFIX
+# CMAKE_BINARY_DIR
+# HYDROGEN_BLAS_SUFFIX
+# HYDROGEN_LAPACK_SUFFIX
+
+# Hydrogen_ENABLE_TESTING
+# HYDROGEN_HAVE_QUADMATH
+# HYDROGEN_HAVE_QD
+# HYDROGEN_HAVE_GMP
+# HYDROGEN_HAVE_MPFR
+# HYDROGEN_HAVE_MPC
+# HYDROGEN_HAVE_ALUMINUM
+# HYDROGEN_HAVE_NCCL2
+# HYDROGEN_HAVE_AL_MPI_CUDA
+# HYDROGEN_HAVE_CUDA
+# HYDROGEN_HAVE_CUB
+# EL_USE_64BIT_INTS
+# EL_USE_64BIT_BLAS_INTS
+# EL_ZERO_INIT
+# EL_HAVE_VALGRIND
+# EL_HYBRID
+# EL_HAVE_OPENMP
+# EL_HAVE_OMP_COLLAPSE
+# EL_HAVE_OMP_SIMD
+# HYDROGEN_HAVE_OMP_TASKLOOP
+# HYDROGEN_HAVE_CUDA_AWARE_MPI
+# HYDROGEN_ENSURE_HOST_MPI_BUFFERS
+# EL_USE_CUSTOM_ALLTOALLV
+# EL_AVOID_COMPLEX_MPI
+# EL_USE_BYTE_ALLGATHERS
+# EL_CACHE_WARNINGS
+# EL_CACHE_WARNINGS
+# EL_VECTOR_WARNINGS
+# HYDROGEN_HAVE_OPENBLAS
+# HYDROGEN_HAVE_LAPACK
+# HYDROGEN_HAVE_MKL
+# HYDROGEN_HAVE_MKL_GEMMT
+
+if (NOT __dont_print_summary)
+  include(PrintHydrogenSummary)
+  print_full_hydrogen_summary(
+    VERSION_VARIABLES
+    HYDROGEN_VERSION
+    HYDROGEN_GIT_VERSION
+    HYDROGEN_LATEST_SHA
+    HYDROGEN_LATEST_HYDROGEN_SHA
+
+    PATH_VARIABLES
+    CMAKE_CXX_COMPILER
+    CMAKE_CUDA_COMPILER
+    CMAKE_CUDA_HOST_COMPILER
+    MPI_CXX_COMPILER
+    CMAKE_INSTALL_PREFIX
+    CMAKE_SOURCE_DIR
+    CMAKE_BINARY_DIR
+
+    STRING_VARIABLES
+    CMAKE_CUDA_FLAGS
+    CMAKE_CXX_FLAGS
+    HYDROGEN_BLAS_SUFFIX
+    HYDROGEN_LAPACK_SUFFIX
+
+    BOOLEAN_VARIABLES
+    Hydrogen_ENABLE_TESTING
+    HYDROGEN_HAVE_QUADMATH
+    HYDROGEN_HAVE_QD
+    HYDROGEN_HAVE_GMP
+    HYDROGEN_HAVE_MPFR
+    HYDROGEN_HAVE_MPC
+    HYDROGEN_HAVE_ALUMINUM
+    HYDROGEN_HAVE_NCCL2
+    HYDROGEN_HAVE_AL_MPI_CUDA
+    HYDROGEN_HAVE_CUDA
+    HYDROGEN_HAVE_CUB
+    HYDROGEN_HAVE_OMP_TASKLOOP
+    HYDROGEN_HAVE_CUDA_AWARE_MPI
+    HYDROGEN_ENSURE_HOST_MPI_BUFFERS
+    HYDROGEN_HAVE_OPENBLAS
+    HYDROGEN_HAVE_LAPACK
+    HYDROGEN_HAVE_MKL
+    HYDROGEN_HAVE_MKL_GEMMT
+    EL_USE_64BIT_INTS
+    EL_USE_64BIT_BLAS_INTS
+    EL_ZERO_INIT
+    EL_HAVE_VALGRIND
+    EL_HYBRID
+    EL_HAVE_OPENMP
+    EL_HAVE_OMP_COLLAPSE
+    EL_HAVE_OMP_SIMD
+    EL_USE_CUSTOM_ALLTOALLV
+    EL_AVOID_COMPLEX_MPI
+    EL_USE_BYTE_ALLGATHERS
+    EL_CACHE_WARNINGS
+    EL_CACHE_WARNINGS
+    EL_VECTOR_WARNINGS
+
+    PRINT_EMPTY_VARIABLES
+    )
+  set(__dont_print_summary ON CACHE INTERNAL "" FORCE)
+endif ()

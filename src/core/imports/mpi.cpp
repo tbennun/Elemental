@@ -1447,7 +1447,7 @@ void AllGather(
     Synchronize(syncInfo);
 
 #ifdef EL_USE_BYTE_ALLGATHERS
-#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
+#ifndef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     const int commSize = Size( comm );
 #endif
     vector<int> byteRcs( commSize ), byteRds( commSize );
@@ -1493,7 +1493,7 @@ EL_NO_RELEASE_EXCEPT
     Synchronize(syncInfo);
 
 #ifdef EL_USE_BYTE_ALLGATHERS
-#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
+#ifndef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     const int commSize = Size( comm );
 #endif
 

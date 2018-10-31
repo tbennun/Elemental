@@ -8,7 +8,7 @@
 #
 include(CheckCXXSourceCompiles)
 
-find_package(MPI)
+find_package(MPI 3.0 REQUIRED COMPONENTS CXX)
 if (MPI_CXX_FOUND)
   if (NOT TARGET MPI::MPI_CXX)
     add_library(MPI::MPI_CXX INTERFACE IMPORTED)
