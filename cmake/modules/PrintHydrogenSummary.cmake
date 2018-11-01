@@ -106,5 +106,7 @@ function (print_full_hydrogen_summary)
   endif ()
 
   string(APPEND __SUMMARY_STR "*\n${__STAR_STR}\n")
-  message("${__SUMMARY_STR}")
+
+  # Get the message to STDOUT
+  execute_process(COMMAND ${CMAKE_COMMAND} -E echo "${__SUMMARY_STR}")
 endfunction ()
