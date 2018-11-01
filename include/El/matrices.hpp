@@ -162,6 +162,12 @@ template<typename T>
 void Zeros( AbstractMatrix<T>& A, Int m, Int n );
 template<typename T>
 void Zeros( AbstractDistMatrix<T>& A, Int m, Int n );
+template<typename T>
+void Zeros_seq( Matrix<T>& A, Int m, Int n );
+template<typename T>
+void Zeros_seq( AbstractMatrix<T>& A, Int m, Int n );
+template<typename T>
+void Zeros_seq( AbstractDistMatrix<T>& A, Int m, Int n );
 
 // Integral equations
 // ==================
