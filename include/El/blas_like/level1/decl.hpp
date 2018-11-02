@@ -1734,6 +1734,10 @@ void UpdateSubmatrix
 // Zero
 // ====
 template<typename T>
+void Zero_seq( AbstractMatrix<T>& A );
+template<typename T>
+void Zero_seq( AbstractDistMatrix<T>& A );
+template<typename T>
 void Zero( AbstractMatrix<T>& A );
 template<typename T>
 void Zero( AbstractDistMatrix<T>& A );

@@ -1,3 +1,4 @@
+include(CheckCXXSourceCompiles)
 
 # Attempt to use the built-in module
 find_package(OpenMP COMPONENTS CXX)
@@ -60,10 +61,10 @@ int main() {
 }
 }")
 
-include(CheckCXXSourceRuns)
+include(CheckCXXSourceCompiles)
 set(CMAKE_REQUIRED_FLAGS "${OpenMP_CXX_FLAGS}")
 set(CMAKE_REQUIRED_LIBRARIES OpenMP::OpenMP_CXX)
-check_cxx_source_runs("${_OPENMP_TEST_SOURCE}" _OPENMP_TEST_RUNS)
+check_cxx_source_compiles("${_OPENMP_TEST_SOURCE}" _OPENMP_TEST_RUNS)
 unset(CMAKE_REQUIRED_FLAGS)
 unset(CMAKE_REQUIRED_LIBRARIES)
 

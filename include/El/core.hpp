@@ -41,11 +41,7 @@
 # define EL_RELEASE_ONLY(cmd)
 #endif
 
-#ifdef EL_HAVE_NO_EXCEPT
-# define EL_NO_EXCEPT noexcept
-#else
-# define EL_NO_EXCEPT
-#endif
+#define EL_NO_EXCEPT noexcept
 
 #ifdef EL_RELEASE
 # define EL_NO_RELEASE_EXCEPT EL_NO_EXCEPT

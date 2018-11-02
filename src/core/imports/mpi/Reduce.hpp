@@ -343,10 +343,8 @@ MPI_REDUCE_PROTO(long int)
 MPI_REDUCE_PROTO(unsigned long)
 MPI_REDUCE_PROTO(float)
 MPI_REDUCE_PROTO(double)
-#ifdef EL_HAVE_MPI_LONG_LONG
 MPI_REDUCE_PROTO(long long int)
 MPI_REDUCE_PROTO(unsigned long long)
-#endif
 MPI_REDUCE_PROTO(ValueInt<Int>)
 MPI_REDUCE_PROTO(Entry<Int>)
 MPI_REDUCE_PROTO(Complex<float>)

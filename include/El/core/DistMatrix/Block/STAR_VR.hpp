@@ -123,14 +123,14 @@ public:
 
     // Basic queries
     // =============
-    Dist ColDist()             const override EL_NO_EXCEPT;
-    Dist RowDist()             const override EL_NO_EXCEPT;
-    Dist PartialColDist()      const override EL_NO_EXCEPT;
-    Dist PartialRowDist()      const override EL_NO_EXCEPT;
-    Dist PartialUnionColDist() const override EL_NO_EXCEPT;
-    Dist PartialUnionRowDist() const override EL_NO_EXCEPT;
-    Dist CollectedColDist()    const override EL_NO_EXCEPT;
-    Dist CollectedRowDist()    const override EL_NO_EXCEPT;
+    Dist ColDist()             const EL_NO_EXCEPT override;
+    Dist RowDist()             const EL_NO_EXCEPT override;
+    Dist PartialColDist()      const EL_NO_EXCEPT override;
+    Dist PartialRowDist()      const EL_NO_EXCEPT override;
+    Dist PartialUnionColDist() const EL_NO_EXCEPT override;
+    Dist PartialUnionRowDist() const EL_NO_EXCEPT override;
+    Dist CollectedColDist()    const EL_NO_EXCEPT override;
+    Dist CollectedRowDist()    const EL_NO_EXCEPT override;
 
     mpi::Comm DistComm()            const EL_NO_EXCEPT override;
     mpi::Comm CrossComm()           const EL_NO_EXCEPT override;
@@ -253,8 +253,8 @@ public:
     void MakeLocalReal(Int iLoc, Int jLoc) EL_NO_RELEASE_EXCEPT override;
     void ConjugateLocal(Int iLoc, Int jLoc) EL_NO_RELEASE_EXCEPT override;
 
-    localMatrixType& Matrix() override;
-    localMatrixType const& LockedMatrix() const override;
+    localMatrixType& Matrix() EL_NO_EXCEPT override;
+    localMatrixType const& LockedMatrix() const EL_NO_EXCEPT override;
 
     Device GetLocalDevice() const EL_NO_EXCEPT override;
 

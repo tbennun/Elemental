@@ -15,6 +15,7 @@
 #define EL_GIT_SHA1 "@GIT_SHA1@"
 #define EL_VERSION_MAJOR "@EL_VERSION_MAJOR@"
 #define EL_VERSION_MINOR "@EL_VERSION_MINOR@"
+#define EL_VERSION_PATCH "@EL_VERSION_PATCH@"
 #define EL_CMAKE_BUILD_TYPE "@CMAKE_BUILD_TYPE@"
 
 #ifdef HYDROGEN_RELEASE_BUILD
@@ -87,35 +88,18 @@
 #cmakedefine EL_HAVE_OMP_SIMD
 #cmakedefine EL_HAVE_QT5
 #cmakedefine EL_AVOID_COMPLEX_MPI
-#cmakedefine EL_HAVE_CXX11RANDOM
-#cmakedefine EL_HAVE_STEADYCLOCK
-#cmakedefine EL_HAVE_NOEXCEPT
-#cmakedefine EL_HAVE_MPI_REDUCE_SCATTER_BLOCK
-#cmakedefine EL_HAVE_MPI_LONG_LONG
-#cmakedefine EL_HAVE_MPI_LONG_DOUBLE
-#cmakedefine EL_HAVE_MPI_LONG_DOUBLE_COMPLEX
-#cmakedefine EL_HAVE_MPI_C_COMPLEX
-#cmakedefine EL_HAVE_MPI_COMM_SET_ERRHANDLER
-#cmakedefine EL_HAVE_MPI_INIT_THREAD
-#cmakedefine EL_HAVE_MPI_QUERY_THREAD
-#cmakedefine EL_HAVE_MPI3_NONBLOCKING_COLLECTIVES
-#cmakedefine EL_HAVE_MPIX_NONBLOCKING_COLLECTIVES
-#cmakedefine EL_REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE
 #cmakedefine EL_USE_BYTE_ALLGATHERS
 #cmakedefine EL_USE_64BIT_INTS
 #cmakedefine EL_USE_64BIT_BLAS_INTS
 
 /* Sparse-direct configuration */
 #cmakedefine EL_USE_CUSTOM_ALLTOALLV
-#cmakedefine EL_HAVE_METIS
-#cmakedefine EL_HAVE_PARMETIS
 
 /* Advanced configuration options */
 #cmakedefine EL_ZERO_INIT
 #cmakedefine EL_CACHE_WARNINGS
 #cmakedefine EL_UNALIGNED_WARNINGS
 #cmakedefine EL_VECTOR_WARNINGS
-#cmakedefine EL_AVOID_OMP_FMA
 
 #ifdef BUILD_SHARED_LIBS
 # if defined _WIN32 || defined __CYGWIN__

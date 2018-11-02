@@ -36,10 +36,10 @@ if (NOT TARGET cuda::nvml)
 endif (NOT TARGET cuda::nvml)
 
 # Set the include directories for the target
-set_property(TARGET cuda::nvml APPEND
+set_property(TARGET cuda::nvml
   PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${NVML_INCLUDE_PATH})
 
-set_property(TARGET cuda::nvml APPEND
+set_property(TARGET cuda::nvml
   PROPERTY INTERFACE_LINK_LIBRARIES ${NVML_LIBRARY})
 
 #

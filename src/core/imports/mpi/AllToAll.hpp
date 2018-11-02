@@ -131,10 +131,8 @@ MPI_ALLTOALL_PROTO(long int)
 MPI_ALLTOALL_PROTO(unsigned long)
 MPI_ALLTOALL_PROTO(float)
 MPI_ALLTOALL_PROTO(double)
-#ifdef EL_HAVE_MPI_LONG_LONG
 MPI_ALLTOALL_PROTO(long long int)
 MPI_ALLTOALL_PROTO(unsigned long long)
-#endif
 MPI_ALLTOALL_PROTO(ValueInt<Int>)
 MPI_ALLTOALL_PROTO(Entry<Int>)
 MPI_ALLTOALL_PROTO(Complex<float>)
