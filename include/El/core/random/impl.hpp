@@ -2,8 +2,8 @@
    Copyright (c) 2009-2016, Jack Poulson
    All rights reserved.
 
-   This file is part of Elemental and is under the BSD 2-Clause License, 
-   which can be found in the LICENSE file in the root directory, or at 
+   This file is part of Elemental and is under the BSD 2-Clause License,
+   which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
 #ifndef EL_RANDOM_IMPL_HPP
@@ -42,7 +42,7 @@ Real LogChoose( Int n, Int k )
 
     // choose(n,k) = (n*(n-1)*...*(n-(k-1)))/(k*(k-1)*...*1)
     //             = (n/k)*(((n-1)/(k-1))*...*((n-(k-1))/1)
-    // Thus, 
+    // Thus,
     //  log(choose(n,k)) = log(n/k) + log((n-1)/(k-1)) + ... + log((n-(k-1))/1).
     //                   = log(n) + log(n-1) + ... log(n-(k-1)) -
     //                     log(k) - log(k-1) - ... log(1)
@@ -114,26 +114,18 @@ Real SampleUniformNaive( const Real& a, const Real& b )
 {
     // TODO(poulson): A better general-purpose uniform random number generator
     // that draws random bits?
-#ifdef EL_HAVE_CXX11RANDOM
     std::mt19937& gen = Generator();
     std::uniform_real_distribution<long double>
       uni((long double)a,(long double)b);
     return uni(gen);
-#else
-    return (Real(rand())/(Real(RAND_MAX)+1))*(b-a) + a;
-#endif
 }
 
 template<typename Real,typename,typename,typename>
 Real SampleUniform( const Real& a, const Real& b )
 {
-#ifdef EL_HAVE_CXX11RANDOM
     std::mt19937& gen = Generator();
     std::uniform_real_distribution<Real> uni(a,b);
     return uni(gen);
-#else
-    return (Real(rand())/(Real(RAND_MAX)+1))*(b-a) + a;
-#endif
 }
 
 template<typename Real,typename,typename,typename,typename>
@@ -185,7 +177,6 @@ F SampleNormalMarsiglia( const F& mean, const Base<F>& stddev )
 template<typename F,typename>
 F SampleNormal( const F& mean, const Base<F>& stddev )
 {
-#ifdef EL_HAVE_CXX11RANDOM
     typedef Base<F> Real;
     Real stddevAdj = stddev;
     if( IsComplex<F>::value )
@@ -201,9 +192,6 @@ F SampleNormal( const F& mean, const Base<F>& stddev )
         SetImagPart( sample, imagNormal(gen) );
     }
     return sample;
-#else
-    return SampleNormalMarsiglia( mean, stddev );
-#endif
 }
 
 template<typename F,typename,typename>

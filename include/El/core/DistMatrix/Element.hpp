@@ -113,28 +113,28 @@ public:
 
     // Basic queries
     // =============
-    DistWrap Wrap() const override EL_NO_EXCEPT { return ELEMENT; }
+    DistWrap Wrap() const EL_NO_EXCEPT override { return ELEMENT; }
 
-    Int BlockHeight() const override EL_NO_EXCEPT { return 1; }
-    Int BlockWidth()  const override EL_NO_EXCEPT { return 1; }
-    Int ColCut()      const override EL_NO_EXCEPT { return 0; }
-    Int RowCut()      const override EL_NO_EXCEPT { return 0; }
+    Int BlockHeight() const EL_NO_EXCEPT override { return 1; }
+    Int BlockWidth()  const EL_NO_EXCEPT override { return 1; }
+    Int ColCut()      const EL_NO_EXCEPT override { return 0; }
+    Int RowCut()      const EL_NO_EXCEPT override { return 0; }
 
-    int  RowOwner(Int i)       const override EL_NO_EXCEPT;
-    int  ColOwner(Int j)       const override EL_NO_EXCEPT;
-    Int  LocalRowOffset(Int i) const override EL_NO_EXCEPT;
-    Int  LocalColOffset(Int j) const override EL_NO_EXCEPT;
-    Int  LocalRowOffset(Int i, int rowOwner) const override EL_NO_EXCEPT;
-    Int  LocalColOffset(Int j, int colOwner) const override EL_NO_EXCEPT;
-    Int  GlobalRow(Int iLoc)   const override EL_NO_EXCEPT;
-    Int  GlobalCol(Int jLoc)   const override EL_NO_EXCEPT;
+    int  RowOwner(Int i)       const EL_NO_EXCEPT override;
+    int  ColOwner(Int j)       const EL_NO_EXCEPT override;
+    Int  LocalRowOffset(Int i) const EL_NO_EXCEPT override;
+    Int  LocalColOffset(Int j) const EL_NO_EXCEPT override;
+    Int  LocalRowOffset(Int i, int rowOwner) const EL_NO_EXCEPT override;
+    Int  LocalColOffset(Int j, int colOwner) const EL_NO_EXCEPT override;
+    Int  GlobalRow(Int iLoc)   const EL_NO_EXCEPT override;
+    Int  GlobalCol(Int jLoc)   const EL_NO_EXCEPT override;
 
     // Diagonal manipulation
     // =====================
     bool DiagonalAlignedWith
-    (const El::DistData& d, Int offset=0) const override EL_NO_EXCEPT;
-    int DiagonalRoot(Int offset=0) const override EL_NO_EXCEPT;
-    int DiagonalAlign(Int offset=0) const override EL_NO_EXCEPT;
+    (const El::DistData& d, Int offset=0) const EL_NO_EXCEPT override;
+    int DiagonalRoot(Int offset=0) const EL_NO_EXCEPT override;
+    int DiagonalAlign(Int offset=0) const EL_NO_EXCEPT override;
 
 protected:
     // Protected constructors

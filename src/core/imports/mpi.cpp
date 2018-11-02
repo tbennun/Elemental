@@ -27,18 +27,12 @@ namespace mpi
 
 const int ANY_SOURCE = MPI_ANY_SOURCE;
 const int ANY_TAG = MPI_ANY_TAG;
-#ifdef EL_HAVE_MPI_QUERY_THREAD
 const int THREAD_SINGLE = MPI_THREAD_SINGLE;
 const int THREAD_FUNNELED = MPI_THREAD_FUNNELED;
 const int THREAD_SERIALIZED = MPI_THREAD_SERIALIZED;
 const int THREAD_MULTIPLE = MPI_THREAD_MULTIPLE;
-#else
-const int THREAD_SINGLE = 0;
-const int THREAD_FUNNELED = 1;
-const int THREAD_SERIALIZED = 2;
-const int THREAD_MULTIPLE = 3;
-#endif
 const int UNDEFINED = MPI_UNDEFINED;
+
 #ifdef HYDROGEN_HAVE_ALUMINUM
 const Comm COMM_NULL(internal::DelayCtorType{}, MPI_COMM_NULL);
 const Comm COMM_SELF(internal::DelayCtorType{}, MPI_COMM_SELF);
@@ -48,6 +42,7 @@ const Comm COMM_NULL = MPI_COMM_NULL;
 const Comm COMM_SELF = MPI_COMM_SELF;
 const Comm COMM_WORLD = MPI_COMM_WORLD;
 #endif
+
 const ErrorHandler ERRORS_RETURN = MPI_ERRORS_RETURN;
 const ErrorHandler ERRORS_ARE_FATAL = MPI_ERRORS_ARE_FATAL;
 const Group GROUP_NULL = MPI_GROUP_NULL;
@@ -91,12 +86,7 @@ int InitializeThread( int& argc, char**& argv, int required ) EL_NO_EXCEPT
 {
     int provided;
 
-#ifdef EL_HAVE_MPI_INIT_THREAD
     MPI_Init_thread( &argc, &argv, required, &provided );
-#else
-    MPI_Init( &argc, &argv );
-    provided = 0; // equivalent to MPI_THREAD_SINGLE
-#endif
 
 #ifdef HYDROGEN_HAVE_ALUMINUM
     Al::Initialize(argc, argv);
@@ -136,11 +126,7 @@ bool Finalized() EL_NO_EXCEPT
 int QueryThread() EL_NO_EXCEPT
 {
     int provided;
-#ifdef EL_HAVE_MPI_QUERY_THREAD
     MPI_Query_thread( &provided );
-#else
-    provided = 0; // equivalent to MPI_THREAD_SINGLE
-#endif
     return provided;
 }
 
@@ -236,11 +222,7 @@ void ErrorHandlerSet( Comm comm, ErrorHandler errorHandler )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
-#ifdef EL_HAVE_MPI_COMM_SET_ERRHANDLER
     EL_CHECK_MPI_NO_DATA( MPI_Comm_set_errhandler( comm.comm, errorHandler ) );
-#else
-    EL_CHECK_MPI_NO_DATA( MPI_Errhandler_set( comm.comm, errorHandler ) );
-#endif
 }
 
 // Cartesian communicator routines
@@ -641,6 +623,7 @@ template <typename T, Device D,
          typename/*=void*/>
 void TaggedSend( const T* buf, int count, int to, int tag, Comm comm,
                  SyncInfo<D> const& syncInfo)
+    EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
@@ -911,6 +894,7 @@ template <typename T, Device D,
          typename/*=void*/>
 void TaggedRecv( T* buf, int count, int from, int tag, Comm comm,
                  SyncInfo<D> const& syncInfo)
+    EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
@@ -1080,6 +1064,7 @@ void TaggedSendRecv(
     const T* sbuf, int sc, int to,   int stag,
     T* rbuf, int rc, int from, int rtag, Comm comm,
     SyncInfo<D> const& syncInfo)
+    EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE
 
@@ -1210,13 +1195,9 @@ void IBroadcast
 ( Real* buf, int count, int root, Comm comm, Request<Real>& request )
 {
     EL_DEBUG_CSE
-#ifdef EL_HAVE_NONBLOCKING_COLLECTIVES
     EL_CHECK_MPI
     ( MPI_Ibcast
       ( buf, count, TypeMap<Real>(), root, comm.comm, &request.backend ) );
-#else
-    LogicError("Elemental was not configured with non-blocking support");
-#endif
 }
 
 template <typename Real,
@@ -1226,7 +1207,6 @@ void IBroadcast
   Request<Complex<Real>>& request )
 {
     EL_DEBUG_CSE
-#ifdef EL_HAVE_NONBLOCKING_COLLECTIVES
 #ifdef EL_AVOID_COMPLEX_MPI
     EL_CHECK_MPI
     ( MPI_Ibcast
@@ -1237,9 +1217,6 @@ void IBroadcast
       ( buf, count, TypeMap<Complex<Real>>(), root, comm.comm,
         &request.backend ) );
 #endif
-#else
-    LogicError("Elemental was not configured with non-blocking support");
-#endif
 }
 
 template <typename T,
@@ -1249,18 +1226,14 @@ void IBroadcast
 ( T* buf, int count, int root, Comm comm, Request<T>& request )
 {
     EL_DEBUG_CSE
-#ifdef EL_HAVE_NONBLOCKING_COLLECTIVES
     request.receivingPacked = true;
     request.recvCount = count;
     request.unpackedRecvBuf = buf;
     ReserveSerialized( count, buf, request.buffer );
     EL_CHECK_MPI
     ( MPI_Ibcast
-      ( request.buffer.data(), count, TypeMap<Real>(), root, comm.comm,
+      ( request.buffer.data(), count, TypeMap<T>(), root, comm.comm,
         &request.backend ) );
-#else
-    LogicError("Elemental was not configured with non-blocking support");
-#endif
 }
 
 template <typename T>
@@ -1276,15 +1249,11 @@ void IGather
   Request<Real>& request )
 {
     EL_DEBUG_CSE
-#ifdef EL_HAVE_NONBLOCKING_COLLECTIVES
     EL_CHECK_MPI
     ( MPI_Igather
       ( const_cast<Real*>(sbuf), sc, TypeMap<Real>(),
         rbuf,                    rc, TypeMap<Real>(), root, comm.comm,
         &request.backend ) );
-#else
-    LogicError("Elemental was not configured with non-blocking support");
-#endif
 }
 
 template <typename Real,
@@ -1296,7 +1265,6 @@ void IGather
   Request<Complex<Real>>& request )
 {
     EL_DEBUG_CSE
-#ifdef EL_HAVE_NONBLOCKING_COLLECTIVES
 #ifdef EL_AVOID_COMPLEX_MPI
     EL_CHECK_MPI
     ( MPI_Igather
@@ -1310,9 +1278,6 @@ void IGather
         rbuf,                             rc, TypeMap<Complex<Real>>(),
         root, comm.comm, &request.backend ) );
 #endif
-#else
-    LogicError("Elemental was not configured with non-blocking support");
-#endif
 }
 
 template <typename T,
@@ -1325,7 +1290,6 @@ void IGather
   Request<T>& request )
 {
     EL_DEBUG_CSE
-#ifdef EL_HAVE_NONBLOCKING_COLLECTIVES
     if( mpi::Rank(comm) == root )
     {
         const int commSize = mpi::Size(comm);
@@ -1336,12 +1300,9 @@ void IGather
     }
     EL_CHECK_MPI
     ( MPI_Igather
-      ( request.buffer.data(), sc, TypeMap<Real>(),
-        rbuf,                  rc, TypeMap<Real>(), root, comm.comm,
+      ( request.buffer.data(), sc, TypeMap<T>(),
+        rbuf,                  rc, TypeMap<T>(), root, comm.comm,
         &request.backend ) );
-#else
-    LogicError("Elemental was not configured with non-blocking support");
-#endif
 }
 
 template <typename Real, Device D,
@@ -1486,7 +1447,7 @@ void AllGather(
     Synchronize(syncInfo);
 
 #ifdef EL_USE_BYTE_ALLGATHERS
-#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
+#ifndef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     const int commSize = Size( comm );
 #endif
     vector<int> byteRcs( commSize ), byteRds( commSize );
@@ -1532,7 +1493,7 @@ EL_NO_RELEASE_EXCEPT
     Synchronize(syncInfo);
 
 #ifdef EL_USE_BYTE_ALLGATHERS
-#ifdef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
+#ifndef HYDROGEN_ENSURE_HOST_MPI_BUFFERS
     const int commSize = Size( comm );
 #endif
 
@@ -2447,10 +2408,8 @@ MPI_PROTO(int)
 MPI_PROTO(unsigned)
 MPI_PROTO(long int)
 MPI_PROTO(unsigned long)
-#ifdef EL_HAVE_MPI_LONG_LONG
 MPI_PROTO(long long int)
 MPI_PROTO(unsigned long long)
-#endif
 MPI_PROTO(ValueInt<Int>)
 MPI_PROTO(Entry<Int>)
 MPI_PROTO(float)

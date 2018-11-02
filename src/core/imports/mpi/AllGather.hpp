@@ -61,6 +61,8 @@ void AllGather(
 
 #ifdef EL_USE_BYTE_ALLGATHERS
     LogicError("AllGather: Let Tom know if you go down this code path.");
+
+    using UCP = unsigned char*;
     CheckMpi(
         MPI_Allgather(
             reinterpret_cast<UCP>(const_cast<T*>(sbuf)),
@@ -179,10 +181,8 @@ MPI_ALLGATHER_PROTO(long int)
 MPI_ALLGATHER_PROTO(unsigned long)
 MPI_ALLGATHER_PROTO(float)
 MPI_ALLGATHER_PROTO(double)
-#ifdef EL_HAVE_MPI_LONG_LONG
 MPI_ALLGATHER_PROTO(long long int)
 MPI_ALLGATHER_PROTO(unsigned long long)
-#endif
 MPI_ALLGATHER_PROTO(ValueInt<Int>)
 MPI_ALLGATHER_PROTO(Entry<Int>)
 MPI_ALLGATHER_PROTO(Complex<float>)

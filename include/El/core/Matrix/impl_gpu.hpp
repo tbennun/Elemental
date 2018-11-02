@@ -404,7 +404,6 @@ void Matrix<Ring, Device::GPU>::Set(Int i, Int j, Ring const& alpha)
 
 template<typename Ring>
 void Matrix<Ring, Device::GPU>::Set(Entry<Ring> const& entry)
-    EL_NO_RELEASE_EXCEPT
 { Set(entry.i, entry.j, entry.value); }
 
 template<typename Ring>
@@ -425,7 +424,6 @@ Matrix<Ring, Device::GPU>::SetRealPart(
 
 template<typename Ring>
 void Matrix<Ring, Device::GPU>::SetRealPart(Entry<Base<Ring>> const& entry)
-    EL_NO_RELEASE_EXCEPT
 { SetRealPart(entry.i, entry.j, entry.value); }
 
 template<typename Ring>
@@ -445,7 +443,6 @@ Matrix<Ring, Device::GPU>::SetImagPart(Int i, Int j, Base<Ring> const& alpha)
 
 template<typename Ring>
 void Matrix<Ring, Device::GPU>::SetImagPart(Entry<Base<Ring>> const& entry)
-    EL_NO_RELEASE_EXCEPT
 { SetImagPart(entry.i, entry.j, entry.value); }
 
 template<typename Ring>
@@ -464,7 +461,6 @@ void Matrix<Ring, Device::GPU>::Update(Int i, Int j, Ring const& alpha)
 
 template<typename Ring>
 void Matrix<Ring, Device::GPU>::Update(Entry<Ring> const& entry)
-    EL_NO_RELEASE_EXCEPT
 { Update(entry.i, entry.j, entry.value); }
 
 template<typename Ring>
@@ -484,7 +480,6 @@ Matrix<Ring, Device::GPU>::UpdateRealPart(Int i, Int j, Base<Ring> const& alpha)
 
 template<typename Ring>
 void Matrix<Ring, Device::GPU>::UpdateRealPart(Entry<Base<Ring>> const& entry)
-    EL_NO_RELEASE_EXCEPT
 { UpdateRealPart(entry.i, entry.j, entry.value); }
 
 template<typename Ring>
@@ -504,7 +499,6 @@ Matrix<Ring, Device::GPU>::UpdateImagPart(Int i, Int j, Base<Ring> const& alpha)
 
 template<typename Ring>
 void Matrix<Ring, Device::GPU>::UpdateImagPart(Entry<Base<Ring>> const& entry)
-    EL_NO_RELEASE_EXCEPT
 { UpdateImagPart(entry.i, entry.j, entry.value); }
 
 template<typename Ring>

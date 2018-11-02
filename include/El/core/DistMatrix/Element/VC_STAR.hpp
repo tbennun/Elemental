@@ -268,8 +268,8 @@ public:
     void MakeLocalReal(Int iLoc, Int jLoc) EL_NO_RELEASE_EXCEPT override;
     void ConjugateLocal(Int iLoc, Int jLoc) EL_NO_RELEASE_EXCEPT override;
 
-    localMatrixType& Matrix() override;
-    localMatrixType const& LockedMatrix() const override;
+    localMatrixType& Matrix() EL_NO_EXCEPT override;
+    localMatrixType const& LockedMatrix() const EL_NO_EXCEPT override;
 
     Device GetLocalDevice() const EL_NO_EXCEPT override;
 

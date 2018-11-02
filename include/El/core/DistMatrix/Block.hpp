@@ -137,25 +137,25 @@ public:
 
     // Basic queries
     // =============
-    DistWrap Wrap() const override EL_NO_EXCEPT { return BLOCK; }
+    DistWrap Wrap() const EL_NO_EXCEPT override { return BLOCK; }
 
     // Distribution information
     // ------------------------
-    Int BlockHeight() const override EL_NO_EXCEPT;
-    Int BlockWidth()  const override EL_NO_EXCEPT;
-    Int ColCut()      const override EL_NO_EXCEPT;
-    Int RowCut()      const override EL_NO_EXCEPT;
+    Int BlockHeight() const EL_NO_EXCEPT override;
+    Int BlockWidth()  const EL_NO_EXCEPT override;
+    Int ColCut()      const EL_NO_EXCEPT override;
+    Int RowCut()      const EL_NO_EXCEPT override;
     // TODO(poulson): Add specialization of ColCut() and RowCut() that return
     // the cuts at arbitrary row/column indices
 
-    int RowOwner(Int i)       const override EL_NO_EXCEPT;
-    int ColOwner(Int j)       const override EL_NO_EXCEPT;
-    Int LocalRowOffset(Int i) const override EL_NO_EXCEPT;
-    Int LocalColOffset(Int j) const override EL_NO_EXCEPT;
-    Int LocalRowOffset(Int i, int rowOwner) const override EL_NO_EXCEPT;
-    Int LocalColOffset(Int j, int colOwner) const override EL_NO_EXCEPT;
-    Int GlobalRow(Int iLoc)   const override EL_NO_EXCEPT;
-    Int GlobalCol(Int jLoc)   const override EL_NO_EXCEPT;
+    int RowOwner(Int i)       const EL_NO_EXCEPT override;
+    int ColOwner(Int j)       const EL_NO_EXCEPT override;
+    Int LocalRowOffset(Int i) const EL_NO_EXCEPT override;
+    Int LocalColOffset(Int j) const EL_NO_EXCEPT override;
+    Int LocalRowOffset(Int i, int rowOwner) const EL_NO_EXCEPT override;
+    Int LocalColOffset(Int j, int colOwner) const EL_NO_EXCEPT override;
+    Int GlobalRow(Int iLoc)   const EL_NO_EXCEPT override;
+    Int GlobalCol(Int jLoc)   const EL_NO_EXCEPT override;
 
     // Diagonal manipulation
     // =====================
