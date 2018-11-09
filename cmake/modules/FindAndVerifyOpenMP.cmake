@@ -57,7 +57,7 @@ set(_OPENMP_TEST_SOURCE
 int main() {
 #pragma omp parallel
 {
-  auto x = omp_get_num_threads();
+  int x = omp_get_num_threads();
 }
 }")
 
