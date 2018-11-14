@@ -419,10 +419,10 @@ install(TARGETS ${PROJECT_NAME}
 include (CMakePackageConfigHelpers)
 
 # Write the version file for both the build and the install tree
-write_basic_package_version_file(
+configure_file(
+  "${CMAKE_SOURCE_DIR}/cmake/configure_files/HydrogenConfigVersion.cmake.in"
   "${CMAKE_BINARY_DIR}/HydrogenConfigVersion.cmake"
-  VERSION "${HYDROGEN_VERSION}"
-  COMPATIBILITY AnyNewerVersion)
+  @ONLY)
 
 # Write the configure file for the build tree
 set(INCLUDE_INSTALL_DIRS "${CMAKE_SOURCE_DIR}/include"
