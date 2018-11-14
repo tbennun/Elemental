@@ -9,46 +9,24 @@ namespace mpi
 template <typename T, Device D,
           typename/*=EnableIf<IsAluminumSupported<T,D,COLL>>*/>
 void AllToAll(T const* sbuf, int /*sc*/, T* rbuf, int rc, Comm comm,
-              SyncInfo<D> const&)
+              SyncInfo<D> const& syncInfo)
 {
     EL_DEBUG_CSE
     if (rc == 0)
         return;
 
     using Backend = BestBackend<T,D,Collective::ALLTOALL>;
-    // FIXME Synchronize
-    Al::Alltoall<Backend>(
-        sbuf, rbuf, rc, comm.template GetComm<Backend>());
-}
-
-#ifdef HYDROGEN_HAVE_CUDA
-template <typename T,
-          typename/*=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>*/>
-void AllToAll(T const* sbuf, int /*sc*/, T* rbuf, int rc, Comm comm,
-              SyncInfo<Device::GPU> const& syncInfo)
-{
-    EL_DEBUG_CSE
-    if (rc == 0)
-        return;
-
-    using Backend = BestBackend<T,Device::GPU,Collective::ALLTOALL>;
-    SyncInfo<Device::GPU> alSyncInfo(comm.template GetComm<Backend>().get_stream(),
-                                     syncInfo.event_);
+    auto alSyncInfo =
+        SyncInfoFromComm(comm.template GetComm<Backend>(), syncInfo);
 
     auto syncHelper = MakeMultiSync(alSyncInfo, syncInfo);
 
     Al::Alltoall<Backend>(
         sbuf, rbuf, rc, comm.template GetComm<Backend>());
-
 }
-
-#endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                  Not<IsAluminumSupported<T,D,COLL>>>>*/,
-          typename/*=EnableIf<IsPacked<T>>*/>
+template <typename T, Device D, typename, typename, typename, typename, typename>
 void AllToAll(T const* sbuf, int sc, T* rbuf, int rc, Comm comm,
               SyncInfo<D> const& syncInfo)
 {
@@ -68,10 +46,7 @@ void AllToAll(T const* sbuf, int sc, T* rbuf, int rc, Comm comm,
             rbuf, rc, TypeMap<T>(), comm.comm));
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>*/,
-          typename/*=EnableIf<IsPacked<T>>*/>
+template <typename T, Device D, typename, typename, typename, typename>
 void AllToAll(Complex<T> const* sbuf,
               int sc, Complex<T>* rbuf, int rc, Comm comm,
               SyncInfo<D> const& syncInfo)
@@ -104,11 +79,7 @@ void AllToAll(Complex<T> const* sbuf,
 #endif
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>*/,
-          typename/*=DisableIf<IsPacked<T>>*/,
-          typename/*=void*/>
+template <typename T, Device D, typename, typename, typename>
 void AllToAll(T const* sbuf, int sc, T* rbuf, int rc, Comm comm,
               SyncInfo<D> const& syncInfo)
 {
@@ -135,10 +106,7 @@ void AllToAll(T const* sbuf, int sc, T* rbuf, int rc, Comm comm,
     Deserialize(totalRecv, packedRecv, rbuf);
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<Not<IsDeviceValidType<T,D>>,
-                              Not<IsAluminumSupported<T,D,COLL>>>>*/,
-          typename/*=void*/, typename/*=void*/, typename/*=void*/>
+template <typename T, Device D, typename, typename>
 void AllToAll(T const*, int, T*, int, Comm, SyncInfo<D> const&)
 {
     LogicError("AllToAll: Bad device/type combination.");

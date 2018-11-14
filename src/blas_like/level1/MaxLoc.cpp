@@ -69,7 +69,7 @@ ValueInt<Real> VectorMaxLoc( const AbstractDistMatrix<Real>& x )
         LogicError("VectorMaxLoc: Only implemented for CPU matrices.");
 
     auto syncInfoA =
-        SyncInfo<Device::CPU>(
+        SyncInfoFromMatrix(
             static_cast<Matrix<Real,Device::CPU> const&>(
                 x.LockedMatrix()));
 
@@ -161,7 +161,7 @@ Entry<Real> MaxLoc( const AbstractDistMatrix<Real>& A )
         LogicError("MaxLoc: Only implemented for CPU matrices.");
 
     auto syncInfoA =
-        SyncInfo<Device::CPU>(
+        SyncInfoFromMatrix(
             static_cast<Matrix<Real,Device::CPU> const&>(
                 A.LockedMatrix()));
 
@@ -268,7 +268,7 @@ SymmetricMaxLoc( UpperOrLower uplo, const AbstractDistMatrix<Real>& A )
         LogicError("SymmetricMaxLoc: Only implemented for CPU matrices.");
 
     auto syncInfoA =
-        SyncInfo<Device::CPU>(
+        SyncInfoFromMatrix(
             static_cast<Matrix<Real,Device::CPU> const&>(
                 A.LockedMatrix()));
 

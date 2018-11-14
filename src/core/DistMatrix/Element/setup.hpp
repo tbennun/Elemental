@@ -453,7 +453,7 @@ EL_NO_RELEASE_EXCEPT
       if (!this->Grid().InGrid())
           LogicError("Get should only be called in-grid");
 #endif // !EL_RELEASE
-    SyncInfo<D> syncInfoA(matrix_);
+    SyncInfo<D> syncInfoA = SyncInfoFromMatrix(matrix_);
 
     T value;
     if (CrossRank() == this->Root())
@@ -477,7 +477,7 @@ EL_NO_RELEASE_EXCEPT
       if (!this->Grid().InGrid())
           LogicError("Get should only be called in-grid");
 #endif // !EL_RELEASE
-    SyncInfo<D> syncInfoA(matrix_);
+    SyncInfo<D> syncInfoA = SyncInfoFromMatrix(matrix_);
     Base<T> value;
     if (CrossRank() == this->Root())
     {
@@ -500,7 +500,7 @@ EL_NO_RELEASE_EXCEPT
     if (!this->Grid().InGrid())
         LogicError("Get should only be called in-grid");
 #endif // !EL_RELEASE
-    SyncInfo<D> syncInfoA(matrix_);
+    SyncInfo<D> syncInfoA = SyncInfoFromMatrix(matrix_);
     Base<T> value;
     if (IsComplex<T>::value)
     {
@@ -671,7 +671,7 @@ void DM::ProcessQueues(bool includeViewers)
 
     // We will first push to redundant rank 0
     const int redundantRoot = 0;
-    SyncInfo<D> syncInfoA(matrix_);
+    SyncInfo<D> syncInfoA = SyncInfoFromMatrix(matrix_);
 
     // Compute the metadata
     // ====================

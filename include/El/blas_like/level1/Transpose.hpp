@@ -168,7 +168,7 @@ void Transpose(Matrix<T,Device::GPU> const& A,
 
     // Syncronize here.
     auto SyncManager = MakeMultiSync(
-        SyncInfo<Device::GPU>(B), SyncInfo<Device::GPU>(A));
+        SyncInfoFromMatrix(B), SyncInfoFromMatrix(A));
 
     // Reset cuBLAS stream to be B's stream (Recall: Prefer to use
     // non-const stream for non-const work!)

@@ -25,7 +25,7 @@ void NormsFromScaledSquares
     Matrix<Real> scales( nLocal, 1 );
     mpi::AllReduce(
         localScales.LockedBuffer(), scales.Buffer(), nLocal, mpi::MAX, comm,
-        SyncInfo<Device::CPU>(scales));
+        SyncInfoFromMatrix(scales));
 
     // Equilibrate the local scaled sums
     for( Int jLoc=0; jLoc<nLocal; ++jLoc )
@@ -46,7 +46,7 @@ void NormsFromScaledSquares
     mpi::AllReduce(
         localScaledSquares.Buffer(),
         scaledSquares.Buffer(), nLocal, mpi::SUM, comm,
-        SyncInfo<Device::CPU>(scaledSquares));
+        SyncInfoFromMatrix(scaledSquares));
     for( Int jLoc=0; jLoc<nLocal; ++jLoc )
         normsLoc(jLoc) = scales(jLoc)*Sqrt(scaledSquares(jLoc));
 }

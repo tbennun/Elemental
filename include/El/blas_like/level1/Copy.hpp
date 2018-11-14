@@ -122,7 +122,7 @@ void Copy(const Matrix<T,Device::GPU>& A, Matrix<T,Device::GPU>& B)
     const T* ABuf = A.LockedBuffer();
     T* BBuf = B.Buffer();
 
-    SyncInfo<Device::GPU> syncInfoA(A), syncInfoB(B);
+    SyncInfo<Device::GPU> syncInfoA = SyncInfoFromMatrix(A), syncInfoB = SyncInfoFromMatrix(B);
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 
     // Launch the copy
@@ -148,7 +148,7 @@ void Copy(Matrix<T,Device::CPU> const& A, Matrix<T,Device::GPU>& B)
     const T* EL_RESTRICT ABuf = A.LockedBuffer();
     T* EL_RESTRICT BBuf = B.Buffer();
 
-    SyncInfo<Device::GPU> syncInfoB(B);
+    SyncInfo<Device::GPU> syncInfoB = SyncInfoFromMatrix(B);
     InterDeviceCopy<Device::CPU,Device::GPU>::MemCopy2DAsync(
         BBuf, ldB, ABuf, ldA, height, width, syncInfoB.stream_);
     Synchronize(syncInfoB); // Is this necessary??
@@ -166,7 +166,7 @@ void Copy(Matrix<T,Device::GPU> const& A, Matrix<T,Device::CPU>& B)
     const T* EL_RESTRICT ABuf = A.LockedBuffer();
     T* EL_RESTRICT BBuf = B.Buffer();
 
-    SyncInfo<Device::GPU> syncInfoA(A);
+    SyncInfo<Device::GPU> syncInfoA = SyncInfoFromMatrix(A);
     InterDeviceCopy<Device::GPU,Device::CPU>::MemCopy2DAsync(
         BBuf, ldB, ABuf, ldA, height, width, syncInfoA.stream_);
     Synchronize(syncInfoA); // Is this necessary??

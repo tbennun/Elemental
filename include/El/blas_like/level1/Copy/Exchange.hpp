@@ -45,8 +45,8 @@ void Exchange_impl
     const bool contigA = ( A.LocalHeight() == A.LDim() );
     const bool contigB = ( B.LocalHeight() == B.LDim() );
 
-    SyncInfo<D> syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
-        syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
+    SyncInfo<D> syncInfoA = SyncInfoFromMatrix(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
+        syncInfoB = SyncInfoFromMatrix(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
 
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 

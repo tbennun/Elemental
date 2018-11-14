@@ -225,6 +225,16 @@ private:
     int RowAlign() const EL_NO_EXCEPT;
 };
 
+template <typename T, Device D>
+void SetSyncInfo(Matrix<T,D>&, SyncInfo<D> const&)
+{}
+
+template <typename T>
+SyncInfo<Device::CPU> SyncInfoFromMatrix(Matrix<T,Device::CPU> const& mat)
+{
+    return SyncInfo<Device::CPU>{};
+}
+
 #ifdef HYDROGEN_HAVE_CUDA
 // GPU version
 template <typename Ring>
@@ -382,6 +392,22 @@ private:
     cudaEvent_t event_ = GPUManager::Event();
 
 };// class Matrix<Ring,Device::GPU>
+
+template <typename T>
+SyncInfo<Device::GPU> SyncInfoFromMatrix(Matrix<T,Device::GPU> const& mat)
+{
+    return SyncInfo<Device::GPU>{mat.Stream(), mat.Event()};
+}
+
+template <typename T>
+void SetSyncInfo(
+    Matrix<T,Device::GPU>& mat, SyncInfo<Device::GPU> const& syncInfo)
+{
+    if (syncInfo.stream_ != nullptr)
+        mat.SetStream(syncInfo.stream_);
+    if (syncInfo.event_ != nullptr)
+        mat.SetEvent(syncInfo.event_);
+}
 #endif // HYDROGEN_HAVE_CUDA
 
 } // namespace El

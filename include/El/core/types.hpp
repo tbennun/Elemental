@@ -221,6 +221,9 @@ Dist StringToDist( std::string s );
 using namespace DistNS;
 typedef Dist Distribution;
 
+template <Dist U, Dist V> struct SameDist : std::false_type {};
+template <Dist U> struct SameDist<U,U> : std::true_type {};
+
 namespace DistWrapNS {
 enum DistWrap {
     ELEMENT,

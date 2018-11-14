@@ -69,7 +69,7 @@ ValueInt<Real> VectorMinLoc( const AbstractDistMatrix<Real>& x )
         LogicError("VectorMinLoc: Only implemented for CPU matrices.");
 
     auto syncInfoA =
-        SyncInfo<Device::CPU>(
+        SyncInfoFromMatrix(
             static_cast<Matrix<Real,Device::CPU> const&>(
                 x.LockedMatrix()));
 
@@ -160,7 +160,7 @@ Entry<Real> MinLoc( const AbstractDistMatrix<Real>& A )
         LogicError("MinLoc: Only implemented for CPU matrices.");
 
     auto syncInfoA =
-        SyncInfo<Device::CPU>(
+        SyncInfoFromMatrix(
             static_cast<Matrix<Real,Device::CPU> const&>(
                 A.LockedMatrix()));
 
@@ -267,7 +267,7 @@ SymmetricMinLoc( UpperOrLower uplo, const AbstractDistMatrix<Real>& A )
         LogicError("SymmetricMinLoc: Only implemented for CPU matrices.");
 
     auto syncInfoA =
-        SyncInfo<Device::CPU>(
+        SyncInfoFromMatrix(
             static_cast<Matrix<Real,Device::CPU> const&>(
                 A.LockedMatrix()));
 

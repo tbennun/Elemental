@@ -10,40 +10,22 @@ namespace mpi
 #ifdef HYDROGEN_HAVE_ALUMINUM
 template <typename T, Device D,
           typename/*=EnableIf<IsAluminumSupported<T,D,COLL>>*/>
-void Broadcast(T* buffer, int count, int root, Comm comm, SyncInfo<D> const&)
+void Broadcast(T* buffer, int count, int root, Comm comm,
+               SyncInfo<D> const& syncInfo)
 {
     EL_DEBUG_CSE
 
     using Backend = BestBackend<T,D,Collective::BROADCAST>;
-
-    // FIXME What kind of synchronization needs to happen here??
-    Al::Bcast<Backend>(buffer, count, root, comm.template GetComm<Backend>());
-}
-
-#ifdef HYDROGEN_HAVE_CUDA
-template <typename T,
-          typename/*=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>*/>
-void Broadcast(T* buffer, int count, int root, Comm comm,
-               SyncInfo<Device::GPU> const& syncInfo)
-{
-    EL_DEBUG_CSE
-
-    using Backend = BestBackend<T,Device::GPU,Collective::BROADCAST>;
-    SyncInfo<Device::GPU> alSyncInfo(comm.template GetComm<Backend>().get_stream(),
-                                     syncInfo.event_);
-
+    auto alSyncInfo =
+        SyncInfoFromComm(comm.template GetComm<Backend>(), syncInfo);
     auto multisync = MakeMultiSync(alSyncInfo, syncInfo);
 
     Al::Bcast<Backend>(
         buffer, count, root, comm.template GetComm<Backend>());
 }
-#endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>*/,
-          typename/*=EnableIf<IsPacked<T>>*/>
+template <typename T, Device D, typename, typename, typename, typename, typename>
 void Broadcast(T* buffer, int count, int root, Comm comm,
                SyncInfo<D> const& syncInfo)
 {
@@ -66,10 +48,7 @@ void Broadcast(T* buffer, int count, int root, Comm comm,
     CheckMpi(MPI_Bcast(buffer, count, TypeMap<T>(), root, comm.comm));
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>*/,
-          typename/*=EnableIf<IsPacked<T>>*/>
+template <typename T, Device D, typename, typename, typename, typename>
 void Broadcast(Complex<T>* buffer, int count, int root, Comm comm,
                SyncInfo<D> const& syncInfo)
 {
@@ -96,11 +75,7 @@ void Broadcast(Complex<T>* buffer, int count, int root, Comm comm,
 #endif
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>*/,
-          typename/*=DisableIf<IsPacked<T>>*/,
-          typename/*=void*/>
+template <typename T, Device D, typename, typename, typename>
 void Broadcast(T* buffer, int count, int root, Comm comm,
                SyncInfo<D> const& syncInfo)
 {
@@ -126,10 +101,7 @@ void Broadcast(T* buffer, int count, int root, Comm comm,
     Deserialize(count, packedBuf, buffer);
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<Not<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>*/,
-          typename/*=void*/, typename/*=void*/, typename/*=void*/>
+template <typename T, Device D, typename, typename>
 void Broadcast(T*, int, int, Comm, SyncInfo<D> const&)
 {
     LogicError("Broadcast: Bad device/type combination.");

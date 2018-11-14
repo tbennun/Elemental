@@ -27,7 +27,7 @@ void AllGather
     B.SetGrid( A.Grid() );
     B.Resize( height, width );
 
-    SyncInfo<D> syncInfoA(A.LockedMatrix()), syncInfoB(B.LockedMatrix());
+    SyncInfo<D> syncInfoA = SyncInfoFromMatrix(A.LockedMatrix()), syncInfoB = SyncInfoFromMatrix(B.LockedMatrix());
 
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 

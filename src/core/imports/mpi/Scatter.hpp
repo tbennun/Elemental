@@ -16,37 +16,16 @@ void Scatter(
 
     using Backend = BestBackend<T,D,Collective::GATHER>;
 
-    // FIXME: Synchronization here??
-    Al::Scatter<Backend>(sbuf, rbuf, sc, root, comm.template GetComm<Backend>());
-}
-
-#ifdef HYDROGEN_HAVE_CUDA
-template <typename T,
-          typename/*=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>*/>
-void Scatter(
-    const T* sbuf, int sc,
-    T* rbuf, int rc, int root, Comm comm,
-    SyncInfo<Device::GPU> const& syncInfo )
-{
-    EL_DEBUG_CSE
-
-    using Backend = BestBackend<T,Device::GPU,Collective::GATHER>;
-    SyncInfo<Device::GPU> alSyncInfo(comm.template GetComm<Backend>().get_stream(),
-                                     syncInfo.event_);
+    auto alSyncInfo =
+        SyncInfoFromComm(comm.template GetComm<Backend>(), syncInfo);
 
     auto multisync = MakeMultiSync(alSyncInfo, syncInfo);
-    std::cout << "ALUMINUM SCATTER" << std::endl;
-    Al::Scatter<Backend>(
-        sbuf, rbuf, sc, root, comm.template GetComm<Backend>());
+    Al::Scatter<Backend>(sbuf, rbuf, sc, root, comm.template GetComm<Backend>());
 }
-
-#endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM
 
 template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>*/,
-          typename/*=EnableIf<IsPacked<T>>*/>
+          typename, typename, typename, typename, typename>
 void Scatter(
     const T* sbuf, int sc,
     T* rbuf, int rc, int root, Comm comm,
@@ -68,12 +47,9 @@ void Scatter(
             rbuf, rc, TypeMap<T>(), root, comm.comm));
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>*/,
-          typename/*=EnableIf<IsPacked<T>>*/>
+template <typename T, Device D, typename, typename, typename, typename>
 void Scatter(
-    const Complex<T>* sbuf, int sc,
+    Complex<T> const* sbuf, int sc,
     Complex<T>* rbuf, int rc, int root, Comm comm,
     SyncInfo<D> const& syncInfo)
 {
@@ -104,11 +80,7 @@ void Scatter(
 #endif
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>>*/,
-          typename/*=DisableIf<IsPacked<T>>*/,
-          typename/*=void*/>
+template <typename T, Device D, typename, typename, typename>
 void Scatter(
     const T* sbuf, int sc,
     T* rbuf, int rc, int root, Comm comm, SyncInfo<D> const& syncInfo )
@@ -139,10 +111,7 @@ void Scatter(
     Deserialize( rc, packedRecv, rbuf );
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<Not<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>*/,
-          typename/*=void*/, typename/*=void*/, typename/*=void*/>
+template <typename T, Device D, typename, typename>
 void Scatter(const T*, int, T*, int, int, Comm, SyncInfo<D> const&)
 {
     LogicError("Scatter: Bad device/type combination.");
@@ -218,5 +187,7 @@ MPI_COLLECTIVE_PROTO(Entry<Complex<BigFloat>>)
 
 #undef MPI_COLLECTIVE_PROTO
 #undef MPI_COLLECTIVE_PROTO_DEV
+#undef MPI_COLLECTIVE_COMPLEX_PROTO
+#undef MPI_COLLECTIVE_COMPLEX_PROTO_DEV
 } // namespace mpi
 } // namespace El

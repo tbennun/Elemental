@@ -31,8 +31,8 @@ void PartialRowAllGather_impl
     const Int maxLocalWidth = MaxLength(width,rowStride);
     const Int portionSize = mpi::Pad( height*maxLocalWidth );
 
-    SyncInfo<D> syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
-        syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
+    SyncInfo<D> syncInfoA = SyncInfoFromMatrix(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
+        syncInfoB = SyncInfoFromMatrix(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
 
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 

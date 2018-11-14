@@ -87,7 +87,7 @@ template <Collective C, typename BackendT>
 struct IsBackendSupported : std::false_type {};
 
 // MPI backend only supports AllReduce
-ADD_ALUMINUM_COLLECTIVE(    Collective::ALLREDUCE, Al::MPIBackend);
+//ADD_ALUMINUM_COLLECTIVE(    Collective::ALLREDUCE, Al::MPIBackend);
 
 #ifdef HYDROGEN_HAVE_NCCL2
 // NCCL backend supports these
@@ -95,19 +95,20 @@ ADD_ALUMINUM_COLLECTIVE(    Collective::ALLGATHER, Al::NCCLBackend);
 ADD_ALUMINUM_COLLECTIVE(    Collective::ALLREDUCE, Al::NCCLBackend);
 ADD_ALUMINUM_COLLECTIVE(    Collective::BROADCAST, Al::NCCLBackend);
 ADD_ALUMINUM_COLLECTIVE(       Collective::REDUCE, Al::NCCLBackend);
-#ifndef HYDROGEN_HAVE_AL_MPI_CUDA
 ADD_ALUMINUM_COLLECTIVE(Collective::REDUCESCATTER, Al::NCCLBackend);
-#endif // !HYDROGEN_HAVE_AL_MPI_CUDA
 #endif // HYDROGEN_HAVE_NCCL2
 
 #ifdef HYDROGEN_HAVE_AL_MPI_CUDA
 // MPICUDA backend only supports AllReduce
+ADD_ALUMINUM_COLLECTIVE(    Collective::ALLGATHER, Al::MPICUDABackend);
 ADD_ALUMINUM_COLLECTIVE(    Collective::ALLREDUCE, Al::MPICUDABackend);
 ADD_ALUMINUM_COLLECTIVE(     Collective::ALLTOALL, Al::MPICUDABackend);
+ADD_ALUMINUM_COLLECTIVE(    Collective::BROADCAST, Al::MPICUDABackend);
 ADD_ALUMINUM_COLLECTIVE(       Collective::GATHER, Al::MPICUDABackend);
+ADD_ALUMINUM_COLLECTIVE(       Collective::REDUCE, Al::MPICUDABackend);
+ADD_ALUMINUM_COLLECTIVE(Collective::REDUCESCATTER, Al::MPICUDABackend);
 ADD_ALUMINUM_COLLECTIVE(      Collective::SCATTER, Al::MPICUDABackend);
 ADD_ALUMINUM_COLLECTIVE(     Collective::SENDRECV, Al::MPICUDABackend);
-ADD_ALUMINUM_COLLECTIVE(Collective::REDUCESCATTER, Al::MPICUDABackend);
 #endif // HYDROGEN_HAVE_AL_MPI_CUDA
 
 template <Device D>

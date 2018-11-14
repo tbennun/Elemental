@@ -92,8 +92,8 @@ static void Gemm_impl(
     const Int k = (orientA == NORMAL ? A.Width() : A.Height());
 
     auto SyncManager = MakeMultiSync(
-        SyncInfo<Device::GPU>(C),
-        SyncInfo<Device::GPU>(A), SyncInfo<Device::GPU>(B));
+        SyncInfoFromMatrix(C),
+        SyncInfoFromMatrix(A), SyncInfoFromMatrix(B));
 
     // Keep the old stream so we can restore it. I don't know if this
     // is necessary, but it might be good to keep the cuBLAS handle

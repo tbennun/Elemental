@@ -2245,7 +2245,7 @@ EL_NO_RELEASE_EXCEPT
 #endif
 }
 
-#define MPI_PROTO_DEVICELESS(T)                                         \
+#define MPI_PROTO_DEVICELESS_COMMON(T)                                  \
     template bool Test(Request<T>& request) EL_NO_RELEASE_EXCEPT;       \
     template void Wait(Request<T>& request) EL_NO_RELEASE_EXCEPT;       \
     template void Wait(Request<T>& request, Status& status)             \
@@ -2256,13 +2256,19 @@ EL_NO_RELEASE_EXCEPT
         int numRequests, Request<T>* requests, Status* statuses)        \
         EL_NO_RELEASE_EXCEPT;                                           \
     template int GetCount<T>(Status& status) EL_NO_RELEASE_EXCEPT;      \
+    template vector<T> AllToAll(                                        \
+        const vector<T>& sendBuf,                                       \
+        const vector<int>& sendCounts,                                  \
+        const vector<int>& sendOffs,                                    \
+        Comm comm)                                                      \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template T Scan(T sb, Op op, Comm comm)                             \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template T Scan(T sb, Comm comm)                                    \
+        EL_NO_RELEASE_EXCEPT;                                           \
     template void TaggedSend(T b, int to, int tag, Comm comm)           \
         EL_NO_RELEASE_EXCEPT;                                           \
     template void Send(T b, int to, Comm comm)                          \
-        EL_NO_RELEASE_EXCEPT;                                           \
-    template void TaggedISend(                                          \
-        const T* buf, int count, int to, int tag, Comm comm,            \
-        Request<T>& request)                                            \
         EL_NO_RELEASE_EXCEPT;                                           \
     template void ISend(                                                \
         const T* buf, int count, int to, Comm comm,                     \
@@ -2273,20 +2279,12 @@ EL_NO_RELEASE_EXCEPT
         EL_NO_RELEASE_EXCEPT;                                           \
     template void ISend(T buf, int to, Comm comm, Request<T>& request)  \
         EL_NO_RELEASE_EXCEPT;                                           \
-    template void TaggedISSend(                                         \
-        const T* buf, int count, int to, int tag, Comm comm,            \
-        Request<T>& request)                                            \
-        EL_NO_RELEASE_EXCEPT;                                           \
     template void ISSend(                                               \
         const T* buf, int count, int to, Comm comm,                     \
         Request<T>& request)                                            \
         EL_NO_RELEASE_EXCEPT;                                           \
     template void TaggedISSend(                                         \
         T b, int to, int tag, Comm comm, Request<T>& request)           \
-        EL_NO_RELEASE_EXCEPT;                                           \
-    template void TaggedIRecv(                                          \
-        T* buf, int count, int from, int tag, Comm comm,                \
-        Request<T>& request)                                            \
         EL_NO_RELEASE_EXCEPT;                                           \
     template T TaggedRecv<T>(                                           \
         int from, int tag, Comm comm)                                   \
@@ -2302,47 +2300,86 @@ EL_NO_RELEASE_EXCEPT
     template T IRecv<T>(int from, Comm comm, Request<T>& request)       \
         EL_NO_RELEASE_EXCEPT;                                           \
     template void IBroadcast(                                           \
-        T* buf, int count, int root, Comm comm, Request<T>& request);   \
+        T& b, int root, Comm comm, Request<T>& request);
+
+#define MPI_PROTO_DEVICELESS(T)                                         \
+    template void TaggedISend(                                          \
+        const T* buf, int count, int to, int tag, Comm comm,            \
+        Request<T>& request)                                            \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void TaggedISSend(                                         \
+        const T* buf, int count, int to, int tag, Comm comm,            \
+        Request<T>& request)                                            \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void TaggedIRecv(                                          \
+        T* buf, int count, int from, int tag, Comm comm,                \
+        Request<T>& request)                                            \
+        EL_NO_RELEASE_EXCEPT;                                           \
     template void IBroadcast(                                           \
-        T& b, int root, Comm comm, Request<T>& request);                \
+        T* buf, int count, int root, Comm comm, Request<T>& request);   \
     template void IGather(                                              \
         const T* sbuf, int sc,                                          \
         T* rbuf, int rc,                                                \
         int root, Comm comm, Request<T>& request);                      \
-    template vector<T> AllToAll(                                        \
-        const vector<T>& sendBuf,                                       \
-        const vector<int>& sendCounts,                                  \
-        const vector<int>& sendOffs,                                    \
-        Comm comm)                                                      \
-        EL_NO_RELEASE_EXCEPT;                                           \
-        template T Scan(T sb, Op op, Comm comm)                         \
-        EL_NO_RELEASE_EXCEPT;                                           \
-    template T Scan(T sb, Comm comm)                                    \
-        EL_NO_RELEASE_EXCEPT;                                           \
+    MPI_PROTO_DEVICELESS_COMMON(T)
 
+#define MPI_PROTO_DEVICELESS_COMPLEX(T)                                 \
+    template void TaggedISend<T>(                                       \
+        const Complex<T>* buf, int count, int to, int tag, Comm comm,   \
+        Request<Complex<T>>& request)                                   \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void TaggedISSend<T>(                                      \
+        const Complex<T>* buf, int count, int to, int tag, Comm comm,   \
+        Request<Complex<T>>& request)                                   \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void TaggedIRecv<T>(                                       \
+        Complex<T>* buf, int count, int from, int tag, Comm comm,       \
+        Request<Complex<T>>& request)                                   \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void IBroadcast<T>(                                        \
+        Complex<T>* buf, int count, int root, Comm comm,                \
+        Request<Complex<T>>& request);                                  \
+    template void IGather<T>(                                           \
+        const Complex<T>* sbuf, int sc,                                 \
+        Complex<T>* rbuf, int rc,                                       \
+        int root, Comm comm, Request<Complex<T>>& request);             \
+    MPI_PROTO_DEVICELESS_COMMON(Complex<T>)
+
+#define MPI_PROTO_COMMON_DEV(T,D)               \
+    template void Send(                                                 \
+        const T* buf, int count, int to, Comm comm, SyncInfo<D> const&) \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void Recv(                                                 \
+        T* buf, int count, int from, Comm comm, SyncInfo<D> const&)     \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template T TaggedSendRecv(                                          \
+        T sb, int to, int stag, int from, int rtag, Comm comm,          \
+        SyncInfo<D> const&)                                             \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void ReduceScatter(                                        \
+        const T* sbuf, T* rbuf, const int* rcs, Comm comm,              \
+        SyncInfo<D> const&)                                             \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void Scan(                                                 \
+        const T* sbuf, T* rbuf, int count, Comm comm,                   \
+        SyncInfo<D> const&)                                             \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void Scan(                                                 \
+        T* buf, int count, Comm comm, SyncInfo<D> const&)               \
+        EL_NO_RELEASE_EXCEPT;
 
 #define MPI_PROTO_DEV(T,D)                                              \
     template void TaggedSend(                                           \
         const T* buf, int count, int to, int tag, Comm comm,            \
         SyncInfo<D> const&)                                             \
         EL_NO_RELEASE_EXCEPT;                                           \
-    template void Send(                                                 \
-        const T* buf, int count, int to, Comm comm, SyncInfo<D> const&) \
-        EL_NO_RELEASE_EXCEPT;                                           \
     template void TaggedRecv(                                           \
         T* buf, int count, int from, int tag, Comm comm,                \
         SyncInfo<D> const&)                                             \
         EL_NO_RELEASE_EXCEPT;                                           \
-    template void Recv(                                                 \
-        T* buf, int count, int from, Comm comm, SyncInfo<D> const&)     \
-        EL_NO_RELEASE_EXCEPT;                                           \
     template void TaggedSendRecv(                                       \
         const T* sbuf, int sc, int to,   int stag,                      \
         T* rbuf, int rc, int from, int rtag, Comm comm,                 \
-        SyncInfo<D> const&)                                             \
-        EL_NO_RELEASE_EXCEPT;                                           \
-    template T TaggedSendRecv(                                          \
-        T sb, int to, int stag, int from, int rtag, Comm comm,          \
         SyncInfo<D> const&)                                             \
         EL_NO_RELEASE_EXCEPT;                                           \
     template void TaggedSendRecv(                                       \
@@ -2373,34 +2410,82 @@ EL_NO_RELEASE_EXCEPT
         const T* sbuf, T* rbuf, const int* rcs, Op op, Comm comm,       \
         SyncInfo<D> const&)                                             \
         EL_NO_RELEASE_EXCEPT;                                           \
-    template void ReduceScatter(                                        \
-        const T* sbuf, T* rbuf, const int* rcs, Comm comm,              \
-        SyncInfo<D> const&)                                             \
-        EL_NO_RELEASE_EXCEPT;                                           \
     template void Scan(                                                 \
         const T* sbuf, T* rbuf, int count, Op op, Comm comm,            \
         SyncInfo<D> const&)                                             \
         EL_NO_RELEASE_EXCEPT;                                           \
     template void Scan(                                                 \
-        const T* sbuf, T* rbuf, int count, Comm comm,                   \
-        SyncInfo<D> const&)                                             \
-        EL_NO_RELEASE_EXCEPT;                                           \
-    template void Scan(                                                 \
         T* buf, int count, Op op, Comm comm, SyncInfo<D> const&)        \
         EL_NO_RELEASE_EXCEPT;                                           \
-    template void Scan(                                                 \
-        T* buf, int count, Comm comm, SyncInfo<D> const&)               \
-        EL_NO_RELEASE_EXCEPT;
+    MPI_PROTO_COMMON_DEV(T,D)
+
+#define MPI_PROTO_COMPLEX_DEV(T,D)                                      \
+    template void TaggedSend<T>(                                        \
+        const Complex<T>* buf, int count, int to, int tag, Comm comm,   \
+        SyncInfo<D> const&)                                             \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void TaggedRecv<T>(                                        \
+        Complex<T>* buf, int count, int from, int tag, Comm comm,       \
+        SyncInfo<D> const&)                                             \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void TaggedSendRecv<T>(                                    \
+        const Complex<T>* sbuf, int sc, int to,   int stag,             \
+        Complex<T>* rbuf, int rc, int from, int rtag, Comm comm,        \
+        SyncInfo<D> const&)                                             \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void TaggedSendRecv<T>(                                    \
+        Complex<T>* buf, int count, int to, int stag, int from, int rtag, \
+        Comm comm, SyncInfo<D> const&)                                  \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void Gather<T>(                                            \
+        const Complex<T>* sbuf, int sc,                                 \
+        Complex<T>* rbuf, const int* rcs, const int* rds, int root,     \
+        Comm comm, SyncInfo<D> const&)                                  \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void AllGather<T>(                                         \
+        const Complex<T>* sbuf, int sc,                                 \
+        Complex<T>* rbuf, const int* rcs, const int* rds, Comm comm,    \
+        SyncInfo<D> const&)                                             \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void Scatter<T>(                                           \
+        Complex<T>* buf, int sc, int rc, int root, Comm comm,           \
+        SyncInfo<D> const&)                                             \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void AllToAll<T>(                                          \
+        const Complex<T>* sbuf, const int* scs, const int* sds,         \
+        Complex<T>* rbuf, const int* rcs, const int* rds, Comm comm,    \
+        SyncInfo<D> const&)                                             \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void ReduceScatter<T>(                                     \
+        const Complex<T>* sbuf, Complex<T>* rbuf, const int* rcs, Op op, \
+        Comm comm, SyncInfo<D> const&)                                  \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void Scan<T>(                                              \
+        const Complex<T>* sbuf, Complex<T>* rbuf, int count, Op op,     \
+        Comm comm, SyncInfo<D> const&)                                  \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    template void Scan<T>(                                              \
+        Complex<T>* buf, int count, Op op, Comm comm,                   \
+        SyncInfo<D> const&)                                             \
+        EL_NO_RELEASE_EXCEPT;                                           \
+    MPI_PROTO_COMMON_DEV(Complex<T>,D)
 
 #ifdef HYDROGEN_HAVE_CUDA
 #define MPI_PROTO(T) \
     MPI_PROTO_DEVICELESS(T) \
     MPI_PROTO_DEV(T, Device::CPU) \
     MPI_PROTO_DEV(T, Device::GPU)
+#define MPI_PROTO_COMPLEX(T) \
+    MPI_PROTO_DEVICELESS_COMPLEX(T) \
+    MPI_PROTO_COMPLEX_DEV(T, Device::CPU) \
+    MPI_PROTO_COMPLEX_DEV(T, Device::GPU)
 #else
 #define MPI_PROTO(T) \
     MPI_PROTO_DEVICELESS(T) \
     MPI_PROTO_DEV(T, Device::CPU)
+#define MPI_PROTO_COMPLEX(T) \
+    MPI_PROTO_DEVICELESS_COMPLEX(T)                    \
+    MPI_PROTO_COMPLEX_DEV(T, Device::CPU)
 #endif // HYDROGEN_HAVE_CUDA
 
 MPI_PROTO(byte)
@@ -2413,13 +2498,13 @@ MPI_PROTO(unsigned long long)
 MPI_PROTO(ValueInt<Int>)
 MPI_PROTO(Entry<Int>)
 MPI_PROTO(float)
-MPI_PROTO(Complex<float>)
+MPI_PROTO_COMPLEX(float)
 MPI_PROTO(ValueInt<float>)
 MPI_PROTO(ValueInt<Complex<float>>)
 MPI_PROTO(Entry<float>)
 MPI_PROTO(Entry<Complex<float>>)
 MPI_PROTO(double)
-MPI_PROTO(Complex<double>)
+MPI_PROTO_COMPLEX(double)
 MPI_PROTO(ValueInt<double>)
 MPI_PROTO(ValueInt<Complex<double>>)
 MPI_PROTO(Entry<double>)
@@ -2427,8 +2512,8 @@ MPI_PROTO(Entry<Complex<double>>)
 #ifdef HYDROGEN_HAVE_QD
 MPI_PROTO(DoubleDouble)
 MPI_PROTO(QuadDouble)
-MPI_PROTO(Complex<DoubleDouble>)
-MPI_PROTO(Complex<QuadDouble>)
+MPI_PROTO_COMPLEX(DoubleDouble)
+MPI_PROTO_COMPLEX(QuadDouble)
 MPI_PROTO(ValueInt<DoubleDouble>)
 MPI_PROTO(ValueInt<QuadDouble>)
 MPI_PROTO(ValueInt<Complex<DoubleDouble>>)
@@ -2440,7 +2525,7 @@ MPI_PROTO(Entry<Complex<QuadDouble>>)
 #endif
 #ifdef HYDROGEN_HAVE_QUADMATH
 MPI_PROTO(Quad)
-MPI_PROTO(Complex<Quad>)
+MPI_PROTO_COMPLEX(Complex<Quad>)
 MPI_PROTO(ValueInt<Quad>)
 MPI_PROTO(ValueInt<Complex<Quad>>)
 MPI_PROTO(Entry<Quad>)
@@ -2449,7 +2534,7 @@ MPI_PROTO(Entry<Complex<Quad>>)
 #ifdef HYDROGEN_HAVE_MPC
 MPI_PROTO(BigInt)
 MPI_PROTO(BigFloat)
-MPI_PROTO(Complex<BigFloat>)
+MPI_PROTO_COMPLEX(Complex<BigFloat>)
 MPI_PROTO(ValueInt<BigInt>)
 MPI_PROTO(ValueInt<BigFloat>)
 MPI_PROTO(ValueInt<Complex<BigFloat>>)

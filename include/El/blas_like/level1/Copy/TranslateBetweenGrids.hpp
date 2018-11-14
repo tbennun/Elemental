@@ -124,8 +124,8 @@ void TranslateBetweenGrids
     if(inBGrid)
         requiredMemory += maxSendSize;
 
-    SyncInfo<D1> syncInfoA(A.LockedMatrix());
-    SyncInfo<D2> syncInfoB(B.LockedMatrix());
+    SyncInfo<D1> syncInfoA = SyncInfoFromMatrix(A.LockedMatrix());
+    SyncInfo<D2> syncInfoB = SyncInfoFromMatrix(B.LockedMatrix());
 
     simple_buffer<T,D1> send_buf(inAGrid ? maxSendSize : 0, syncInfoA);
     simple_buffer<T,D2> recv_buf(inBGrid ? maxSendSize : 0, syncInfoB);
@@ -310,8 +310,8 @@ void TranslateBetweenGrids
     simple_buffer<T,D1> sendBuffer(rankA == 0 ? height*width : 0);
     simple_buffer<T,D2> bcastBuffer(B.Participating() ? height*width : 0);
 
-    SyncInfo<D1> syncInfoA(A.LockedMatrix());
-    SyncInfo<D2> syncInfoB(B.LockedMatrix());
+    SyncInfo<D1> syncInfoA = SyncInfoFromMatrix(A.LockedMatrix());
+    SyncInfo<D2> syncInfoB = SyncInfoFromMatrix(B.LockedMatrix());
 
     // Send from the root of A to the root of B's matrix's grid
     mpi::Request<T> sendRequest;

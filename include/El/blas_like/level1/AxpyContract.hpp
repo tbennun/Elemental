@@ -39,8 +39,8 @@ void PartialColScatter
     {
 
         SyncInfo<D>
-            syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
-            syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
+            syncInfoA = SyncInfoFromMatrix(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
+            syncInfoB = SyncInfoFromMatrix(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
 
         auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 
@@ -102,8 +102,8 @@ void PartialRowScatter(
     if( B.RowAlign() % A.RowStride() == A.RowAlign() )
     {
         SyncInfo<D>
-            syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
-            syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
+            syncInfoA = SyncInfoFromMatrix(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
+            syncInfoB = SyncInfoFromMatrix(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
 
         auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 
@@ -185,8 +185,8 @@ void ColScatter
     const Int rowDiff = B.RowAlign()-A.RowAlign();
 
     SyncInfo<D>
-        syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
-        syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
+        syncInfoA = SyncInfoFromMatrix(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
+        syncInfoB = SyncInfoFromMatrix(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
 
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 
@@ -279,8 +279,8 @@ void RowScatter
     const Int colDiff = B.ColAlign()-A.ColAlign();
 
     SyncInfo<D>
-        syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
-        syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
+        syncInfoA = SyncInfoFromMatrix(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
+        syncInfoB = SyncInfoFromMatrix(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
 
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 
@@ -452,8 +452,8 @@ void Scatter
     const Int sendSize = colStride*rowStride*recvSize;
 
     SyncInfo<D>
-        syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
-        syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
+        syncInfoA = SyncInfoFromMatrix(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
+        syncInfoB = SyncInfoFromMatrix(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
 
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 

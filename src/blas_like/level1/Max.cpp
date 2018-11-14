@@ -42,7 +42,7 @@ Real Max( const AbstractDistMatrix<Real>& A )
         LogicError("Max: Only implemented for CPU matrices.");
 
     auto syncInfoA =
-        SyncInfo<Device::CPU>(
+        SyncInfoFromMatrix(
             static_cast<Matrix<Real,Device::CPU> const&>(
                 A.LockedMatrix()));
 
@@ -110,7 +110,7 @@ Real SymmetricMax( UpperOrLower uplo, const AbstractDistMatrix<Real>& A )
         LogicError("SymmetricMax: Only implemented for CPU matrices.");
 
     auto syncInfoA =
-        SyncInfo<Device::CPU>(
+        SyncInfoFromMatrix(
             static_cast<Matrix<Real,Device::CPU> const&>(
                 A.LockedMatrix()));
 

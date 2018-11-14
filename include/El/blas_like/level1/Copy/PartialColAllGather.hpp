@@ -57,7 +57,8 @@ void PartialColAllGather
     const Int maxLocalHeight = MaxLength(height,A.ColStride());
     const Int portionSize = mpi::Pad( maxLocalHeight*width );
 
-    SyncInfo<D> syncInfoA(A.LockedMatrix()), syncInfoB(B.LockedMatrix());
+    auto syncInfoA = SyncInfoFromMatrix(A.LockedMatrix()),
+        syncInfoB = SyncInfoFromMatrix(B.LockedMatrix());
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 
     if( colDiff == 0 )

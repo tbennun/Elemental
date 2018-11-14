@@ -78,7 +78,7 @@ ValueInt<Base<Ring>> VectorMinAbsLoc( const AbstractDistMatrix<Ring>& x )
         LogicError("VectorMinAbsLoc: Only implemented for CPU matrices.");
 
     auto syncInfoA =
-        SyncInfo<Device::CPU>(
+        SyncInfoFromMatrix(
             static_cast<Matrix<Ring,Device::CPU> const&>(
                 x.LockedMatrix()));
 
@@ -182,7 +182,7 @@ Entry<Base<Ring>> MinAbsLoc( const AbstractDistMatrix<Ring>& A )
         LogicError("MinAbsLoc: Only implemented for CPU matrices.");
 
     auto syncInfoA =
-        SyncInfo<Device::CPU>(
+        SyncInfoFromMatrix(
             static_cast<Matrix<Ring,Device::CPU> const&>(
                 A.LockedMatrix()));
 
@@ -305,7 +305,7 @@ SymmetricMinAbsLoc( UpperOrLower uplo, const AbstractDistMatrix<Ring>& A )
     const Int mLocal = A.LocalHeight();
     const Int nLocal = A.LocalWidth();
     auto syncInfoA =
-        SyncInfo<Device::CPU>(
+        SyncInfoFromMatrix(
             static_cast<Matrix<Ring,Device::CPU> const&>(
                 A.LockedMatrix()));
 

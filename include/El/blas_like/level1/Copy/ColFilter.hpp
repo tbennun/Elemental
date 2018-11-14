@@ -37,8 +37,10 @@ void ColFilter_impl( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
 
     const Int rowDiff = B.RowAlign() - A.RowAlign();
 
-    SyncInfo<D> syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
-        syncInfoB(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
+    auto syncInfoA = SyncInfoFromMatrix(
+        static_cast<Matrix<T,D> const&>(A.LockedMatrix()));
+    auto syncInfoB = SyncInfoFromMatrix(
+        static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
 
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 
@@ -49,7 +51,6 @@ void ColFilter_impl( const ElementalMatrix<T>& A, ElementalMatrix<T>& B )
             A.LockedBuffer(colShift,0), colStride, A.LDim(),
             B.Buffer(),                 1,         B.LDim(),
             syncInfoB);
-        // FIXME: need to sync A and B
     }
     else
     {

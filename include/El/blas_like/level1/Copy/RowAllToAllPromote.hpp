@@ -40,7 +40,7 @@ void RowAllToAllPromote
     const Int maxLocalHeight = MaxLength(height,rowStrideUnion);
     const Int portionSize = mpi::Pad( maxLocalHeight*maxLocalWidth );
 
-    SyncInfo<D> syncInfoA(A.LockedMatrix()), syncInfoB(B.LockedMatrix());
+    SyncInfo<D> syncInfoA = SyncInfoFromMatrix(A.LockedMatrix()), syncInfoB = SyncInfoFromMatrix(B.LockedMatrix());
 
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 

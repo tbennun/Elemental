@@ -15,8 +15,13 @@ void SendRecv(const T* sbuf, int sc, int to,
     EL_DEBUG_CSE
 
     using Backend = BestBackend<T,D,Collective::SENDRECV>;
+    auto alSyncInfo =
+        SyncInfoFromComm(comm.template GetComm<Backend>(), syncInfo);
+
+    auto multisync = MakeMultiSync(alSyncInfo, syncInfo);
     Al::SendRecv<Backend>(
-        sbuf, sc, to, rbuf, rc, from, comm.template GetComm<Backend>());
+        sbuf, sc, to, rbuf, rc, from,
+        comm.template GetComm<Backend>());
 }
 
 template <typename T, Device D,
@@ -27,44 +32,10 @@ void SendRecv(T* buf, int count, int to, int from, Comm comm,
     EL_DEBUG_CSE
 
     using Backend = BestBackend<T,D,Collective::SENDRECV>;
+    auto alSyncInfo =
+        SyncInfoFromComm(comm.template GetComm<Backend>(), syncInfo);
+
     // Not sure if Al is ok with this bit
-    //std::cout << "WARNING: IN-PLACE SENDRECV." << std::endl;
-    Al::SendRecv<Backend>(
-        buf, count, to, buf, count, from, comm.template GetComm<Backend>());
-}
-
-#ifdef HYDROGEN_HAVE_CUDA
-template <typename T,
-          typename/*=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>*/>
-void SendRecv(const T* sbuf, int sc, int to,
-              T* rbuf, int rc, int from, Comm comm,
-              SyncInfo<Device::GPU> const& syncInfo)
-{
-    EL_DEBUG_CSE
-    using Backend = BestBackend<T,Device::GPU,Collective::SENDRECV>;
-
-    SyncInfo<Device::GPU> alSyncInfo(
-        comm.template GetComm<Backend>().get_stream(),
-        syncInfo.event_);
-
-    auto multisync = MakeMultiSync(alSyncInfo, syncInfo);
-    Al::SendRecv<Backend>(
-        sbuf, sc, to, rbuf, rc, from,
-        comm.template GetComm<Backend>());
-}
-
-template <typename T,
-          typename/*=EnableIf<IsAluminumSupported<T,Device::GPU,COLL>>*/>
-void SendRecv(T* buf, int count, int to, int from, Comm comm,
-              SyncInfo<Device::GPU> const& syncInfo)
-{
-    EL_DEBUG_CSE
-    using Backend = BestBackend<T,Device::GPU,Collective::SENDRECV>;
-
-    SyncInfo<Device::GPU> alSyncInfo(
-        comm.template GetComm<Backend>().get_stream(),
-        syncInfo.event_);
-
     auto multisync = MakeMultiSync(alSyncInfo, syncInfo);
 
     // Not sure if Al is ok with this bit
@@ -72,13 +43,9 @@ void SendRecv(T* buf, int count, int to, int from, Comm comm,
         buf, count, to, buf, count, from,
         comm.template GetComm<Backend>());
 }
-#endif // HYDROGEN_HAVE_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>*/,
-          typename/*=void*/>
+template <typename T, Device D, typename, typename, typename>
 void SendRecv(const T* sbuf, int sc, int to,
               T* rbuf, int rc, int from, Comm comm,
               SyncInfo<D> const& syncInfo)
@@ -87,10 +54,7 @@ void SendRecv(const T* sbuf, int sc, int to,
                    std::move(comm), syncInfo);
 }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<Not<IsDeviceValidType<T,D>>,
-                                Not<IsAluminumSupported<T,D,COLL>>>*/,
-          typename/*=void*/, typename/*=void*/>
+template <typename T, Device D, typename, typename>
 void SendRecv(const T* sbuf, int sc, int to,
               T* rbuf, int rc, int from, Comm comm,
               SyncInfo<D> const& syncInfo)
@@ -99,18 +63,12 @@ void SendRecv(const T* sbuf, int sc, int to,
 }
 
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>*/,
-          typename/*=void*/>
+template <typename T, Device D, typename, typename, typename>
 void SendRecv( T* buf, int count, int to, int from, Comm comm,
                SyncInfo<D> const& syncInfo)
 { TaggedSendRecv(buf, count, to, 0, from, ANY_TAG, comm, syncInfo); }
 
-template <typename T, Device D,
-          typename/*=EnableIf<And<IsDeviceValidType<T,D>,
-                                Not<IsAluminumSupported<T,D,COLL>>>*/,
-          typename/*=void*/, typename/*=void*/>
+template <typename T, Device D, typename, typename>
 void SendRecv( T* buf, int count, int to, int from, Comm comm,
                SyncInfo<D> const& syncInfo)
 {

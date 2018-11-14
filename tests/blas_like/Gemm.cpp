@@ -43,6 +43,35 @@ void TestAssociativity
          EFrobNorm, "/", YFrobNorm, "=", EFrobNorm/YFrobNorm);
 }
 
+#ifdef HYDROGEN_HAVE_CUDA
+#define START_CUDA_TIMER                                  \
+    if (D == Device::GPU)                                 \
+        cudaEventRecord(start, GPUManager::Stream());
+
+#define STOP_CUDA_TIMER                                 \
+    if (D == Device::GPU)                               \
+    {                                                   \
+        cudaEventRecord(stop, GPUManager::Stream());    \
+        cudaEventSynchronize(stop);                     \
+        cudaEventElapsedTime(&cudaTime, start, stop);   \
+    }
+
+#define SUMMARIZE_CUDA_TIMER                                            \
+    if (D == Device::GPU)                                               \
+    {                                                                   \
+        runTime = cudaTime * 1e-3;                                      \
+        realGFlops = 2.*double(m)*double(n)*double(k)/(1.e9*runTime);   \
+        gFlops = (IsComplex<T>::value ? 4*realGFlops : realGFlops);     \
+        OutputFromRoot(g.Comm(),"Finished in ",runTime,                 \
+                     " seconds (",gFlops," GFlop/s)");                  \
+    }
+
+#else
+#define START_CUDA_TIMER do {} while (false)
+#define STOP_CUDA_TIMER do {} while (false)
+#define SUMMARIZE_CUDA_TIMER do {} while (false)
+#endif
+
 template<typename T, Device D>
 void TestGemm
 (Orientation orientA,
@@ -82,6 +111,12 @@ void TestGemm
     }
 
     Timer timer;
+#ifdef HYDROGEN_HAVE_CUDA
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    float cudaTime;
+#endif
 
     // Test the variant of Gemm that keeps A stationary
     C = COrig;
@@ -89,13 +124,19 @@ void TestGemm
     PushIndent();
     mpi::Barrier(g.Comm());
     timer.Start();
+    START_CUDA_TIMER;
     Gemm(orientA, orientB, alpha, A, B, beta, C, GEMM_SUMMA_A);
+    STOP_CUDA_TIMER;
+
     mpi::Barrier(g.Comm());
     runTime = timer.Stop();
     realGFlops = 2.*double(m)*double(n)*double(k)/(1.e9*runTime);
     gFlops = (IsComplex<T>::value ? 4*realGFlops : realGFlops);
-    OutputFromRoot
-        (g.Comm(),"Finished in ",runTime," seconds (",gFlops," GFlop/s)");
+    if (D == Device::CPU)
+      OutputFromRoot
+          (g.Comm(),"Finished in ",runTime," seconds (",gFlops," GFlop/s)");
+    SUMMARIZE_CUDA_TIMER;
+
     if (print)
         Print(C, BuildString("C := ",alpha," A B + ",beta," C"));
     if (correctness)
@@ -108,13 +149,20 @@ void TestGemm
     PushIndent();
     mpi::Barrier(g.Comm());
     timer.Start();
+    START_CUDA_TIMER;
     Gemm(orientA, orientB, alpha, A, B, beta, C, GEMM_SUMMA_B);
+    STOP_CUDA_TIMER;
+
     mpi::Barrier(g.Comm());
     runTime = timer.Stop();
     realGFlops = 2.*double(m)*double(n)*double(k)/(1.e9*runTime);
     gFlops = (IsComplex<T>::value ? 4*realGFlops : realGFlops);
-    OutputFromRoot
-        (g.Comm(),"Finished in ",runTime," seconds (",gFlops," GFlop/s)");
+
+    if (D == Device::CPU)
+      OutputFromRoot
+          (g.Comm(),"Finished in ",runTime," seconds (",gFlops," GFlop/s)");
+    SUMMARIZE_CUDA_TIMER;
+
     if (print)
         Print(C, BuildString("C := ",alpha," A B + ",beta," C"));
     if (correctness)
@@ -127,13 +175,18 @@ void TestGemm
     PushIndent();
     mpi::Barrier(g.Comm());
     timer.Start();
+    START_CUDA_TIMER;
     Gemm(orientA, orientB, alpha, A, B, beta, C, GEMM_SUMMA_C);
+    STOP_CUDA_TIMER;
+
     mpi::Barrier(g.Comm());
     runTime = timer.Stop();
     realGFlops = 2.*double(m)*double(n)*double(k)/(1.e9*runTime);
     gFlops = (IsComplex<T>::value ? 4*realGFlops : realGFlops);
-    OutputFromRoot
-        (g.Comm(),"Finished in ",runTime," seconds (",gFlops," GFlop/s)");
+    if (D == Device::CPU)
+        OutputFromRoot
+            (g.Comm(),"Finished in ",runTime," seconds (",gFlops," GFlop/s)");
+    SUMMARIZE_CUDA_TIMER;
     if (print)
         Print(C, BuildString("C := ",alpha," A B + ",beta," C"));
     if (correctness)
@@ -149,13 +202,20 @@ void TestGemm
         C = COrig;
         mpi::Barrier(g.Comm());
         timer.Start();
+        START_CUDA_TIMER;
         Gemm(NORMAL, NORMAL, alpha, A, B, beta, C, GEMM_SUMMA_DOT);
+        STOP_CUDA_TIMER;
+
         mpi::Barrier(g.Comm());
         runTime = timer.Stop();
         realGFlops = 2.*double(m)*double(n)*double(k)/(1.e9*runTime);
         gFlops = (IsComplex<T>::value ? 4*realGFlops : realGFlops);
-        OutputFromRoot
-            (g.Comm(),"Finished in ",runTime," seconds (",gFlops," GFlop/s)");
+        if (D == Device::CPU)
+            OutputFromRoot
+                (g.Comm(),"Finished in ",runTime," seconds (",gFlops,
+                 " GFlop/s)");
+        SUMMARIZE_CUDA_TIMER;
+
         if (print)
             Print(C, BuildString("C := ",alpha," A B + ",beta," C"));
         if (correctness)
@@ -164,6 +224,10 @@ void TestGemm
         PopIndent();
     }
     PopIndent();
+#ifdef HYDROGEN_HAVE_CUDA
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+#endif
 }
 
 int

@@ -60,8 +60,9 @@ void UpdateWithLocalData(
     if (A.GetLocalDevice() != D)
         LogicError("axpy::util::UpdateWithLocalData: Bad device.");
 
-    SyncInfo<D> syncInfoA(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
-        syncInfoB(B.LockedMatrix());
+    auto syncInfoA = SyncInfoFromMatrix(
+        static_cast<Matrix<T,D> const&>(A.LockedMatrix()));
+    auto syncInfoB = SyncInfoFromMatrix(B.LockedMatrix());
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 
     InterleaveMatrixUpdate(

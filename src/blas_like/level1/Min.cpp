@@ -40,7 +40,7 @@ Real Min( const AbstractDistMatrix<Real>& A )
     if (A.GetLocalDevice() != Device::CPU)
         LogicError("Min: Only implemented for CPU matrices.");
     auto syncInfoA =
-        SyncInfo<Device::CPU>(
+        SyncInfoFromMatrix(
             static_cast<Matrix<Real,Device::CPU> const&>(
                 A.LockedMatrix()));
 
@@ -107,7 +107,7 @@ Real SymmetricMin( UpperOrLower uplo, const AbstractDistMatrix<Real>& A )
         LogicError("SymmetricMin: Only implemented for CPU matrices.");
 
     auto syncInfoA =
-        SyncInfo<Device::CPU>(
+        SyncInfoFromMatrix(
             static_cast<Matrix<Real,Device::CPU> const&>(
                 A.LockedMatrix()));
 
