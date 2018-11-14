@@ -54,7 +54,7 @@ endif (__GIT_EXECUTABLE)
 # This must be set because version tags
 set(HYDROGEN_VERSION_MAJOR 1)
 set(HYDROGEN_VERSION_MINOR 0)
-set(HYDROGEN_VERSION_PATCH 0)
+set(HYDROGEN_VERSION_PATCH 1)
 set(HYDROGEN_VERSION
   "${HYDROGEN_VERSION_MAJOR}.${HYDROGEN_VERSION_MINOR}.${HYDROGEN_VERSION_PATCH}")
 
@@ -419,10 +419,10 @@ install(TARGETS ${PROJECT_NAME}
 include (CMakePackageConfigHelpers)
 
 # Write the version file for both the build and the install tree
-write_basic_package_version_file(
+configure_file(
+  "${CMAKE_SOURCE_DIR}/cmake/configure_files/HydrogenConfigVersion.cmake.in"
   "${CMAKE_BINARY_DIR}/HydrogenConfigVersion.cmake"
-  VERSION "${HYDROGEN_VERSION}"
-  COMPATIBILITY AnyNewerVersion)
+  @ONLY)
 
 # Write the configure file for the build tree
 set(INCLUDE_INSTALL_DIRS "${CMAKE_SOURCE_DIR}/include"

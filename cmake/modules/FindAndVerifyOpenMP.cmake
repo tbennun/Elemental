@@ -57,14 +57,14 @@ set(_OPENMP_TEST_SOURCE
 int main() {
 #pragma omp parallel
 {
-  auto x = omp_get_num_threads();
+  int x = omp_get_num_threads();
 }
 }")
 
 include(CheckCXXSourceCompiles)
 set(CMAKE_REQUIRED_FLAGS "${OpenMP_CXX_FLAGS}")
 set(CMAKE_REQUIRED_LIBRARIES OpenMP::OpenMP_CXX)
-check_cxx_source_compiles("${_OPENMP_TEST_SOURCE}" _OPENMP_TEST_RUNS)
+check_cxx_source_compiles("${_OPENMP_TEST_SOURCE}" _OPENMP_TEST_COMPILES)
 unset(CMAKE_REQUIRED_FLAGS)
 unset(CMAKE_REQUIRED_LIBRARIES)
 
@@ -72,7 +72,7 @@ get_target_property(_OMP_FLAGS OpenMP::OpenMP_CXX INTERFACE_COMPILE_OPTIONS)
 set_property(TARGET OpenMP::OpenMP_CXX PROPERTY
   INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CXX>:${_OMP_FLAGS}>)
 
-set(OpenMP_FOUND ${_OPENMP_TEST_RUNS})
+set(OpenMP_FOUND ${_OPENMP_TEST_COMPILES})
 
 if (OpenMP_FOUND)
   set(EL_HAVE_OPENMP TRUE)
