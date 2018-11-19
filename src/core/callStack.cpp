@@ -13,8 +13,8 @@ namespace {
 
 // Debugging
 #ifndef EL_RELEASE
-  std::stack<std::string> callStack;
-  bool tracingEnabled = false;
+thread_local std::stack<std::string> callStack;
+bool tracingEnabled = false;
 #endif // !EL_RELEASE
 
 }
