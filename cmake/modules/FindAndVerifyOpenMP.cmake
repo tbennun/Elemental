@@ -87,7 +87,7 @@ if (EL_HAVE_OPENMP)
      int main( int argc, char* argv[] )
      {
          int k[100];
-     #pragma omp collapse(2)
+     #pragma omp parallel for collapse(2)
          for( int i=0; i<10; ++i )
              for( int j=0; j<10; ++j )
                  k[i+j*10] = i+j;
