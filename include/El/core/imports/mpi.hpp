@@ -1,4 +1,3 @@
-
 /*
    Copyright (c) 2009-2016, Jack Poulson
    All rights reserved.
@@ -28,6 +27,37 @@ using std::vector;
 
 namespace mpi
 {
+
+template <typename T, Device D>
+struct IsMpiDeviceValidType : IsDeviceValidType<T,D> {};
+
+// Signed integer types
+template <>
+struct IsMpiDeviceValidType<char, Device::GPU> : std::true_type {};
+template <>
+struct IsMpiDeviceValidType<signed char, Device::GPU> : std::true_type {};
+template <>
+struct IsMpiDeviceValidType<int, Device::GPU> : std::true_type {};
+template <>
+struct IsMpiDeviceValidType<long int, Device::GPU> : std::true_type {};
+template <>
+struct IsMpiDeviceValidType<short int, Device::GPU> : std::true_type {};
+template <>
+struct IsMpiDeviceValidType<long long int, Device::GPU> : std::true_type {};
+
+// Unsigned types
+template <>
+struct IsMpiDeviceValidType<unsigned char, Device::GPU> : std::true_type {};
+template <>
+struct IsMpiDeviceValidType<unsigned short, Device::GPU> : std::true_type {};
+template <>
+struct IsMpiDeviceValidType<unsigned int, Device::GPU> : std::true_type {};
+template <>
+struct IsMpiDeviceValidType<unsigned long int, Device::GPU> : std::true_type {};
+template <>
+struct IsMpiDeviceValidType<unsigned long long int, Device::GPU>
+    : std::true_type {};
+
 
 // Yes, I realize there's some code duplication here, but it's SO MUCH
 // EASIER for the human to read I really don't care... The
@@ -800,7 +830,7 @@ void SendRecv(T* buf, int count, int to, int from, Comm comm,
 // Non-aluminum, not-device-ok
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=DisableIf<IsDeviceValidType<T,D>>>
+          typename=DisableIf<IsMpiDeviceValidType<T,D>>>
 void SendRecv(const T* sbuf, int sc, int to,
               T* rbuf, int rc, int from, Comm comm,
               SyncInfo<D> const& syncInfo);
@@ -808,7 +838,7 @@ void SendRecv(const T* sbuf, int sc, int to,
 // Non-aluminum, device-ok
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<T,D>>,
           typename=void>
 void SendRecv(const T* sbuf, int sc, int to,
               T* rbuf, int rc, int from, Comm comm,
@@ -817,14 +847,14 @@ void SendRecv(const T* sbuf, int sc, int to,
 // Non-aluminum, non-device-ok
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=DisableIf<IsDeviceValidType<T,D>>>
+          typename=DisableIf<IsMpiDeviceValidType<T,D>>>
 void SendRecv( T* buf, int count, int to, int from, Comm comm,
                SyncInfo<D> const& syncInfo);
 
 // Non-aluminum, device-ok
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<T,D>>,
           typename=void>
 void SendRecv( T* buf, int count, int to, int from, Comm comm,
                SyncInfo<D> const& syncInfo);
@@ -885,20 +915,20 @@ COLLECTIVE_SIGNATURE;
 // Non-aluminum, not-device-ok
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=DisableIf<IsDeviceValidType<T,D>>>
+          typename=DisableIf<IsMpiDeviceValidType<T,D>>>
 COLLECTIVE_SIGNATURE;
 
 // Non-aluminum, device-ok, not-packed
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<T,D>>,
           typename=DisableIf<IsPacked<T>>>
 COLLECTIVE_SIGNATURE;
 
 // Non-aluminum, device-ok, packed, complex
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<Complex<T>,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<Complex<T>,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<Complex<T>,D>>,
           typename=EnableIf<IsPacked<T>>,
           typename=void>
 COLLECTIVE_SIGNATURE_COMPLEX;
@@ -906,7 +936,7 @@ COLLECTIVE_SIGNATURE_COMPLEX;
 // Non-aluminum, device-ok, packed, real
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<T,D>>,
           typename=EnableIf<IsPacked<T>>,
           typename=DisableIf<IsComplex<T>>,
           typename=void>
@@ -971,20 +1001,20 @@ COLLECTIVE_SIGNATURE;
 // Non-aluminum, not-device-ok
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=DisableIf<IsDeviceValidType<T,D>>>
+          typename=DisableIf<IsMpiDeviceValidType<T,D>>>
 COLLECTIVE_SIGNATURE;
 
 // Non-aluminum, device-ok, not-packed
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<T,D>>,
           typename=DisableIf<IsPacked<T>>>
 COLLECTIVE_SIGNATURE;
 
 // Non-aluminum, device-ok, packed, complex
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<Complex<T>,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<Complex<T>,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<Complex<T>,D>>,
           typename=EnableIf<IsPacked<T>>,
           typename=void>
 COLLECTIVE_SIGNATURE_COMPLEX;
@@ -992,7 +1022,7 @@ COLLECTIVE_SIGNATURE_COMPLEX;
 // Non-aluminum, device-ok, packed, real
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<T,D>>,
           typename=EnableIf<IsPacked<T>>,
           typename=DisableIf<IsComplex<T>>,
           typename=void>
@@ -1071,20 +1101,20 @@ COLLECTIVE_SIGNATURE;
 // Non-aluminum, not-device-ok
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=DisableIf<IsDeviceValidType<T,D>>>
+          typename=DisableIf<IsMpiDeviceValidType<T,D>>>
 COLLECTIVE_SIGNATURE;
 
 // Non-aluminum, device-ok, not-packed
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<T,D>>,
           typename=DisableIf<IsPacked<T>>>
 COLLECTIVE_SIGNATURE;
 
 // Non-aluminum, device-ok, packed, complex
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<Complex<T>,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<Complex<T>,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<Complex<T>,D>>,
           typename=EnableIf<IsPacked<T>>,
           typename=void>
 COLLECTIVE_SIGNATURE_COMPLEX;
@@ -1092,7 +1122,7 @@ COLLECTIVE_SIGNATURE_COMPLEX;
 // Non-aluminum, device-ok, packed, real
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<T,D>>,
           typename=EnableIf<IsPacked<T>>,
           typename=DisableIf<IsComplex<T>>,
           typename=void>
@@ -1147,20 +1177,20 @@ COLLECTIVE_SIGNATURE;
 // Non-aluminum, not-device-ok
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=DisableIf<IsDeviceValidType<T,D>>>
+          typename=DisableIf<IsMpiDeviceValidType<T,D>>>
 COLLECTIVE_SIGNATURE;
 
 // Non-aluminum, device-ok, not-packed
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<T,D>>,
           typename=DisableIf<IsPacked<T>>>
 COLLECTIVE_SIGNATURE;
 
 // Non-aluminum, device-ok, packed, complex
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<Complex<T>,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<Complex<T>,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<Complex<T>,D>>,
           typename=EnableIf<IsPacked<T>>,
           typename=void>
 COLLECTIVE_SIGNATURE_COMPLEX;
@@ -1168,7 +1198,7 @@ COLLECTIVE_SIGNATURE_COMPLEX;
 // Non-aluminum, device-ok, packed, real
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<T,D>>,
           typename=EnableIf<IsPacked<T>>,
           typename=DisableIf<IsComplex<T>>,
           typename=void>
@@ -1216,20 +1246,20 @@ COLLECTIVE_SIGNATURE;
 // Non-aluminum, not-device-ok
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=DisableIf<IsDeviceValidType<T,D>>>
+          typename=DisableIf<IsMpiDeviceValidType<T,D>>>
 COLLECTIVE_SIGNATURE;
 
 // Non-aluminum, device-ok, not-packed
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<T,D>>,
           typename=DisableIf<IsPacked<T>>>
 COLLECTIVE_SIGNATURE;
 
 // Non-aluminum, device-ok, packed, complex
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<Complex<T>,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<Complex<T>,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<Complex<T>,D>>,
           typename=EnableIf<IsPacked<T>>,
           typename=void>
 COLLECTIVE_SIGNATURE_COMPLEX;
@@ -1237,7 +1267,7 @@ COLLECTIVE_SIGNATURE_COMPLEX;
 // Non-aluminum, device-ok, packed, real
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<T,D>>,
           typename=EnableIf<IsPacked<T>>,
           typename=DisableIf<IsComplex<T>>,
           typename=void>
@@ -1297,20 +1327,20 @@ COLLECTIVE_SIGNATURE;
 // Non-aluminum, not-device-ok
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=DisableIf<IsDeviceValidType<T,D>>>
+          typename=DisableIf<IsMpiDeviceValidType<T,D>>>
 COLLECTIVE_SIGNATURE;
 
 // Non-aluminum, device-ok, not-packed
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<T,D>>,
           typename=DisableIf<IsPacked<T>>>
 COLLECTIVE_SIGNATURE;
 
 // Non-aluminum, device-ok, packed, complex
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<Complex<T>,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<Complex<T>,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<Complex<T>,D>>,
           typename=EnableIf<IsPacked<T>>,
           typename=void>
 COLLECTIVE_SIGNATURE_COMPLEX;
@@ -1318,7 +1348,7 @@ COLLECTIVE_SIGNATURE_COMPLEX;
 // Non-aluminum, device-ok, packed, real
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<T,D>>,
           typename=EnableIf<IsPacked<T>>,
           typename=DisableIf<IsComplex<T>>,
           typename=void>
@@ -1388,20 +1418,20 @@ COLLECTIVE_SIGNATURE;
 // Non-aluminum, not-device-ok
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=DisableIf<IsDeviceValidType<T,D>>>
+          typename=DisableIf<IsMpiDeviceValidType<T,D>>>
 COLLECTIVE_SIGNATURE;
 
 // Non-aluminum, device-ok, not-packed
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<T,D>>,
           typename=DisableIf<IsPacked<T>>>
 COLLECTIVE_SIGNATURE;
 
 // Non-aluminum, device-ok, packed, complex
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<Complex<T>,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<Complex<T>,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<Complex<T>,D>>,
           typename=EnableIf<IsPacked<T>>,
           typename=void>
 COLLECTIVE_SIGNATURE_COMPLEX;
@@ -1409,7 +1439,7 @@ COLLECTIVE_SIGNATURE_COMPLEX;
 // Non-aluminum, device-ok, packed, real
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<T,D>>,
           typename=EnableIf<IsPacked<T>>,
           typename=DisableIf<IsComplex<T>>,
           typename=void>
@@ -1458,20 +1488,20 @@ COLLECTIVE_SIGNATURE;
 // Non-aluminum, not-device-ok
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=DisableIf<IsDeviceValidType<T,D>>>
+          typename=DisableIf<IsMpiDeviceValidType<T,D>>>
 COLLECTIVE_SIGNATURE;
 
 // Non-aluminum, device-ok, not-packed
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<T,D>>,
           typename=DisableIf<IsPacked<T>>>
 COLLECTIVE_SIGNATURE;
 
 // Non-aluminum, device-ok, packed, complex
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<Complex<T>,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<Complex<T>,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<Complex<T>,D>>,
           typename=EnableIf<IsPacked<T>>,
           typename=void>
 COLLECTIVE_SIGNATURE_COMPLEX;
@@ -1479,7 +1509,7 @@ COLLECTIVE_SIGNATURE_COMPLEX;
 // Non-aluminum, device-ok, packed, real
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<T,D>>,
           typename=EnableIf<IsPacked<T>>,
           typename=DisableIf<IsComplex<T>>,
           typename=void>
@@ -1507,20 +1537,20 @@ COLLECTIVE_SIGNATURE;
 // Non-aluminum, not-device-ok
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=DisableIf<IsDeviceValidType<T,D>>>
+          typename=DisableIf<IsMpiDeviceValidType<T,D>>>
 COLLECTIVE_SIGNATURE;
 
 // Non-aluminum, device-ok, not-packed
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<T,D>>,
           typename=DisableIf<IsPacked<T>>>
 COLLECTIVE_SIGNATURE;
 
 // Non-aluminum, device-ok, packed, complex
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<Complex<T>,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<Complex<T>,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<Complex<T>,D>>,
           typename=EnableIf<IsPacked<T>>,
           typename=void>
 COLLECTIVE_SIGNATURE_COMPLEX;
@@ -1528,7 +1558,7 @@ COLLECTIVE_SIGNATURE_COMPLEX;
 // Non-aluminum, device-ok, packed, real
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<T,D>>,
           typename=EnableIf<IsPacked<T>>,
           typename=DisableIf<IsComplex<T>>,
           typename=void>
@@ -1571,20 +1601,20 @@ COLLECTIVE_SIGNATURE;
 // Non-aluminum, not-device-ok
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=DisableIf<IsDeviceValidType<T,D>>>
+          typename=DisableIf<IsMpiDeviceValidType<T,D>>>
 COLLECTIVE_SIGNATURE;
 
 // Non-aluminum, device-ok, not-packed
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<T,D>>,
           typename=DisableIf<IsPacked<T>>>
 COLLECTIVE_SIGNATURE;
 
 // Non-aluminum, device-ok, packed, complex
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<Complex<T>,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<Complex<T>,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<Complex<T>,D>>,
           typename=EnableIf<IsPacked<T>>,
           typename=void>
 COLLECTIVE_SIGNATURE_COMPLEX;
@@ -1592,7 +1622,7 @@ COLLECTIVE_SIGNATURE_COMPLEX;
 // Non-aluminum, device-ok, packed, real
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<T,D>>,
           typename=EnableIf<IsPacked<T>>,
           typename=DisableIf<IsComplex<T>>,
           typename=void>
@@ -1640,20 +1670,20 @@ COLLECTIVE_SIGNATURE;
 // Non-aluminum, not-device-ok
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=DisableIf<IsDeviceValidType<T,D>>>
+          typename=DisableIf<IsMpiDeviceValidType<T,D>>>
 COLLECTIVE_SIGNATURE;
 
 // Non-aluminum, device-ok, not-packed
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<T,D>>,
           typename=DisableIf<IsPacked<T>>>
 COLLECTIVE_SIGNATURE;
 
 // Non-aluminum, device-ok, packed, complex
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<Complex<T>,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<Complex<T>,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<Complex<T>,D>>,
           typename=EnableIf<IsPacked<T>>,
           typename=void>
 COLLECTIVE_SIGNATURE_COMPLEX;
@@ -1661,7 +1691,7 @@ COLLECTIVE_SIGNATURE_COMPLEX;
 // Non-aluminum, device-ok, packed, real
 template <typename T, Device D,
           typename=DisableIf<IsAluminumSupported<T,D,COLL>>,
-          typename=EnableIf<IsDeviceValidType<T,D>>,
+          typename=EnableIf<IsMpiDeviceValidType<T,D>>,
           typename=EnableIf<IsPacked<T>>,
           typename=DisableIf<IsComplex<T>>,
           typename=void>
