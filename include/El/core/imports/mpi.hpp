@@ -31,6 +31,7 @@ namespace mpi
 template <typename T, Device D>
 struct IsMpiDeviceValidType : IsDeviceValidType<T,D> {};
 
+#ifdef HYDROGEN_HAVE_CUDA
 // Signed integer types
 template <>
 struct IsMpiDeviceValidType<char, Device::GPU> : std::true_type {};
@@ -57,7 +58,7 @@ struct IsMpiDeviceValidType<unsigned long int, Device::GPU> : std::true_type {};
 template <>
 struct IsMpiDeviceValidType<unsigned long long int, Device::GPU>
     : std::true_type {};
-
+#endif // HYDROGEN_HAVE_CUDA
 
 // Yes, I realize there's some code duplication here, but it's SO MUCH
 // EASIER for the human to read I really don't care... The
