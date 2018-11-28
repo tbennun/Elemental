@@ -128,7 +128,7 @@ void BeginRegionProfile(char const* s, Color c) noexcept
     (void) c;
 }
 
-void EndReginProfile(const char *) noexcept
+void EndRegionProfile(const char *) noexcept
 {
 #ifdef HYDROGEN_HAVE_NVPROF
     if (NVProfRuntimeEnabled())

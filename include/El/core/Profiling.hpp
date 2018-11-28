@@ -227,4 +227,22 @@ auto MakeSyncProfileRegion(
     return SyncProfileRegion<D>(std::move(desc), color, std::move(si));
 }
 
+
+#define AUTO_NOSYNC_PROFILE_REGION(description)                         \
+    auto region_nosync_profiler__ =                                     \
+        MakeProfileRegion(description, GetNextProfilingColor())
+
+#define AUTO_SYNC_PROFILE_REGION(description,syncinfo)                  \
+    auto region_sync_profiler__ =                                       \
+        MakeSyncProfileRegion(                                          \
+            description, GetNextProfilingColor(), syncinfo)
+
+#ifdef HYDROGEN_DEFAULT_SYNC_PROFILING
+#define AUTO_PROFILE_REGION(description, syncinfo) \
+    AUTO_SYNC_PROFILE_REGION(description, syncinfo)
+#else
+#define AUTO_PROFILE_REGION(description, syncinfo) \
+    AUTO_NOSYNC_PROFILE_REGION(description)
+#endif
+
 }// namespace El
