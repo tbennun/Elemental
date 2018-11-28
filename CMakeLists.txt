@@ -168,6 +168,12 @@ option(${PROJECT_NAME}_ENABLE_NVPROF
   "Search for NVProf and enable related features" OFF)
 option(${PROJECT_NAME}_ENABLE_VTUNE
   "Search for VTune and enable related features" OFF)
+option(${PROEJCT_NAME}_ENABLE_SYNCHRONOUS_PROFILING
+  "Perform compute-stream synchronization before beginning profile regions"
+  OFF)
+if (${PROJECT_NAME}_ENABLE_SYNCHRONOUS_PROFILING)
+  set(HYDROGEN_DEFAULT_SYNC_PROFILING TRUE)
+endif ()
 
 #
 # OpenMP
@@ -348,6 +354,13 @@ include(detect/CXX)
 # Find third-party libraries
 #
 
+if (${PROJECT_NAME}_ENABLE_VTUNE)
+  find_package(VTUNE REQUIRED)
+  set(HYDROGEN_HAVE_VTUNE TRUE)
+else ()
+  set(HYDROGEN_HAVE_VTUNE FALSE)
+endif ()
+
 if (${PROJECT_NAME}_ENABLE_OPENMP)
   include(FindAndVerifyOpenMP)
   if (OpenMP_FOUND)
@@ -402,6 +415,12 @@ endif ()
 target_link_libraries(${PROJECT_NAME} PUBLIC MPI::MPI_CXX)
 target_link_libraries(${PROJECT_NAME} PUBLIC LAPACK::lapack)
 target_link_libraries(${PROJECT_NAME} PUBLIC EP::extended_precision)
+if (TARGET vtune::vtune)
+  target_link_libraries(${PROJECT_NAME} PUBLIC vtune::vtune)
+endif ()
+if (TARGET cuda::nvtx)
+  target_link_libraries(${PROJECT_NAME} PUBLIC cuda::nvtx)
+endif ()
 if (HYDROGEN_HAVE_CUDA)
   target_link_libraries(${PROJECT_NAME} PUBLIC cuda::toolkit)
 endif ()
