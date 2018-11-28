@@ -161,6 +161,15 @@ if (${PROJECT_NAME}_ENABLE_VALGRIND)
 endif ()
 
 #
+# Profiling
+#
+
+option(${PROJECT_NAME}_ENABLE_NVPROF
+  "Search for NVProf and enable related features" OFF)
+option(${PROJECT_NAME}_ENABLE_VTUNE
+  "Search for VTune and enable related features" OFF)
+
+#
 # OpenMP
 #
 
@@ -259,7 +268,7 @@ if (${PROJECT_NAME}_ENABLE_CUDA)
       set(CMAKE_CUDA_STANDARD_REQUIRED TRUE)
     endif ()
 
-    find_package(CUDA) # Enable all the macros
+    find_package(CUDA REQUIRED) # Enable all the macros
     find_package(NVML REQUIRED)
 
     if (${PROJECT_NAME}_ENABLE_CUB)
@@ -267,6 +276,13 @@ if (${PROJECT_NAME}_ENABLE_CUDA)
       set(HYDROGEN_HAVE_CUB TRUE)
     else ()
       set(HYDROGEN_HAVE_CUB FALSE)
+    endif ()
+
+    if (${PROJECT_NAME}_ENABLE_NVPROF)
+      find_package(NVTX REQUIRED)
+      set(HYDROGEN_HAVE_NVPROF TRUE)
+    else ()
+      set(HYDROGEN_HAVE_NVPROF FALSE)
     endif ()
 
     if (NOT TARGET cuda::toolkit)
