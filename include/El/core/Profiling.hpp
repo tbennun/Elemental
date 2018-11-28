@@ -1,5 +1,7 @@
 #include <string>
 
+#include "El-lite.hpp"
+#include "El/core/Device.hpp"
 #include "El/core/SyncInfo.hpp"
 
 namespace El

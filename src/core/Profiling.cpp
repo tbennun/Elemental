@@ -1,3 +1,6 @@
+#include <array>
+#include <atomic>
+
 #include "El/hydrogen_config.h"
 #include "El/core/Profiling.hpp"
 
@@ -34,7 +37,7 @@ std::array<Color, num_prof_colors> list_of_colors =
     Color::SAN_MARINO,   Color::GOVERNOR_BAY
 };
 
-std::atomic<size_t> current_color = 0;
+std::atomic<size_t> current_color;
 
 // Some handles/etc for VTune
 #ifdef HYDROGEN_HAVE_VTUNE
@@ -89,7 +92,7 @@ Color GetNextProfilingColor() noexcept
     return list_of_colors[id % num_prof_colors];
 }
 
-void BeginRegionProfile(char const* s, Color c)
+void BeginRegionProfile(char const* s, Color c) noexcept
 {
 #ifdef HYDROGEN_HAVE_NVPROF
     if (NVProfRuntimeEnabled())
