@@ -8,6 +8,7 @@
 */
 #include <El-lite.hpp>
 #include <El/blas_like/level3.hpp>
+#include "El/core/Profiling.hpp"
 
 #include "./Gemm/NN.hpp"
 #include "./Gemm/NT.hpp"
@@ -65,6 +66,8 @@ static void Gemm_impl(
     Matrix<T,Device::CPU> const& A, Matrix<T,Device::CPU> const& B,
     T beta, Matrix<T,Device::CPU>& C)
 {
+    AUTO_PROFILE_REGION("Gemm_impl.CPU", SyncInfoFromMatrix(C));
+
     const char transA = OrientationToChar(orientA);
     const char transB = OrientationToChar(orientB);
     const Int m = C.Height();
@@ -85,6 +88,8 @@ static void Gemm_impl(
     Matrix<T,Device::GPU> const& A, Matrix<T,Device::GPU> const& B,
     T beta, Matrix<T,Device::GPU>& C)
 {
+    AUTO_PROFILE_REGION("Gemm_impl.GPU", SyncInfoFromMatrix(C));
+
     const char transA = OrientationToChar(orientA);
     const char transB = OrientationToChar(orientB);
     const Int m = C.Height();
@@ -124,7 +129,6 @@ void Gemm
   T alpha, Matrix<T,D> const& A, Matrix<T,D> const& B,
   T beta, Matrix<T,D>& C)
 {
-
     EL_DEBUG_CSE
     if(orientA == NORMAL && orientB == NORMAL)
     {
