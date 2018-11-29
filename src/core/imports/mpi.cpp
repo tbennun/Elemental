@@ -14,6 +14,8 @@
 */
 
 #include <El-lite.hpp>
+#include <El/core/Profiling.hpp>
+
 #include "mpi_utils.hpp"
 
 #include "mpi_collectives.hpp"
