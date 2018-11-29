@@ -105,6 +105,11 @@ void SUMMA_NNA_impl
  AbstractDistMatrix<T>& CPre)
 {
     EL_DEBUG_CSE
+    AUTO_PROFILE_REGION(
+        "SUMMA.NNA",
+        SyncInfoFromMatrix(
+            static_cast<Matrix<T,D> const&>(CPre.LockedMatrix())));
+
     const Int n = CPre.Width();
     const Int bsize = Blocksize();
     const Grid& g = APre.Grid();
@@ -184,6 +189,11 @@ void SUMMA_NNB_impl
         AbstractDistMatrix<T>& CPre)
 {
     EL_DEBUG_CSE
+    AUTO_PROFILE_REGION(
+        "SUMMA.NNB",
+        SyncInfoFromMatrix(
+            static_cast<Matrix<T,D> const&>(CPre.LockedMatrix())));
+
     const Int m = CPre.Height();
     const Int bsize = Blocksize();
     const Grid& g = APre.Grid();
@@ -259,6 +269,10 @@ void SUMMA_NNC_impl(T alpha,
                     AbstractDistMatrix<T>& CPre)
 {
     EL_DEBUG_CSE
+    AUTO_PROFILE_REGION(
+        "SUMMA.NNC",
+        SyncInfoFromMatrix(
+            static_cast<Matrix<T,D> const&>(CPre.LockedMatrix())));
     const Int sumDim = APre.Width();
     const Int bsize = Blocksize();
     const Grid& g = APre.Grid();
@@ -341,6 +355,11 @@ void SUMMA_NNDot_impl
   Int blockSize)
 {
     EL_DEBUG_CSE
+    AUTO_PROFILE_REGION(
+        "SUMMA.NNDot",
+        SyncInfoFromMatrix(
+            static_cast<Matrix<T,D> const&>(CPre.LockedMatrix())));
+
     const Int m = CPre.Height();
     const Int n = CPre.Width();
     const Grid& g = APre.Grid();

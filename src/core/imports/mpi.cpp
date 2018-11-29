@@ -14,6 +14,8 @@
 */
 
 #include <El-lite.hpp>
+#include <El/core/Profiling.hpp>
+
 #include "mpi_utils.hpp"
 
 #include "mpi_collectives.hpp"
@@ -71,6 +73,8 @@ bool GroupSameSizeAsInteger() EL_NO_EXCEPT
 
 void Initialize( int& argc, char**& argv ) EL_NO_EXCEPT
 {
+    AUTO_NOSYNC_PROFILE_REGION("MPI.Initialize");
+
     MPI_Init( &argc, &argv );
 #ifdef HYDROGEN_HAVE_ALUMINUM
     Al::Initialize(argc, argv);
@@ -84,6 +88,7 @@ void Initialize( int& argc, char**& argv ) EL_NO_EXCEPT
 
 int InitializeThread( int& argc, char**& argv, int required ) EL_NO_EXCEPT
 {
+    AUTO_NOSYNC_PROFILE_REGION("MPI.InitializeThread");
     int provided;
 
     MPI_Init_thread( &argc, &argv, required, &provided );
@@ -101,12 +106,14 @@ int InitializeThread( int& argc, char**& argv, int required ) EL_NO_EXCEPT
 
 void Finalize() EL_NO_EXCEPT
 {
+    AUTO_NOSYNC_PROFILE_REGION("MPI.Finalize");
 #ifdef HYDROGEN_HAVE_ALUMINUM
     // Making sure finalizing Aluminum before finalizing MPI.
     Al::Finalize();
 #endif // HYDROGEN_HAVE_ALUMINUM
 
-    MPI_Finalize();
+    if (!Finalized())
+        MPI_Finalize();
 }
 
 bool Initialized() EL_NO_EXCEPT

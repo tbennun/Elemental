@@ -4,6 +4,7 @@ set_full_path(THIS_DIR_SOURCES
   Element.cpp
   Grid.cpp
   Instantiate.cpp
+  Profiling.cpp
   Serialize.cpp
   Timer.cpp
   callStack.cpp

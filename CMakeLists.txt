@@ -161,6 +161,21 @@ if (${PROJECT_NAME}_ENABLE_VALGRIND)
 endif ()
 
 #
+# Profiling
+#
+
+option(${PROJECT_NAME}_ENABLE_NVPROF
+  "Search for NVProf and enable related features" OFF)
+option(${PROJECT_NAME}_ENABLE_VTUNE
+  "Search for VTune and enable related features" OFF)
+option(${PROEJCT_NAME}_ENABLE_SYNCHRONOUS_PROFILING
+  "Perform compute-stream synchronization before beginning profile regions"
+  OFF)
+if (${PROJECT_NAME}_ENABLE_SYNCHRONOUS_PROFILING)
+  set(HYDROGEN_DEFAULT_SYNC_PROFILING TRUE)
+endif ()
+
+#
 # OpenMP
 #
 
@@ -259,7 +274,7 @@ if (${PROJECT_NAME}_ENABLE_CUDA)
       set(CMAKE_CUDA_STANDARD_REQUIRED TRUE)
     endif ()
 
-    find_package(CUDA) # Enable all the macros
+    find_package(CUDA REQUIRED) # Enable all the macros
     find_package(NVML REQUIRED)
 
     if (${PROJECT_NAME}_ENABLE_CUB)
@@ -267,6 +282,13 @@ if (${PROJECT_NAME}_ENABLE_CUDA)
       set(HYDROGEN_HAVE_CUB TRUE)
     else ()
       set(HYDROGEN_HAVE_CUB FALSE)
+    endif ()
+
+    if (${PROJECT_NAME}_ENABLE_NVPROF)
+      find_package(NVTX REQUIRED)
+      set(HYDROGEN_HAVE_NVPROF TRUE)
+    else ()
+      set(HYDROGEN_HAVE_NVPROF FALSE)
     endif ()
 
     if (NOT TARGET cuda::toolkit)
@@ -332,6 +354,13 @@ include(detect/CXX)
 # Find third-party libraries
 #
 
+if (${PROJECT_NAME}_ENABLE_VTUNE)
+  find_package(VTUNE REQUIRED)
+  set(HYDROGEN_HAVE_VTUNE TRUE)
+else ()
+  set(HYDROGEN_HAVE_VTUNE FALSE)
+endif ()
+
 if (${PROJECT_NAME}_ENABLE_OPENMP)
   include(FindAndVerifyOpenMP)
   if (OpenMP_FOUND)
@@ -386,6 +415,12 @@ endif ()
 target_link_libraries(${PROJECT_NAME} PUBLIC MPI::MPI_CXX)
 target_link_libraries(${PROJECT_NAME} PUBLIC LAPACK::lapack)
 target_link_libraries(${PROJECT_NAME} PUBLIC EP::extended_precision)
+if (TARGET vtune::vtune)
+  target_link_libraries(${PROJECT_NAME} PUBLIC vtune::vtune)
+endif ()
+if (TARGET cuda::nvtx)
+  target_link_libraries(${PROJECT_NAME} PUBLIC cuda::nvtx)
+endif ()
 if (HYDROGEN_HAVE_CUDA)
   target_link_libraries(${PROJECT_NAME} PUBLIC cuda::toolkit)
 endif ()
@@ -529,7 +564,6 @@ if (NOT __dont_print_summary)
     EL_USE_CUSTOM_ALLTOALLV
     EL_AVOID_COMPLEX_MPI
     EL_USE_BYTE_ALLGATHERS
-    EL_CACHE_WARNINGS
     EL_CACHE_WARNINGS
     EL_VECTOR_WARNINGS
 

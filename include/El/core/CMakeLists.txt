@@ -11,6 +11,7 @@ set_full_path(THIS_DIR_HEADERS
   Matrix.hpp
   Memory.hpp
   Permutation.hpp
+  Profiling.hpp
   Proxy.hpp
   Serialize.hpp
   Timer.hpp
