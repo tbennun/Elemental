@@ -173,7 +173,8 @@ struct ProfileRegion
     }
     ~ProfileRegion() noexcept
     {
-        EndRegionProfile(desc_.c_str());
+        if (desc_.size())
+            EndRegionProfile(desc_.c_str());
     }
 
     // Disable copy
@@ -204,7 +205,8 @@ struct SyncProfileRegion
 
     ~SyncProfileRegion() noexcept
     {
-        EndRegionProfile(desc_.c_str(), si_);
+        if (desc_.size())
+            EndRegionProfile(desc_.c_str(), si_);
     }
 
     // Allow move -- allows the Make function to work
