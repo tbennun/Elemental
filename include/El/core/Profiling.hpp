@@ -163,7 +163,13 @@ void EndRegionProfile(const char* desc, SyncInfo<D> const& si) noexcept
     EndRegionProfile(desc);
 }
 
-// RAII profiler.
+/** \class ProfileRegion
+ *  \brief RAII profiler.
+ *
+ *  This wrapper class annotates the region between the construction
+ *  and the destruction of the object. No thread/stream/device/etc
+ *  synchronization is performed.
+ */
 struct ProfileRegion
 {
     ProfileRegion(std::string desc, Color color) noexcept
@@ -193,7 +199,13 @@ inline ProfileRegion MakeProfileRegion(std::string desc, Color color)
     return ProfileRegion(std::move(desc), color);
 }
 
-// Synchronous RAII profiler.
+/** \class SyncProfileRegion
+ *  \brief Synchronous RAII profiler.
+ *
+ *  This wrapper class synchronizes the SyncInfo object at
+ *  construction and destruction. It annotates the region between the
+ *  construction and the destruction of the object.
+ */
 template <Device D>
 struct SyncProfileRegion
 {
