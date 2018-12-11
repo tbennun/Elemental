@@ -22,17 +22,17 @@ Matrix<Ring, Device::GPU>::Matrix() { }
 
 template<typename Ring>
 Matrix<Ring, Device::GPU>::Matrix(Int height, Int width)
-    : AbstractMatrix<Ring>{height, width, Max(height,1)}
+    : AbstractMatrix<Ring>{height,width,height}
 {
-    memory_.Require(this->LDim() * width);
+    memory_.Require(this->LDim()*this->Width());
     data_ = memory_.Buffer();
 }
 
 template<typename Ring>
 Matrix<Ring, Device::GPU>::Matrix(Int height, Int width, Int leadingDimension)
-    : AbstractMatrix<Ring>{height, width, leadingDimension}
+    : AbstractMatrix<Ring>{height,width,leadingDimension}
 {
-    memory_.Require(leadingDimension*width);
+    memory_.Require(this->LDim()*this->Width());
     data_ = memory_.Buffer();
 }
 
