@@ -295,13 +295,13 @@ inline SyncInfo<Device::CPU> SyncInfoFromComm(
     return SyncInfo<Device::CPU>{};
 }
 
-#ifdef HYDROGEN_HAVE_CUDA
+#if defined(HYDROGEN_HAS_CUDA) && defined(HYDROGEN_ALUMINUM_HAS_GPU)
 inline SyncInfo<Device::GPU> SyncInfoFromComm(
     Al::CUDACommunicator const& comm, SyncInfo<Device::GPU> const& other)
 {
     return SyncInfo<Device::GPU>{comm.get_stream(), other.event_};
 }
-#endif // HYDROGEN_HAVE_CUDA
+#endif // HYDROGEN_ALUMINUM_HAS_GPU && HYDROGEN_HAS_CUDA
 #endif // HYDROGEN_HAVE_ALUMINUM
 
 inline bool operator==( const Comm& a, const Comm& b ) EL_NO_EXCEPT
