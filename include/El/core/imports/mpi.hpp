@@ -295,7 +295,7 @@ inline SyncInfo<Device::CPU> SyncInfoFromComm(
     return SyncInfo<Device::CPU>{};
 }
 
-#if defined(HYDROGEN_HAS_CUDA) && defined(HYDROGEN_ALUMINUM_USES_GPU)
+#if defined(HYDROGEN_HAVE_CUDA) && defined(HYDROGEN_ALUMINUM_USES_GPU)
 inline SyncInfo<Device::GPU> SyncInfoFromComm(
     Al::CUDACommunicator const& comm, SyncInfo<Device::GPU> const& other)
 {
