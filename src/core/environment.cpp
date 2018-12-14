@@ -23,6 +23,8 @@ El::Args* args = 0;
 
 namespace El {
 
+void break_on_me() {}
+
 void PrintVersion( ostream& os )
 {
     os << "Elemental version information:\n"

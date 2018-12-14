@@ -177,7 +177,8 @@ string BuildString( const ArgPack& ... args )
     return os.str();
 }
 
-inline void break_on_me() noexcept {}
+// Helpful utility for debugging.
+void break_on_me();
 
 template<typename... ArgPack>
 void UnrecoverableError( const ArgPack& ... args )
