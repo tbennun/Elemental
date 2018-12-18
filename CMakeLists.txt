@@ -277,6 +277,11 @@ if (${PROJECT_NAME}_ENABLE_CUDA)
     find_package(CUDA REQUIRED) # Enable all the macros
     find_package(NVML REQUIRED)
 
+    find_package(MAGMA)
+    if (MAGMA_FOUND)
+      set(USE_MAGMABLAS_GEMM ON)
+    endif ()
+
     if (${PROJECT_NAME}_ENABLE_CUB)
       find_package(CUB REQUIRED)
       set(HYDROGEN_HAVE_CUB TRUE)
@@ -298,7 +303,7 @@ if (${PROJECT_NAME}_ENABLE_CUDA)
       set_property(TARGET cuda::toolkit PROPERTY
         INTERFACE_LINK_LIBRARIES
         "${CUDA_CUBLAS_LIBRARIES}" "${CUDA_LIBRARIES}" "${CUDA_CUDA_LIBRARY}"
-        "${CUB_LIBRARIES}" "${NVML_LIBRARIES}")
+        "${CUB_LIBRARIES}" "${NVML_LIBRARIES}" "${MAGMA_LIBRARIES}")
 
       set_property(TARGET cuda::toolkit PROPERTY
         INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CUDA>:-arch=sm_30>)
