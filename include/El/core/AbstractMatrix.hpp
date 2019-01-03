@@ -260,8 +260,9 @@ inline void AbstractMatrix<T>::Resize(
     Int height, Int width, Int leadingDimension)
 {
     EL_DEBUG_CSE
+        leadingDimension = Max(leadingDimension,1);
 #ifndef EL_RELEASE
-        AssertValidDimensions(height, width, leadingDimension);
+    AssertValidDimensions(height, width, leadingDimension);
     if (this->FixedSize() &&
         (height != height_ || width != this->Width() ||
          leadingDimension != leadingDimension_))
@@ -289,6 +290,7 @@ template <typename T>
 inline void AbstractMatrix<T>::Resize_(
     Int height, Int width, Int leadingDimension)
 {
+    leadingDimension = Max(leadingDimension,1);
     if (height > this->Height()
         || width > this->Width()
         || leadingDimension != this->LDim())
@@ -320,8 +322,8 @@ inline void AbstractMatrix<T>::AssertValidDimensions(
             LogicError("Height and width must be non-negative");
     if (leadingDimension < height)
         LogicError("Leading dimension must be no less than height");
-    if (leadingDimension == 0)
-        LogicError("Leading dimension cannot be zero (for BLAS compatibility)");
+    if (leadingDimension <= 0)
+        LogicError("Leading dimension must be greater than zero (for BLAS compatibility)");
 }
 
 template <typename T>
@@ -347,11 +349,14 @@ AbstractMatrix<T>::AbstractMatrix(Int height, Int width, Int ldim)
 template <typename T>
 AbstractMatrix<T>::AbstractMatrix(
     El::ViewType view, Int height, Int width, Int ldim)
-    : viewType_{view}, height_{height}, width_{width}, leadingDimension_{ldim}
+    : viewType_{view},
+      height_{height}, width_{width}, leadingDimension_{Max(ldim,1)}
 {
     EL_DEBUG_CSE
-        EL_DEBUG_ONLY(AssertValidDimensions(height, width, ldim))
-        }
+        EL_DEBUG_ONLY(AssertValidDimensions(this->Height(),
+                                            this->Width(),
+                                            this->LDim()))
+            }
 
 template <typename T>
 inline void AbstractMatrix<T>::SetSize_(
@@ -359,7 +364,7 @@ inline void AbstractMatrix<T>::SetSize_(
 {
     height_ = height;
     width_ = width;
-    leadingDimension_ = leadingDimension;
+    leadingDimension_ = Max(leadingDimension,1);
 }
 
 // Single-entry manipulation

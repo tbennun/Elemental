@@ -23,18 +23,18 @@ Matrix<Ring, Device::CPU>::Matrix() { }
 
 template<typename Ring>
 Matrix<Ring, Device::CPU>::Matrix(Int height, Int width)
-    : AbstractMatrix<Ring>{height,width,Max(height,1)}
+    : AbstractMatrix<Ring>{height,width,height}
 {
-    memory_.Require(Max(height,1) * width);
+    memory_.Require(this->LDim()*this->Width());
     data_ = memory_.Buffer();
     // TODO(poulson): Consider explicitly zeroing
 }
 
 template<typename Ring>
 Matrix<Ring, Device::CPU>::Matrix(Int height, Int width, Int leadingDimension)
-    : AbstractMatrix<Ring>{height, width, leadingDimension}
+    : AbstractMatrix<Ring>{height,width,leadingDimension}
 {
-    memory_.Require(leadingDimension*width);
+    memory_.Require(this->LDim()*this->Width());
     data_ = memory_.Buffer();
 }
 
