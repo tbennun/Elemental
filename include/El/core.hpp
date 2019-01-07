@@ -56,9 +56,22 @@
 #include <quadmath.h>
 #endif
 
+#ifdef HYDROGEN_HAVE_HALF
+#include <half.hpp>
+#endif
+
 namespace El {
 
 typedef unsigned char byte;
+
+// 16-bit floating-point types
+#ifdef HYDROGEN_HAVE_HALF
+using cpu_half_type = half_float::half;
+#endif
+#ifdef HYDROGEN_HAVE_CUDA
+using gpu_half_type = __half;
+// TODO: __half2?
+#endif
 
 // If these are changes, you must make sure that they have
 // existing MPI datatypes. This is only sometimes true for 'long long'

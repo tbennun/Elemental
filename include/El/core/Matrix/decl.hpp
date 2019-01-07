@@ -16,6 +16,13 @@
 namespace El
 {
 
+template <typename T>
+struct IsComputeType : std::true_type {};
+
+#ifdef HYDROGEN_HAVE_HALF
+template <> struct IsComputeType<cpu_half_type> : std::false_type {};
+#endif
+
 // Matrix base for arbitrary rings
 template<typename Ring, Device Dev>
 class Matrix;
@@ -99,12 +106,18 @@ public:
 
 
     // Rescaling
+    template <typename Ring2=Ring,
+              typename=EnableIf<IsComputeType<Ring2>>>
     Matrix<Ring, Device::CPU> const& operator*=(Ring const& alpha);
 
     // Addition/substraction
+    template <typename Ring2=Ring,
+              typename=EnableIf<IsComputeType<Ring2>>>
     Matrix<Ring, Device::CPU> const&
     operator+=(Matrix<Ring, Device::CPU> const& A);
 
+    template <typename Ring2=Ring,
+              typename=EnableIf<IsComputeType<Ring2>>>
     Matrix<Ring, Device::CPU> const&
     operator-=(Matrix<Ring, Device::CPU> const& A);
 

@@ -221,7 +221,8 @@ Matrix<Ring, Device::CPU>::operator=(Matrix<Ring, Device::CPU>&& A)
 
 // Rescaling
 // ---------
-template<typename Ring>
+template <typename Ring>
+template <typename Ring2, typename>
 Matrix<Ring, Device::CPU> const&
 Matrix<Ring, Device::CPU>::operator*=(Ring const& alpha)
 {
@@ -233,6 +234,7 @@ Matrix<Ring, Device::CPU>::operator*=(Ring const& alpha)
 // Addition/subtraction
 // --------------------
 template<typename Ring>
+template <typename Ring2, typename>
 Matrix<Ring, Device::CPU> const&
 Matrix<Ring, Device::CPU>::operator+=(Matrix<Ring, Device::CPU> const& A)
 {
@@ -242,6 +244,7 @@ Matrix<Ring, Device::CPU>::operator+=(Matrix<Ring, Device::CPU> const& A)
 }
 
 template<typename Ring>
+template <typename Ring2, typename>
 Matrix<Ring, Device::CPU> const&
 Matrix<Ring, Device::CPU>::operator-=(Matrix<Ring, Device::CPU> const& A)
 {
@@ -662,6 +665,11 @@ int Matrix<Ring, Device::CPU>::RowAlign() const EL_NO_EXCEPT { return 0; }
 #define EL_ENABLE_QUAD
 #define EL_ENABLE_BIGINT
 #define EL_ENABLE_BIGFLOAT
+
+#ifdef HYDROGEN_HAVE_HALF
+PROTO(cpu_half_type)
+#endif
+
 #include <El/macros/Instantiate.h>
 
 #undef EL_EXTERN
