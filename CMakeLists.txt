@@ -138,9 +138,9 @@ option(${PROJECT_NAME}_ENABLE_HALF
   "Enable the use of \"half\" library." OFF)
 # This refers to the half.sourceforge.net type "half"
 
-option(${PROJECT_NAME}_ENABLE_BFLOAT32
-  "Enable the use of Intel's bfloat32 type." OFF)
-if (${PROJECT_NAME}_ENABLE_BFLOAT32)
+option(${PROJECT_NAME}_ENABLE_BFLOAT16
+  "Enable the use of Intel's bfloat16 type." OFF)
+if (${PROJECT_NAME}_ENABLE_BFLOAT16)
   message(WARNING
     "At time of writing, we are unaware of any implementation "
     "of the \"bfloat16\". This is a placeholder option. If our "
