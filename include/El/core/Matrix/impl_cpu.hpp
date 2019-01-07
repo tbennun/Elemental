@@ -219,37 +219,6 @@ Matrix<Ring, Device::CPU>::operator=(Matrix<Ring, Device::CPU>&& A)
     return *this;
 }
 
-// Rescaling
-// ---------
-template<typename Ring>
-Matrix<Ring, Device::CPU> const&
-Matrix<Ring, Device::CPU>::operator*=(Ring const& alpha)
-{
-    EL_DEBUG_CSE
-    Scale(alpha, *this);
-    return *this;
-}
-
-// Addition/subtraction
-// --------------------
-template<typename Ring>
-Matrix<Ring, Device::CPU> const&
-Matrix<Ring, Device::CPU>::operator+=(Matrix<Ring, Device::CPU> const& A)
-{
-    EL_DEBUG_CSE
-    Axpy(Ring(1), A, *this);
-    return *this;
-}
-
-template<typename Ring>
-Matrix<Ring, Device::CPU> const&
-Matrix<Ring, Device::CPU>::operator-=(Matrix<Ring, Device::CPU> const& A)
-{
-    EL_DEBUG_CSE
-    Axpy(Ring(-1), A, *this);
-    return *this;
-}
-
 // Basic queries
 // =============
 
