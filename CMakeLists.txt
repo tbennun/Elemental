@@ -134,6 +134,20 @@ endif ()
 # MEMORY-RELATED OPTIONS
 #
 
+option(${PROJECT_NAME}_ENABLE_HALF
+  "Enable the use of \"half\" library." OFF)
+# This refers to the half.sourceforge.net type "half"
+
+option(${PROJECT_NAME}_ENABLE_BFLOAT32
+  "Enable the use of Intel's bfloat32 type." OFF)
+if (${PROJECT_NAME}_ENABLE_BFLOAT32)
+  message(WARNING
+    "At time of writing, we are unaware of any implementation "
+    "of the \"bfloat16\". This is a placeholder option. If our "
+    "information is out of date, please open an issue and point "
+    "us to an implementation.")
+endif ()
+
 option(${PROJECT_NAME}_USE_64BIT_INTS
   "Use 64-bit integers for internal indexing" OFF)
 option(${PROJECT_NAME}_USE_64BIT_BLAS_INTS
@@ -260,6 +274,10 @@ endif ()
 #
 # Check the compiler features
 #
+
+if (${PROJECT_NAME}_ENABLE_HALF)
+  find_package(HALF REQUIRED)
+endif ()
 
 if (${PROJECT_NAME}_ENABLE_CUDA)
 
@@ -411,6 +429,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/El>
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
   $<INSTALL_INTERFACE:include>)
+
+target_link_libraries(${PROJECT_NAME} PUBLIC ${HALF_LIBRARIES})
 
 if (TARGET AL::Al)
   target_link_libraries(${PROJECT_NAME} PUBLIC AL::Al)
