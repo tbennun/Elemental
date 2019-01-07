@@ -16,13 +16,6 @@
 namespace El
 {
 
-template <typename T>
-struct IsComputeType : std::true_type {};
-
-#ifdef HYDROGEN_HAVE_HALF
-template <> struct IsComputeType<cpu_half_type> : std::false_type {};
-#endif
-
 // Matrix base for arbitrary rings
 template<typename Ring, Device Dev>
 class Matrix;
