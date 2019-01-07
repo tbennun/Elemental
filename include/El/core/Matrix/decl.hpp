@@ -97,17 +97,6 @@ public:
     Matrix<Ring, Device::CPU> operator()(
         vector<Int> const& I, vector<Int> const& J) const;
 
-
-    // Rescaling
-    Matrix<Ring, Device::CPU> const& operator*=(Ring const& alpha);
-
-    // Addition/substraction
-    Matrix<Ring, Device::CPU> const&
-    operator+=(Matrix<Ring, Device::CPU> const& A);
-
-    Matrix<Ring, Device::CPU> const&
-    operator-=(Matrix<Ring, Device::CPU> const& A);
-
     //
     // Basic queries
     //
