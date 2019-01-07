@@ -13,7 +13,7 @@
 
 // 16-bit floating point stuff
 #cmakedefine HYDROGEN_HAVE_HALF
-#cmakedefine HYDROGEN_HAVE_BFLOAT32
+#cmakedefine HYDROGEN_HAVE_BFLOAT16
 
 // Extended Precision stuff
 #cmakedefine HYDROGEN_HAVE_QUADMATH
