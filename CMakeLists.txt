@@ -300,10 +300,17 @@ if (${PROJECT_NAME}_ENABLE_CUDA)
 
       add_library(cuda::toolkit INTERFACE IMPORTED)
 
+      foreach (lib IN LISTS CUDA_CUBLAS_LIBRARIES CUDA_LIBRARIES
+          CUDA_CUDA_LIBRARY CUB_LIBRARIES NVML_LIBRARIES)
+
+        if (lib)
+          list(APPEND _CUDA_TOOLKIT_LIBS ${lib})
+        endif ()
+
+      endforeach ()
+
       set_property(TARGET cuda::toolkit PROPERTY
-        INTERFACE_LINK_LIBRARIES
-        "${CUDA_CUBLAS_LIBRARIES}" "${CUDA_LIBRARIES}" "${CUDA_CUDA_LIBRARY}"
-        "${CUB_LIBRARIES}" "${NVML_LIBRARIES}" "${MAGMA_LIBRARIES}")
+        INTERFACE_LINK_LIBRARIES "${_CUDA_TOOLKIT_LIBS}")
 
       set_property(TARGET cuda::toolkit PROPERTY
         INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CUDA>:-arch=sm_30>)
