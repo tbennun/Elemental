@@ -137,6 +137,9 @@ template<> struct IsScalar<double>
 { static const bool value=true; };
 template<> struct IsScalar<long double>
 { static const bool value=true; };
+#ifdef HYDROGEN_HAVE_HALF
+template <> struct IsScalar<cpu_half_type> : std::true_type {};
+#endif
 #ifdef HYDROGEN_HAVE_QD
 template<> struct IsScalar<DoubleDouble>
 { static const bool value=true; };
@@ -166,6 +169,9 @@ template<> struct IsField<double>
 { static const bool value=true; };
 template<> struct IsField<long double>
 { static const bool value=true; };
+#ifdef HYDROGEN_HAVE_HALF
+template <> struct IsField<cpu_half_type> : std::true_type {};
+#endif
 #ifdef HYDROGEN_HAVE_QD
 template<> struct IsField<DoubleDouble>
 { static const bool value=true; };
@@ -205,6 +211,10 @@ template<> struct IsStdScalar<double>
 { static const bool value=true; };
 template<> struct IsStdScalar<long double>
 { static const bool value=true; };
+#ifdef HYDROGEN_HAVE_HALF
+// This should work via ADL
+template <> struct IsStdScalar<cpu_half_type> : std::true_type {};
+#endif
 #ifdef HYDROGEN_HAVE_QUADMATH
 template<> struct IsStdScalar<Quad>
 { static const bool value=true; };
@@ -222,6 +232,9 @@ template<> struct IsStdField<double>
 { static const bool value=true; };
 template<> struct IsStdField<long double>
 { static const bool value=true; };
+#ifdef HYDROGEN_HAVE_HALF
+template <> struct IsStdField<cpu_half_type> : std::true_type {};
+#endif
 #ifdef HYDROGEN_HAVE_QUADMATH
 template<> struct IsStdField<Quad>
 { static const bool value=true; };
