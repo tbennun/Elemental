@@ -3,11 +3,15 @@
 
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <cuda_fp16.h>
 #include <cublas_v2.h>
 
 
 namespace El
 {
+
+using gpu_half_type = __half;
+// TODO: __half2?
 
 /** CudaError
  *  Exception class for CUDA errors.

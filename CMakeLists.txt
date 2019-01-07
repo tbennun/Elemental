@@ -277,6 +277,7 @@ endif ()
 
 if (${PROJECT_NAME}_ENABLE_HALF)
   find_package(HALF REQUIRED)
+  set(HYDROGEN_HAVE_HALF TRUE)
 endif ()
 
 if (${PROJECT_NAME}_ENABLE_CUDA)
