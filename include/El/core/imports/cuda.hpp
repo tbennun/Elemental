@@ -11,6 +11,11 @@ namespace El
 {
 
 using gpu_half_type = __half;
+template <> struct IsScalar<gpu_half_type> : std::true_type {};
+template <> struct IsField<gpu_half_type> : std::true_type {};
+template <> struct IsPacked<gpu_half_type> : std::true_type {};
+template <> struct IsReal<gpu_half_type> : std::true_type {};
+
 // TODO: __half2?
 
 /** CudaError

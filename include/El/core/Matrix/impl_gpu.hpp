@@ -360,7 +360,7 @@ Ring Matrix<Ring, Device::GPU>::Get(Int i, Int j) const
     if (i == END) i = this->Height() - 1;
     if (j == END) j = this->Width() - 1;
     auto stream = this->Stream();
-    Ring val = Ring(0);
+    Ring val;
     EL_CHECK_CUDA(cudaMemcpyAsync( &val, &data_[i+j*this->LDim()],
                                    sizeof(Ring), cudaMemcpyDeviceToHost,
                                    stream ));
@@ -783,6 +783,11 @@ int Matrix<Ring, Device::GPU>::RowAlign() const EL_NO_EXCEPT { return 0; }
 #define EL_ENABLE_QUAD
 #define EL_ENABLE_BIGINT
 #define EL_ENABLE_BIGFLOAT
+
+// Right now, we don't acknowledge a world in which NVIDIA GPUs
+// coexist on a platform with some other type of GPU (e.g., AMD)
+PROTO(gpu_half_type)
+
 #include <El/macros/Instantiate.h>
 
 #undef EL_EXTERN
