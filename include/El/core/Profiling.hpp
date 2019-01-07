@@ -1,3 +1,7 @@
+#pragma once
+#ifndef EL_CORE_PROFILING_HPP_
+#define EL_CORE_PROFILING_HPP_
+
 #include <string>
 
 #include "El-lite.hpp"
@@ -260,3 +264,4 @@ auto MakeSyncProfileRegion(
 #endif
 
 }// namespace El
+#endif /* EL_CORE_PROFILING_HPP_ */
