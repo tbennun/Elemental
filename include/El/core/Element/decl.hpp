@@ -36,7 +36,7 @@ template<> std::string TypeName<long int>();
 template<> std::string TypeName<long long int>();
 template<> std::string TypeName<float>();
 template<> std::string TypeName<double>();
-#ifdef HYDRONGE_HAVE_HALF
+#ifdef HYDROGEN_HAVE_HALF
 template<> std::string TypeName<cpu_half_type>();
 #endif
 #ifdef HYDROGEN_HAVE_QD
