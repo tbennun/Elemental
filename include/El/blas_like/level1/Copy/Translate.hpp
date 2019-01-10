@@ -67,8 +67,7 @@ void Translate(
         const Int maxWidth  = MaxLength(width,  rowStride);
         const Int pkgSize = mpi::Pad(maxHeight*maxWidth);
 
-        // Need the zero to silence compiler warning.
-        simple_buffer<T,D1> buffer(0);
+        simple_buffer<T,D1> buffer;
         if(crossRank == root || crossRank == B.Root())
             buffer.allocate(pkgSize);
 

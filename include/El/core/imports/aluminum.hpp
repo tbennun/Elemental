@@ -147,7 +147,7 @@ using BackendsForDevice = typename BackendsForDeviceT<D>::type;
 using AllAluminumBackends = Join<BackendsForDevice<Device::CPU>,
                                  BackendsForDevice<Device::GPU>>;
 #else
-using AllAluminumBackends = Join<BackendsForDevice<Device::CPU>>;
+using AllAluminumBackends = BackendsForDevice<Device::CPU>;
 #endif // HYDROGEN_HAVE_CUDA
 
 template <typename BackendT>
