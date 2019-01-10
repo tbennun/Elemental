@@ -146,9 +146,18 @@ public:
         internal::ResetAll(al_comms_);
     }
 
+    template <typename BackendT>
+    typename BackendT::comm_type& GetComm() const
+    {
+        static_assert(
+            DeviceForBackend<BackendT>() == Device::CPU,
+            "Requires CPU backend for this compatibility function.");
+        return GetComm<BackendT>(SyncInfo<DeviceForBackend<BackendT>()>{});
+    }
+
     template <typename BackendT, Device D>
     typename BackendT::comm_type&
-    GetComm(SyncInfo<D> const& syncinfo) const EL_NO_EXCEPT
+    GetComm(SyncInfo<D> const& syncinfo) const
     {
         using comm_type = typename BackendT::comm_type;
 
