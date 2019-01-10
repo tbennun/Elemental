@@ -15,6 +15,7 @@
 #include <El/core/imports/aluminum.hpp>
 #include <El/core/imports/mpi/comm.hpp>
 #include <El/core/imports/mpi/error.hpp>
+#include <El/core/imports/mpi/meta.hpp>
 
 #include <algorithm>
 #include <functional>
