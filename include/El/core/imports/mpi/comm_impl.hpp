@@ -17,7 +17,7 @@ namespace mpi
 /** @class CommImpl
  *  @brief A resource-owning Communicator wrapper.
  *
- *  This imposes strong "resource ownership" semantics on an MPI_comm
+ *  This imposes strong "resource ownership" semantics on an MPI_Comm
  *  object. The underlying MPI_Comm is externally immutable (except by
  *  means hereby defined as pathological) and is not shared with other
  *  objects.
@@ -128,7 +128,7 @@ public:
      *
      *  @param comm The MPI communicator to duplicate.
      */
-    void Reset(MPI_comm comm);
+    void Reset(MPI_Comm comm);
 
     /** @brief Relinquish ownership of the underlying resource.
      *
@@ -263,7 +263,7 @@ void CommImpl<SpecificCommImpl>::Reset()
 
 
 template <typename SpecificCommImpl>
-void CommImpl<SpecificCommImpl>::Reset(MPI_comm comm)
+void CommImpl<SpecificCommImpl>::Reset(MPI_Comm comm)
 {
     Reset();
     SafeDuplicateMPIComm_(comm);
