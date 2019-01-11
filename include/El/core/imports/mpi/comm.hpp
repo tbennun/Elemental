@@ -21,6 +21,9 @@ using Comm = AluminumComm;
 using Comm = PlainComm;
 #endif // HYDROGEN_HAVE_ALUMINUM
 
+using CommRef = std::reference_wrapper<Comm>;
+using CommCRef = std::reference_wrapper<Comm const>;
+
 }// namespace mpi
 }// namespace El
 #endif /* EL_IMPORTS_MPI_COMM_HPP_ */
