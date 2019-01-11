@@ -121,7 +121,7 @@ public:
 
     /** @brief Clear current state and recreate based on new comm.
      *
-     *  The currently-held resource, if any, is freed and replaced
+     *  The currently-held resources, if any, are freed and replaced
      *  with a duplicate of @c comm. See @c Control for a version of
      *  this function that assumes ownership of an @ c MPI_Comm object
      *  instead of duplicating the input @c MPI_Comm.
