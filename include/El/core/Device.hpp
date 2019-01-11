@@ -1,6 +1,13 @@
 #ifndef EL_CORE_DEVICE_HPP_
 #define EL_CORE_DEVICE_HPP_
 
+#include <El/config.h>
+#include <El/core/imports/cuda.hpp>
+#include <El/core/types.hpp>
+
+#include <string>
+#include <type_traits>
+
 namespace El
 {
 
