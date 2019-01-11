@@ -2,6 +2,7 @@
 #ifndef EL_IMPORTS_MPI_COMM_IMPL_HPP_
 #define EL_IMPORTS_MPI_COMM_IMPL_HPP_
 
+#include <El/config.h>
 #include <mpi.h>
 
 namespace El
@@ -13,10 +14,29 @@ template <typename SpecificCommImpl>
 class CommImpl
 {
 public:
+
+    /** @name Constructors */
+    ///@{
+
     CommImpl() = default;
     CommImpl(MPI_Comm mpi_comm)
-        : comm_{mpi_comm}
-    {}
+    {
+        MPI_Comm_dup(mpi_comm, &comm_);
+    }
+
+    // *NOT* copyable
+    CommImpl(CommImpl<SpecificCommImpl> const&) = delete;
+    CommImpl<SpecificCommImpl>& operator=(
+        CommImpl<SpecificCommImpl> const&) = delete;
+
+    // Moveable
+    CommImpl(CommImpl<SpecificCommImpl>&&) EL_NO_EXCEPT = default;
+    CommImpl<SpecificCommImpl>& operator=(
+        CommImpl<SpecificCommImpl>&&) EL_NO_EXCEPT = default;
+
+    ///@}
+    /** @name Query metadata */
+    ///@{
 
     /** @brief Get the process rank in the communicator. */
     int Rank() const EL_NO_RELEASE_EXCEPT
@@ -40,23 +60,73 @@ public:
         return size;
     }
 
-    /** @brief Clear all the state of the communicator. */
-    void Reset() EL_NO_EXCEPT
+    ///@}
+    /** @name Resource access */
+    ///@{
+
+    /** @brief Get the raw MPI handle. */
+    MPI_Comm GetMPIComm() const EL_NO_EXCEPT { return comm_; };
+
+    ///@}
+    /** @name Modifiers */
+    ///@{
+
+    /** @brief Take ownership of an existing communicator. */
+    void Control(MPI_Comm comm)
     {
-        static_cast<SpecificCommImpl*>(this)->DoReset();
-        comm_ = MPI_COMM_NULL;
+        Reset();
+        comm_ = comm;
     }
 
-    void Free() EL_NO_RELEASE_EXCEPT
+    /** @brief Clear all the state of the communicator. */
+    void Reset()
     {
-        MPI_Comm_free(&comm_);
+        static_cast<SpecificCommImpl*>(this)->DoReset();
+        if (comm_ != MPI_COMM_NULL)
+        {
+            MPI_Comm_free(&comm_);
+            comm_ = MPI_COMM_NULL;
+        }
+    }
+
+    /** @brief Clear current state and recreate based on new comm */
+    void Reset(MPI_comm comm)
+    {
+        Reset();
+        MPI_Comm_dup(comm, &comm_);
+    }
+
+    /** @brief Relinquish ownership of the underlying resource */
+    MPI_Comm Release()
+    {
+        MPI_Comm ret = comm_;
+        comm_ = MPI_COMM_NULL;
+        Reset();
+        return ret;
+    }
+
+    /** @brief Swap the interal state */
+    void Swap(CommImpl<SpecificCommImpl>& other)
+    {
+        static_cast<SpecificCommImpl*>(this)->DoSwap(
+            static_cast<SpecificCommImpl&>(other));
+        std::swap(comm_, other.comm_);
+    }
+
+    ///@}
+
+protected:
+
+    ~CommImpl()
+    {
         Reset();
     }
 
-    MPI_Comm GetMPIComm() const EL_NO_EXCEPT { return comm_; };
-
 private:
+
+    /** @brief The raw MPI handle. */
     MPI_Comm comm_ = MPI_COMM_NULL;
+
 };// class CommImpl
 
 // NOTE (trb): With how this class has evolved, I'm not really
