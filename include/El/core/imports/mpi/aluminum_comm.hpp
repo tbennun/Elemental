@@ -181,7 +181,7 @@ public:
      *          synchronizes on the specified SyncInfo object.
      */
     template <typename BackendT, Device D>
-    typename BackendT::comm_type const&
+    typename BackendT::comm_type /*const*/&
     GetComm(SyncInfo<D> const& syncinfo) const
     {
         using comm_type = typename BackendT::comm_type;

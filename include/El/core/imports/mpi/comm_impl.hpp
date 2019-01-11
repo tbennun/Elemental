@@ -247,7 +247,7 @@ int CommImpl<SpecificCommImpl>::Size() const
 
 
 template <typename SpecificCommImpl>
-void CommImpl<SpecificCommImpl>::Control(MPI_Comm comm);
+void CommImpl<SpecificCommImpl>::Control(MPI_Comm comm)
 {
     Reset();
     comm_ = comm;
@@ -301,7 +301,7 @@ void CommImpl<SpecificCommImpl>::SafeDuplicateMPIComm_(MPI_Comm src_comm)
 
     try
     {
-        EL_CHECK_MPI_CALL(MPI_Comm_dup(mpi_comm, &comm_));
+        EL_CHECK_MPI_CALL(MPI_Comm_dup(src_comm, &comm_));
     }
     catch (std::exception const& x)
     {
