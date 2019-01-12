@@ -140,6 +140,11 @@ public:
 
     AluminumComm() = default;
 
+    /** @brief Construct an AluminumComm with the same group as this MPI_Comm. */
+    AluminumComm(MPI_Comm comm)
+        : CommImpl<AluminumComm>{comm}
+    {}
+
     AluminumComm(AluminumComm&&) = default;
     AluminumComm& operator=(AluminumComm&&) = default;
 
