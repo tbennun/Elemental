@@ -201,7 +201,7 @@ void Split( Comm const& comm, int color, int key, Comm& newComm ) EL_NO_RELEASE_
 void Free( Comm& comm ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE;
-    comm.Free();
+    comm.Reset();
 }
 
 bool Congruent( Comm const& comm1, Comm const& comm2 ) EL_NO_RELEASE_EXCEPT
@@ -342,7 +342,7 @@ EL_NO_RELEASE_EXCEPT
     return newRank;
 }
 
-int Translate( Comm origComm, int origRank, Group newGroup )
+int Translate( Comm const& origComm, int origRank, Group newGroup )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE;
@@ -351,7 +351,7 @@ EL_NO_RELEASE_EXCEPT
     return newRank;
 }
 
-int Translate( Group origGroup, int origRank, Comm newComm )
+int Translate( Group origGroup, int origRank, Comm const& newComm )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE;
@@ -360,7 +360,7 @@ EL_NO_RELEASE_EXCEPT
     return newRank;
 }
 
-int Translate( Comm origComm, int origRank, Comm newComm )
+int Translate( Comm const& origComm, int origRank, Comm const& newComm )
 EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE;
@@ -380,9 +380,9 @@ void Translate
         newGroup.group, newRanks ) );
 }
 
-void Translate
-( Comm origComm,  int size, const int* origRanks,
-  Group newGroup,                 int* newRanks ) EL_NO_RELEASE_EXCEPT
+void Translate(
+    Comm const& origComm,  int size, const int* origRanks,
+    Group newGroup, int* newRanks ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE;
     Group origGroup;
@@ -391,9 +391,9 @@ void Translate
     Free( origGroup );
 }
 
-void Translate
-( Group origGroup,  int size, const int* origRanks,
-  Comm newComm,                     int* newRanks ) EL_NO_RELEASE_EXCEPT
+void Translate(
+    Group origGroup, int size, const int* origRanks,
+    Comm const& newComm, int* newRanks ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE;
     Group newGroup;
@@ -402,9 +402,9 @@ void Translate
     Free( newGroup  );
 }
 
-void Translate
-( Comm origComm,  int size, const int* origRanks,
-  Comm newComm,                   int* newRanks ) EL_NO_RELEASE_EXCEPT
+void Translate(
+    Comm const& origComm, int size, const int* origRanks,
+    Comm const& newComm, int* newRanks ) EL_NO_RELEASE_EXCEPT
 {
     EL_DEBUG_CSE;
     Group origGroup, newGroup;
