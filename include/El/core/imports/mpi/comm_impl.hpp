@@ -189,7 +189,9 @@ private:
 template <typename SpecificCommImpl>
 CommImpl<SpecificCommImpl>::CommImpl(MPI_Comm mpi_comm)
 {
-    Reset(mpi_comm);
+    // This just sets the data that this manages, which is only the
+    // internal MPI_Comm handle.
+    SafeDuplicateMPIComm_(mpi_comm);
 }
 
 
