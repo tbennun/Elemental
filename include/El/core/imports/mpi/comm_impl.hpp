@@ -58,14 +58,13 @@ public:
      *
      *  The source is left in a default-constructed-like state.
      */
-    CommImpl(CommImpl<SpecificCommImpl>&&) EL_NO_EXCEPT = default;
+    CommImpl(CommImpl<SpecificCommImpl>&&) EL_NO_EXCEPT;
 
     /** @brief Move-assign from an other communicator.
      *
      *  The source is left in a default-constructed-like state.
      */
-    CommImpl<SpecificCommImpl>& operator=(
-        CommImpl<SpecificCommImpl>&&) EL_NO_EXCEPT = default;
+    CommImpl<SpecificCommImpl>& operator=(CommImpl<SpecificCommImpl>&&);
 
     ///@}
     /** @name Deleted functions */
@@ -195,6 +194,31 @@ CommImpl<SpecificCommImpl>::CommImpl(MPI_Comm mpi_comm)
 
 
 template <typename SpecificCommImpl>
+CommImpl<SpecificCommImpl>::CommImpl(
+    CommImpl<SpecificCommImpl>&& other) EL_NO_EXCEPT
+{
+    // This just needs to handle its own data; it should not touch
+    // derived type data at all.
+    comm_ = other.comm_;
+    other.comm_ = MPI_COMM_NULL;
+}
+
+
+template <typename SpecificCommImpl>
+CommImpl<SpecificCommImpl>&
+CommImpl<SpecificCommImpl>::operator=(
+    CommImpl<SpecificCommImpl>&& other)
+{
+    // Delete the state for which this is responsible
+    FreeAndResetInternalComm_();
+
+    // Take the new MPI_Comm and reset other to null
+    comm_ = other.comm_;
+    other.comm_ = MPI_COMM_NULL;
+}
+
+
+template <typename SpecificCommImpl>
 CommImpl<SpecificCommImpl>::~CommImpl() EL_NO_EXCEPT
 {
     try
@@ -315,11 +339,17 @@ void CommImpl<SpecificCommImpl>::SafeDuplicateMPIComm_(MPI_Comm src_comm)
 template <typename SpecificCommImpl>
 void CommImpl<SpecificCommImpl>::FreeAndResetInternalComm_()
 {
-    if (comm_ != MPI_COMM_NULL)
+    int finalized;
+    MPI_Finalized(&finalized);
+    if (!finalized
+        && (comm_ != MPI_COMM_WORLD)
+        && (comm_ != MPI_COMM_NULL)
+        && (comm_ != MPI_COMM_SELF))
     {
-        EL_CHECK_MPI_CALL(MPI_Comm_free(&comm_));
-        comm_ = MPI_COMM_NULL;
+        EL_CHECK_MPI_CALL(
+            MPI_Comm_free(&comm_));
     }
+    comm_ = MPI_COMM_NULL;
 }
 
 
