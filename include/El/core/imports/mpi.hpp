@@ -207,6 +207,10 @@ void Free( Comm& comm ) EL_NO_RELEASE_EXCEPT;
 bool Congruent( Comm const& comm1, Comm const& comm2 ) EL_NO_RELEASE_EXCEPT;
 void ErrorHandlerSet
 ( Comm const& comm, ErrorHandler errorHandler ) EL_NO_RELEASE_EXCEPT;
+bool CongruentToCommSelf( Comm const& comm ) EL_NO_RELEASE_EXCEPT;
+bool CongruentToCommWorld( Comm const& comm ) EL_NO_RELEASE_EXCEPT;
+
+Comm NewWorldComm() EL_NO_RELEASE_EXCEPT;
 
 // Cartesian communicator routines
 void CartCreate
