@@ -65,36 +65,6 @@ using SharedPtrCommTuple = typename SharedPtrCommTupleT<T>::type;
 template <typename T>
 using PlainType = typename std::decay<T>::type;
 
-template <typename... Ts>
-void ResetAll_impl(std::tuple<Ts...>&, IndexSequence<>)
-{}
-
-template <typename... Ts, size_t I, size_t... Is>
-void ResetAll_impl(std::tuple<Ts...>& tup, IndexSequence<I,Is...>)
-{
-    auto& container = std::get<I>(tup);
-
-    // Delete all contents
-    PlainType<decltype(container)>{}.swap(container);
-
-    ResetAll_impl(tup, IndexSequence<Is...>{});
-}
-
-/** @brief Reset all @c shared_ptr objects in the tuple to nullptr.
- *
- *  Generates a compile-time loop to call @c reset() on each member of the tuple.
- *
- *  @param tup The tuple of pointers.
- *
- *  @todo Could be generalized to other pointer types. Currently no
- *        need and it's not without overhead.
- */
-template <typename... Ts>
-void ResetAll(std::tuple<Ts...>& tup)
-{
-    ResetAll_impl(tup, MakeIndexSequence<sizeof...(Ts)>{});
-}
-
 // Should go in SyncInfo stuff, but not 100% sure about this.
 inline bool SyncInfoEquiv(SyncInfo<Device::CPU> const&,
                           SyncInfo<Device::CPU> const&) EL_NO_EXCEPT
@@ -158,7 +128,7 @@ public:
      */
     void DoReset()
     {
-        internal::ResetAll(al_comms_);
+        comm_tuple_type{}.swap(al_comms_);
     }
 
     /** @brief Swap internal state.
