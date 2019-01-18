@@ -20,7 +20,7 @@ inline void AssertSameDist( const DistTypeA& distA, const DistTypeB& distB )
 
 } // namespace El
 
-#include <El/core/DistMatrix/Abstract.hpp>
+#include <El/core/DistMatrix/AbstractDistMatrix.hpp>
 
 #include <El/core/DistMatrix/Element.hpp>
 #include <El/core/DistMatrix/Element/CIRC_CIRC.hpp>

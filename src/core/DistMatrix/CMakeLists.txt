@@ -1,6 +1,6 @@
 # Add the source files for this directory
 set_full_path(THIS_DIR_SOURCES
-  Abstract.cpp
+  AbstractDistMatrix.cpp
   Block.cpp
   Element.cpp
   )
