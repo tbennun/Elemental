@@ -2,12 +2,12 @@
 set_full_path(THIS_DIR_SOURCES
   AbstractDistMatrix.cpp
   Block.cpp
-  Element.cpp
+  ElementMatrix.cpp
   )
 
 # Add the subdirectories
 add_subdirectory(Block)
-add_subdirectory(Element)
+add_subdirectory(ElementMatrix)
 
 # Propagate the files up the tree
 set(SOURCES "${SOURCES}" "${THIS_DIR_SOURCES}" PARENT_SCOPE)
