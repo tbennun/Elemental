@@ -93,7 +93,7 @@ struct CublasError : std::runtime_error
         {                                                               \
             cudaDeviceReset();                                          \
             throw CublasError(status_CHECK_CUBLAS,__FILE__,__LINE__);   \
-        }
+        }                                                               \
     } while (0)
 
 #ifdef EL_RELEASE
