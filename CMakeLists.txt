@@ -158,6 +158,20 @@ endif ()
 # MEMORY-RELATED OPTIONS
 #
 
+option(Hydrogen_ENABLE_HALF
+  "Enable the use of \"half\" library." OFF)
+# This refers to the half.sourceforge.net type "half"
+
+option(Hydrogen_ENABLE_BFLOAT16
+  "Enable the use of Intel's bfloat16 type." OFF)
+if (Hydrogen_ENABLE_BFLOAT16)
+  message(WARNING
+    "At time of writing, we are unaware of any implementation "
+    "of the \"bfloat16\". This is a placeholder option. If our "
+    "information is out of date, please open an issue and point "
+    "us to an implementation.")
+endif ()
+
 option(Hydrogen_USE_64BIT_INTS
   "Use 64-bit integers for internal indexing" OFF)
 option(Hydrogen_USE_64BIT_BLAS_INTS
@@ -284,6 +298,11 @@ endif ()
 #
 # Check the compiler features
 #
+
+if (Hydrogen_ENABLE_HALF)
+  find_package(HALF REQUIRED)
+  set(HYDROGEN_HAVE_HALF TRUE)
+endif ()
 
 if (Hydrogen_ENABLE_CUDA)
 
@@ -443,6 +462,7 @@ target_include_directories(Hydrogen PUBLIC
 target_link_libraries(Hydrogen PRIVATE ${EXTRA_CXX_FLAGS})
 
 target_link_libraries(Hydrogen PUBLIC ${Aluminum_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${HALF_LIBRARIES})
 
 if (TARGET OpenMP::OpenMP_CXX)
   target_link_libraries(Hydrogen PUBLIC OpenMP::OpenMP_CXX)
