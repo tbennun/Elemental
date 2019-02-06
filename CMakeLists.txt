@@ -87,10 +87,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
 # Add warning flags
 include(CheckCXXCompilerFlag)
 macro (add_cxx_flag_as_library FLAG_LIST_VAR FLAG)
-  add_library(flag${FLAG} INTERFACE)
-  target_compile_options(
-    flag${FLAG} INTERFACE $<$<COMPILE_LANGUAGE:CXX>:${FLAG}>)
-  LIST(APPEND ${FLAG_LIST_VAR} flag${FLAG})
+  LIST(APPEND ${FLAG_LIST_VAR} $<$<COMPILE_LANGUAGE:CXX>:${FLAG}>)
 endmacro()
 
 LIST(APPEND INITIAL_CXX_FLAGS
@@ -459,10 +456,10 @@ target_include_directories(Hydrogen PUBLIC
 # These flags don't need to be propagated. Just because Hydrogen is
 # built with "-Werror", for instance, doesn't mean downstreams should
 # be forced to build with that (even though they maybe should)...
-target_link_libraries(Hydrogen PRIVATE ${EXTRA_CXX_FLAGS})
+target_compile_options(Hydrogen PRIVATE ${EXTRA_CXX_FLAGS})
 
 target_link_libraries(Hydrogen PUBLIC ${Aluminum_LIBRARIES})
-target_link_libraries(${PROJECT_NAME} PUBLIC ${HALF_LIBRARIES})
+target_link_libraries(Hydrogen PUBLIC ${HALF_LIBRARIES})
 
 if (TARGET OpenMP::OpenMP_CXX)
   target_link_libraries(Hydrogen PUBLIC OpenMP::OpenMP_CXX)
