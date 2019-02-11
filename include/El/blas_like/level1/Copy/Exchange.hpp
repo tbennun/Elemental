@@ -12,11 +12,11 @@
 namespace El {
 namespace copy {
 
-template<typename T, Device D,typename=EnableIf<IsDeviceValidType<T,D>>>
+template<typename T, Device D, typename=EnableIf<IsDeviceValidType<T,D>>>
 void Exchange_impl
 ( const ElementalMatrix<T>& A,
         ElementalMatrix<T>& B,
-  int sendRank, int recvRank, mpi::Comm comm )
+  int sendRank, int recvRank, mpi::Comm const& comm )
 {
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(AssertSameGrids( A, B ))
@@ -29,8 +29,16 @@ void Exchange_impl
           LogicError("Receiving from self but sending to someone else");
     )
     B.Resize( A.Height(), A.Width() );
+
+    SyncInfo<D>
+        syncInfoA = SyncInfoFromMatrix(
+            static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
+        syncInfoB = SyncInfoFromMatrix(
+            static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
+
     if( myRank == sendRank )
     {
+        mpi::EnsureComm<T,Collective::SENDRECV>(comm, syncInfoB);
         Copy( A.LockedMatrix(), B.Matrix() );
         return;
     }
@@ -45,8 +53,6 @@ void Exchange_impl
     const bool contigA = ( A.LocalHeight() == A.LDim() );
     const bool contigB = ( B.LocalHeight() == B.LDim() );
 
-    SyncInfo<D> syncInfoA = SyncInfoFromMatrix(static_cast<Matrix<T,D> const&>(A.LockedMatrix())),
-        syncInfoB = SyncInfoFromMatrix(static_cast<Matrix<T,D> const&>(B.LockedMatrix()));
 
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 
@@ -115,7 +121,7 @@ template<typename T,Device D,
 void Exchange_impl
 ( const ElementalMatrix<T>& A,
         ElementalMatrix<T>& B,
-  int sendRank, int recvRank, mpi::Comm comm )
+  int sendRank, int recvRank, mpi::Comm const& comm )
 {
     LogicError("Exchange: Bad Device/type combo.");
 }
@@ -124,7 +130,7 @@ template<typename T>
 void Exchange
 ( const ElementalMatrix<T>& A,
         ElementalMatrix<T>& B,
-  int sendRank, int recvRank, mpi::Comm comm )
+  int sendRank, int recvRank, mpi::Comm const& comm )
 {
     if (A.GetLocalDevice() != B.GetLocalDevice())
         LogicError("Exchange: Device error.");
