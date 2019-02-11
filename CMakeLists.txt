@@ -367,13 +367,13 @@ if (Hydrogen_ENABLE_CUDA)
 endif (Hydrogen_ENABLE_CUDA)
 
 if (Hydrogen_ENABLE_ALUMINUM)
-  find_package(Aluminum 0.2 NO_MODULE QUIET
+  find_package(Aluminum 0.2.0 NO_MODULE QUIET
     HINTS ${Aluminum_DIR} ${ALUMINUM_DIR} ${AL_DIR}
     $ENV{Aluminum_DIR} $ENV{ALUMINUM_DIR} $ENV{AL_DIR}
     PATH_SUFFIXES lib64/cmake/aluminum lib/cmake/aluminum
     NO_DEFAULT_PATH)
   if (NOT Aluminum_FOUND)
-    find_package(Aluminum 0.2 NO_MODULE QUIET)
+    find_package(Aluminum 0.2.0 NO_MODULE QUIET)
   endif ()
 
   if (Aluminum_FOUND)
