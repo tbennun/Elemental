@@ -6,6 +6,9 @@
 #include <cuda_fp16.h>
 #include <cublas_v2.h>
 
+#include <stdexcept>
+#include <sstream>
+#include <string>
 
 namespace El
 {
