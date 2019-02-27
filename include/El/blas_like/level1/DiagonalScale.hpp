@@ -11,12 +11,32 @@
 
 namespace El {
 
+template <typename T>
+void DiagonalScale(
+    LeftOrRight side, Orientation orientation,
+    Matrix<T,Device::GPU> const& d, Matrix<T,Device::GPU>& A)
+{
+    EL_DEBUG_CSE;
+    const Int m = A.Height();
+    const Int n = A.Width();
+    const Int lda = A.LDim();
+    const Int incd = 1;
+
+    if (orientation != NORMAL)
+        LogicError("DiagonalScale: Only NORMAL mode supported on GPU");
+
+    cublas::Dgmm(side, m, n,
+                 A.Buffer(), lda,
+                 d.Buffer(), incd,
+                 A.Buffer(), lda);
+}
+
 template<typename TDiag,typename T>
-void DiagonalScale
-( LeftOrRight side,
-  Orientation orientation,
-  const Matrix<TDiag>& d,
-        Matrix<T>& A )
+void DiagonalScale(
+    LeftOrRight side,
+    Orientation orientation,
+    Matrix<TDiag> const& d,
+    Matrix<T>& A )
 {
     EL_DEBUG_CSE
     const Int m = A.Height();
@@ -47,6 +67,31 @@ void DiagonalScale
             for( Int i=0; i<m; ++i )
                 A(i,j) *= delta;
         }
+    }
+}
+
+template <typename T>
+void DiagonalScale(LeftOrRight side,
+                   Orientation orientation,
+                   AbstractMatrix<T> const& d,
+                   AbstractMatrix<T>& A)
+{
+    switch (A.GetDevice())
+    {
+    case Device::CPU:
+        DiagonalScale(side, orientation,
+                      static_cast<Matrix<T,Device::CPU> const&>(d),
+                      static_cast<Matrix<T,Device::CPU>&>(A));
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case Device::GPU:
+        DiagonalScale(side, orientation,
+                      static_cast<Matrix<T,Device::CPU> const&>(d),
+                      static_cast<Matrix<T,Device::CPU>&>(A));
+        break;
+#endif // HYDROGEN_HAVE_CUDA
+    default:
+        LogicError("DiagonalScale: Bad device.");
     }
 }
 
