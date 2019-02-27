@@ -670,7 +670,7 @@ void StridedUnpack(
 // DiagonalScale
 // =============
 #ifdef HYDROGEN_HAVE_GPU
-template<typename T, typename=EnableIf<IsDeviceType<T,Device::GPU>>>
+template<typename T, typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
 void DiagonalScale
 ( LeftOrRight side, Orientation orientation,
   Matrix<T,Device::GPU> const& d, Matrix<T,Device::GPU>& A );
@@ -693,7 +693,17 @@ void DiagonalScale(
 
 template<typename TDiag, typename T, Dist U, Dist V,
          DistWrap wrapType=ELEMENT,
-         Device D=Device::CPU>
+         Device D=Device::CPU,
+         typename=EnableIf<And<IsDeviceValidType<T,D>,IsDeviceValidType<TDiag,D>>>>
+void DiagonalScale(
+    LeftOrRight side, Orientation orientation,
+    const AbstractDistMatrix<TDiag>& d, DistMatrix<T,U,V,wrapType,D>& A);
+
+template<typename TDiag, typename T, Dist U, Dist V,
+         DistWrap wrapType=ELEMENT,
+         Device D=Device::CPU,
+         typename=DisableIf<And<IsDeviceValidType<T,D>,IsDeviceValidType<TDiag,D>>>,
+         typename=void>
 void DiagonalScale(
     LeftOrRight side, Orientation orientation,
     const AbstractDistMatrix<TDiag>& d, DistMatrix<T,U,V,wrapType,D>& A);

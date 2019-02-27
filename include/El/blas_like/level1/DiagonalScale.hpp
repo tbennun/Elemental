@@ -106,7 +106,7 @@ void DiagonalScale(LeftOrRight side,
     }
 }
 
-template<typename TDiag,typename T,Dist U,Dist V,DistWrap wrapType,Device D>
+template<typename TDiag,typename T,Dist U,Dist V,DistWrap wrapType,Device D,typename>
 void DiagonalScale(
     LeftOrRight side,
     Orientation orientation,
@@ -177,7 +177,7 @@ void DiagonalScale(
     }
 }
 
-template<typename TDiag,typename T>
+template<typename TDiag, typename T>
 void DiagonalScale(
     LeftOrRight side,
     Orientation orientation,
@@ -193,6 +193,15 @@ void DiagonalScale(
     #include <El/macros/DeviceGuardAndPayload.h>
 }
 
+template<typename TDiag, typename T,
+         Dist U, Dist V, DistWrap wrapType, Device D,
+         typename, typename>
+void DiagonalScale(
+    LeftOrRight, Orientation,
+    AbstractDistMatrix<TDiag> const&, DistMatrix<T,U,V,wrapType,D>&)
+{
+    LogicError("DiagonalScale: Bad device type combo.");
+}
 
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
 # define EL_EXTERN
