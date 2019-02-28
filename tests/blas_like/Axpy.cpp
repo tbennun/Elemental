@@ -199,6 +199,9 @@ main(int argc, char* argv[])
             TestAxpy<Complex<float>>(m, n, ldimX, ldimY, numThreads, g, print, correctness);
             TestAxpy<double>(m, n, ldimX, ldimY, numThreads, g, print, correctness);
             TestAxpy<Complex<double>>(m, n, ldimX, ldimY, numThreads, g, print, correctness);
+#ifdef HYDROGEN_HAVE_HALF
+            TestAxpy<cpu_half_type>(m, n, ldimX, ldimY, numThreads, g, print, correctness);
+#endif
 #ifdef EL_HAVE_QD
             TestAxpy<DoubleDouble>(m, n, ldimX, ldimY, numThreads, g, print, correctness);
             TestAxpy<QuadDouble>(m, n, ldimX, ldimY, numThreads, g, print, correctness);
