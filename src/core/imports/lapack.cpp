@@ -384,6 +384,12 @@ template void Copy
   const Complex<BigFloat>* A, BlasInt lda,
         Complex<BigFloat>* B, BlasInt ldb );
 #endif
+#ifdef HYDROGEN_HAVE_HALF
+template void Copy
+( char uplo, BlasInt m, BlasInt n,
+  const cpu_half_type* A, BlasInt lda,
+        cpu_half_type* B, BlasInt ldb );
+#endif
 
 #ifndef HYDROGEN_HAVE_LAPACK
 

@@ -100,6 +100,10 @@ extern const Op BINARY_AND;
 extern const Op BINARY_OR;
 extern const Op BINARY_XOR;
 
+/*!
+  Explicit instantiation code for Types is in src/core/mpi_register.cpp
+  (not src/core/imports/mpi.cpp).
+*/
 template<typename T>
 struct Types
 {

@@ -2523,6 +2523,10 @@ MPI_PROTO(ValueInt<double>)
 MPI_PROTO(ValueInt<Complex<double>>)
 MPI_PROTO(Entry<double>)
 MPI_PROTO(Entry<Complex<double>>)
+#ifdef HYDROGEN_HAVE_HALF
+MPI_PROTO(cpu_half_type)
+MPI_PROTO(Entry<cpu_half_type>)
+#endif
 #ifdef HYDROGEN_HAVE_QD
 MPI_PROTO(DoubleDouble)
 MPI_PROTO(QuadDouble)
@@ -2573,6 +2577,7 @@ MPI_PROTO(Entry<Complex<BigFloat>>)
 #define EL_ENABLE_QUAD
 #define EL_ENABLE_BIGINT
 #define EL_ENABLE_BIGFLOAT
+#define EL_ENABLE_HALF
 #include <El/macros/Instantiate.h>
 
 } // namespace mpi

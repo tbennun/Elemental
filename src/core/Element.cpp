@@ -52,6 +52,11 @@ string TypeName<float>()
 template<>
 string TypeName<double>()
 { return string("double"); }
+#ifdef HYDROGEN_HAVE_HALF
+template<>
+string TypeName<cpu_half_type>()
+{ return string("cpu_half_type"); }
+#endif
 #ifdef HYDROGEN_HAVE_QD
 template<>
 string TypeName<DoubleDouble>()

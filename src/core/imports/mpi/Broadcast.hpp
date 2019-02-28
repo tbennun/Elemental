@@ -141,6 +141,10 @@ MPI_BROADCAST_PROTO(ValueInt<double>)
 MPI_BROADCAST_PROTO(ValueInt<Complex<double>>)
 MPI_BROADCAST_PROTO(Entry<double>)
 MPI_BROADCAST_PROTO(Entry<Complex<double>>)
+#ifdef HYDROGEN_HAVE_HALF
+MPI_BROADCAST_PROTO(cpu_half_type)
+MPI_BROADCAST_PROTO(Entry<cpu_half_type>)
+#endif
 #ifdef HYDROGEN_HAVE_QD
 MPI_BROADCAST_PROTO(DoubleDouble)
 MPI_BROADCAST_PROTO(QuadDouble)

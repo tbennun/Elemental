@@ -838,7 +838,7 @@ void AssertConforming2x2
         LogicError("2x2 set of matrices must aligned to combine");
 }
 
-// Instantiations for {Int,Real,Complex<Real>} for each Real in {float,double}
+// Instantiations for {Int,Real,Complex<Real>} for each Real in {float,double,half}
 // ###########################################################################
 
 #ifndef EL_RELEASE
@@ -864,6 +864,7 @@ void AssertConforming2x2
 #define EL_ENABLE_QUAD
 #define EL_ENABLE_BIGINT
 #define EL_ENABLE_BIGFLOAT
+#define EL_ENABLE_HALF
 #include <El/macros/Instantiate.h>
 
 } // namespace El
