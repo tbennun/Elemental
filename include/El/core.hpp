@@ -294,7 +294,7 @@ class DistMatrix;
 
 } // namespace El
 
-
+#include <El/core/MemoryPool.hpp>
 #include <El/core/Memory.hpp>
 #include <El/core/SimpleBuffer.hpp>
 #include <El/core/AbstractMatrix.hpp>

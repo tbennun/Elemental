@@ -44,6 +44,14 @@ G* New(size_t size, unsigned int mode, SyncInfo<Device::CPU> const&)
     }
     break;
 #endif // HYDROGEN_HAVE_CUDA
+    case 2:
+        ptr = static_cast<G*>(HostMemoryPool().Allocate(size * sizeof(G)));
+        break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case 3:
+        ptr = static_cast<G*>(PinnedHostMemoryPool().Allocate(size * sizeof(G)));
+        break;
+#endif // HYDROGEN_HAVE_CUDA
     default: RuntimeError("Invalid CPU memory allocation mode");
     }
     return ptr;
@@ -67,6 +75,10 @@ void Delete( G*& ptr, unsigned int mode, SyncInfo<Device::CPU> const& )
     }
     break;
 #endif // HYDROGEN_HAVE_CUDA
+    case 2: HostMemoryPool().Free(ptr); break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case 3: PinnedHostMemoryPool().Free(ptr); break;
+#endif  // HYDROGEN_HAVE_CUDA
     default: RuntimeError("Invalid CPU memory deallocation mode");
     }
     ptr = nullptr;
