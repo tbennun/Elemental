@@ -87,6 +87,8 @@ void DiagonalScale(LeftOrRight side,
                    AbstractMatrix<T> const& d,
                    AbstractMatrix<T>& A)
 {
+    if (d.GetDevice() != A.GetDevice())
+        LogicError("DiagonalScale: d and A must be on the same device!");
     switch (A.GetDevice())
     {
     case Device::CPU:
@@ -97,8 +99,8 @@ void DiagonalScale(LeftOrRight side,
 #ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
         DiagonalScale(side, orientation,
-                      static_cast<Matrix<T,Device::CPU> const&>(d),
-                      static_cast<Matrix<T,Device::CPU>&>(A));
+                      static_cast<Matrix<T,Device::GPU> const&>(d),
+                      static_cast<Matrix<T,Device::GPU>&>(A));
         break;
 #endif // HYDROGEN_HAVE_CUDA
     default:
@@ -114,6 +116,9 @@ void DiagonalScale(
     DistMatrix<T,U,V,wrapType,D>& A)
 {
     EL_DEBUG_CSE;
+    if (dPre.GetLocalDevice() != D)
+        LogicError("DiagonalScale: dPre must have same device as A");
+
     if (wrapType == ELEMENT)
     {
         if (side == LEFT)
