@@ -9,6 +9,8 @@
 #ifndef EL_BLAS_DIAGONALSCALE_HPP
 #define EL_BLAS_DIAGONALSCALE_HPP
 
+#include <El/hydrogen_config.h>
+
 namespace El {
 
 #ifdef HYDROGEN_HAVE_CUDA
@@ -27,8 +29,8 @@ void DiagonalScale(
         LogicError("DiagonalScale: Only NORMAL mode supported on GPU");
 
     cublas::Dgmm(side, m, n,
-                 A.Buffer(), lda,
-                 d.Buffer(), incd,
+                 A.LockedBuffer(), lda,
+                 d.LockedBuffer(), incd,
                  A.Buffer(), lda);
 }
 
@@ -53,6 +55,7 @@ void DiagonalScale(
     const Int m = A.Height();
     const Int n = A.Width();
     const bool conj = (orientation == ADJOINT);
+
     if (side == LEFT)
     {
 #ifndef EL_RELEASE
@@ -141,7 +144,6 @@ void DiagonalScale(
             ctrl.colConstrain = true;
             ctrl.root = A.Root();
             ctrl.colAlign = A.RowAlign();
-
             DistMatrixReadProxy<TDiag,TDiag,V,Collect<U>(),ELEMENT,D> dProx(dPre, ctrl);
             auto& d = dProx.GetLocked();
 
