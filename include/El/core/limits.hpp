@@ -57,6 +57,11 @@ template<> struct MantissaBits<Quad>
 { static const unsigned value = 113; };
 #endif
 
+#ifdef HYDROGEN_HAVE_HALF
+template<> struct MantissaBits<cpu_half_type>
+{ static const unsigned value = 11; };
+#endif
+
 // NOTE: The 'Num' is only prepended to avoid a symbol conflict
 template<typename T>
 Int NumMantissaBits( const T& alpha=T() )

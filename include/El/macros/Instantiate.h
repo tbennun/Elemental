@@ -106,7 +106,7 @@
 
 #if defined(HYDROGEN_HAVE_HALF) && defined(EL_ENABLE_HALF)
 #ifndef PROTO_COMPLEX_HALF
-# define PROTO_COMPLEX_HALF PROTO_COMPLEX(cpu_half_type)
+# define PROTO_COMPLEX_HALF PROTO_COMPLEX(Complex<cpu_half_type>)
 #endif
 #endif
 

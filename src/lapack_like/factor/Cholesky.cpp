@@ -257,12 +257,14 @@ void HPSDCholesky( UpperOrLower uplo, AbstractDistMatrix<F>& APre )
 #define PROTO_COMPLEX_QUAD PROTO_BASE(Complex<Quad>)
 #define PROTO_BIGFLOAT PROTO_BASE(BigFloat)
 #define PROTO_COMPLEX_BIGFLOAT PROTO_BASE(Complex<BigFloat>)
+// #define PROTO_COMPLEX_HALF PROTO_BASE(Complex<cpu_half_type>)
 
 #define EL_NO_INT_PROTO
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE
 #define EL_ENABLE_QUAD
 #define EL_ENABLE_BIGFLOAT
+// #define EL_ENABLE_HALF
 #include <El/macros/Instantiate.h>
 
 } // namespace El

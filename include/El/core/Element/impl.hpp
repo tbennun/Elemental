@@ -452,7 +452,7 @@ double Log10( const Integer& alpha )
 template<typename F,
          typename/*=EnableIf<IsStdScalar<F>>*/>
 F Sqrt( const F& alpha )
-{ return std::sqrt(alpha); }
+{ return F(std::sqrt(alpha)); /* explicit conversion required because half_float::half(float&) is explicit. */ }
 
 // Use a branch cut on the negative real axis
 template<typename Real,

@@ -58,6 +58,18 @@
 
 #ifdef HYDROGEN_HAVE_HALF
 #include <half.hpp>
+template<>
+struct std::is_floating_point< half_float::half > {
+  static const bool value = true;
+};
+template<>
+struct std::is_integral< half_float::half > {
+  static const bool value = false;
+};
+template<>
+struct std::is_arithmetic< half_float::half > : std::integral_constant<bool,
+                                                                       std::is_integral<half_float::half>::value ||
+                                                                       std::is_floating_point<half_float::half>::value> {};
 #endif
 
 namespace El {
