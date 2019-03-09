@@ -57,6 +57,7 @@ void FinalizeCUDA()
 #ifdef HYDROGEN_HAVE_CUB
     cub::DestroyMemoryPool();
 #endif // HYDROGEN_HAVE_CUB
+    DestroyPinnedHostMemoryPool();
     GPUManager::Destroy();
 }
 
