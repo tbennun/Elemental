@@ -25,6 +25,13 @@ The most basic build of Hydrogen requires only:
 
 + MPI 3.0-compliant MPI library.
 
++ [BLAS](http://www.netlib.org/blas/): Provides basic linear
+  algebra kernels for the CPU code path.
+
++ [LAPACK](http://www.netlib.org/lapack/): Provides a few utility
+  functions (norms and 2D copies, e.g.). This could be demoted to
+  "optional" status with little effort.
+  
 Optional dependencies of Hydrogen include:
 
 + [Aluminum](https://github.com/llnl/aluminum): Provides asynchronous
