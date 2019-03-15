@@ -68,7 +68,7 @@ void TestCorrectness
 
 
 /*!
-  @brief Exercise Ax+y and check or correctness.
+  @brief Exercise Ax+y and check for correctness.
 */
 template<typename T,Device D=Device::CPU>
 void TestAxpy
