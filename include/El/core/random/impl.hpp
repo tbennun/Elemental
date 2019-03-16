@@ -209,7 +209,7 @@ F SampleBall( const F& center, const Base<F>& radius )
 
 template<typename Real,typename>
 Real SampleBall( const Real& center, const Real& radius )
-{ return SampleUniform(center-radius,center+radius); }
+{ return SampleUniform(Real(center-radius),Real(center+radius)); }
 
 } // namespace El
 

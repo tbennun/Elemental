@@ -260,6 +260,10 @@ Quad Abs( const Complex<Quad>& alphaPre ) EL_NO_EXCEPT
 }
 #endif
 
+#ifdef HYDROGEN_HAVE_HALF
+cpu_half_type Abs( const cpu_half_type& alpha ) EL_NO_EXCEPT { return fabs(alpha); }
+#endif
+
 #ifdef HYDROGEN_HAVE_MPC
 BigInt Abs( const BigInt& alpha ) EL_NO_EXCEPT
 {
