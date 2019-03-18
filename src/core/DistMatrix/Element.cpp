@@ -364,8 +364,26 @@ ElementalMatrix<T>::Attach(
     Int height, Int width, const El::Grid& g,
     int colAlign, int rowAlign, T* buffer, Int ldim, int root)
 {
-    EL_DEBUG_CSE;
-    LogicError("This function is going away. Do not use.");
+    EL_DEBUG_CSE
+    this->Empty();
+
+    this->grid_ = &g;
+    this->root_ = root;
+    this->height_ = height;
+    this->width_ = width;
+    this->colAlign_ = colAlign;
+    this->rowAlign_ = rowAlign;
+    this->colConstrained_ = true;
+    this->rowConstrained_ = true;
+    this->rootConstrained_ = true;
+    this->viewType_ = VIEW;
+    this->SetShifts();
+    if( this->Participating() )
+    {
+        Int localHeight = Length(height,this->colShift_,this->ColStride());
+        Int localWidth = Length(width,this->rowShift_,this->RowStride());
+        this->Matrix().Attach_( localHeight, localWidth, buffer, ldim );
+    }
 }
 
 template <typename T>
@@ -395,8 +413,26 @@ ElementalMatrix<T>::LockedAttach(
     Int height, Int width, const El::Grid& g,
     int colAlign, int rowAlign, const T* buffer, Int ldim, int root)
 {
-    EL_DEBUG_CSE;
-    LogicError("This function is going away. Do not use.");
+    EL_DEBUG_CSE
+    this->Empty();
+
+    this->grid_ = &g;
+    this->root_ = root;
+    this->height_ = height;
+    this->width_ = width;
+    this->colAlign_ = colAlign;
+    this->rowAlign_ = rowAlign;
+    this->colConstrained_ = true;
+    this->rowConstrained_ = true;
+    this->rootConstrained_ = true;
+    this->viewType_ = LOCKED_VIEW;
+    this->SetShifts();
+    if( this->Participating() )
+    {
+        Int localHeight = Length(height,this->colShift_,this->ColStride());
+        Int localWidth = Length(width,this->rowShift_,this->RowStride());
+        this->Matrix().LockedAttach_( localHeight, localWidth, buffer, ldim );
+    }
 }
 
 template <typename T>
