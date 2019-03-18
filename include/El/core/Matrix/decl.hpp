@@ -281,7 +281,8 @@ public:
     Matrix();
 
     /** @brief Create a matrix with the specified dimensions and leading dimension */
-    Matrix(size_type height, size_type width, size_type leadingDimension);
+    Matrix(size_type height, size_type width,
+           size_type leadingDimension=size_type{0});
 
     /** @brief Construct a matrix around an existing (possibly immutable) buffer */
     Matrix(size_type height, size_type width, value_type const* buffer,
