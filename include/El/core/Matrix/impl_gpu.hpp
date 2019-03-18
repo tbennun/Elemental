@@ -48,15 +48,9 @@ Matrix<T, Device::GPU>::Matrix
 
 template <typename T>
 Matrix<T, Device::GPU>::Matrix(Matrix<T, Device::GPU> const& A)
-    : AbstractMatrix<T>{A}
 {
-    // FIXME (trb): This is idiomatically backward. Assignment in
-    // terms of copy!
     EL_DEBUG_CSE;
-    if (&A != this)
-        *this = A;
-    else
-        LogicError("You just tried to construct a Matrix with itself!");
+    Copy(A, *this);
 }
 
 template <typename T>
@@ -149,7 +143,7 @@ Matrix<T, Device::GPU>&
 Matrix<T, Device::GPU>::operator=(Matrix<T, Device::GPU> const& A)
 {
     EL_DEBUG_CSE;
-    Copy(A, *this);
+    Matrix<T, Device::GPU>{A}.Swap(*this);
     return *this;
 }
 

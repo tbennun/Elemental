@@ -50,13 +50,9 @@ Matrix<T, Device::CPU>::Matrix(
 
 template <typename T>
 Matrix<T, Device::CPU>::Matrix(Matrix<T, Device::CPU> const& A)
-  : AbstractMatrix<T>(A)
 {
     EL_DEBUG_CSE;
-    if (&A != this)
-        *this = A;
-    else
-        LogicError("You just tried to construct a Matrix with itself!");
+    Copy(A, *this);
 }
 
 #ifdef HYDROGEN_HAVE_CUDA
@@ -179,7 +175,7 @@ Matrix<T, Device::CPU>&
 Matrix<T, Device::CPU>::operator=(Matrix<T, Device::CPU> const& A)
 {
     EL_DEBUG_CSE;
-    Copy(A, *this);
+    Matrix<T, Device::CPU>{A}.Swap(*this);
     return *this;
 }
 
