@@ -185,19 +185,12 @@ inline void AbstractMatrix<T>::Resize_(
 {
     leadingDimension = Max(leadingDimension, 1);
 
-    // Determine if we need to do a reallocation. The memory required
-    // for this resize to occur in-place is width*leadingdimension.
-    const bool realloc_needed =
-        ((width*leadingDimension > this->MemorySize())
-         && (height*width != 0));
-
     // The following order of operations should be guaranteed to
     // ensure exception guarantees:
     //
     //   1. The underlying storage is resized if needed.
     //   2. The metadata is updated
-    if (realloc_needed)
-        do_resize_(height, width, leadingDimension);
+    do_resize_(height, width, leadingDimension);
     this->SetSize_(height, width, leadingDimension);
 }
 
