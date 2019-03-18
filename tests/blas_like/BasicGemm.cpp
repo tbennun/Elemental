@@ -98,6 +98,7 @@ void TestGemm
 (El::Int m, El::Int n, El::Int k, const El::Grid& grid,
   bool testSequential, bool instrument)
 {
+    El::Output("Testing with ",El::TypeName<T>());
     El::Output(
         "Starting TestGemm for device: ", El::DeviceName<D>());
 
@@ -298,6 +299,10 @@ int main(int argc, char *argv[])
                 (m, n, k, grid, testSequential, instrument);
             TestGemm<El::Complex<double>,El::Device::CPU>
                 (m, n, k, grid, testSequential, instrument);
+#ifdef HYDROGEN_HAVE_HALF
+            TestGemm<El::cpu_half_type,El::Device::CPU>
+                (m, n, k, grid, testSequential, instrument);
+#endif
 
             if (testHigherPrec)
             {

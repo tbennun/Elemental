@@ -212,6 +212,9 @@ main(int argc, char* argv[])
             TestAxpy<Quad>(m, n, ldimX, ldimY, numThreads, g, print, correctness);
             TestAxpy<Complex<Quad>>(m, n, ldimX, ldimY, numThreads, g, print, correctness);
 #endif
+#ifdef HYDROGEN_HAVE_HALF
+            TestAxpy<cpu_half_type>(m, n, ldimX, ldimY, numThreads, g, print, correctness);
+#endif
 #ifdef EL_HAVE_MPC
             TestAxpy<BigFloat>(m, n, ldimX, ldimY, numThreads, g, print, correctness);
             TestAxpy<Complex<BigFloat>>(m, n, ldimX, ldimY, numThreads, g, print, correctness);

@@ -84,7 +84,7 @@ void TestGemm
  Int colAlignB=0, Int rowAlignB=0,
  Int colAlignC=0, Int rowAlignC=0)
 {
-    OutputFromRoot(g.Comm(),"Testing with ",TypeName<T>());
+  OutputFromRoot(g.Comm(),"Testing with ",TypeName<T>());
     PushIndent();
 
     double runTime, realGFlops, gFlops;
@@ -369,6 +369,18 @@ main(int argc, char* argv[])
                 (orientA, orientB,
                  m, n, k,
                  Complex<QuadDouble>(3), Complex<QuadDouble>(4),
+                 g,
+                 print, correctness,
+                 colAlignA, rowAlignA,
+                 colAlignB, rowAlignB,
+                 colAlignC, rowAlignC);
+#endif
+
+#ifdef HYDROGEN_HAVE_HALF
+            TestGemm<cpu_half_type,Device::CPU>
+                (orientA, orientB,
+                 m, n, k,
+                 cpu_half_type(3), cpu_half_type(4),
                  g,
                  print, correctness,
                  colAlignA, rowAlignA,
