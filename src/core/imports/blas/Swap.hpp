@@ -62,6 +62,12 @@ template void Swap
   Complex<QuadDouble>* x, BlasInt incx,
   Complex<QuadDouble>* y, BlasInt incy );
 #endif
+#ifdef HYDROGEN_HAVE_HALF
+template void Swap
+( BlasInt n,
+  cpu_half_type* x, BlasInt incx,
+  cpu_half_type* y, BlasInt incy );
+#endif
 #ifdef HYDROGEN_HAVE_QUADMATH
 template void Swap
 ( BlasInt n,

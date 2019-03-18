@@ -85,6 +85,12 @@ template Complex<Quad> Dot
   const Complex<Quad>* x, BlasInt incx, 
   const Complex<Quad>* y, BlasInt incy );
 #endif
+#ifdef HYDROGEN_HAVE_HALF
+template cpu_half_type Dot
+( BlasInt n,
+  const cpu_half_type* x, BlasInt incx, 
+  const cpu_half_type* y, BlasInt incy );
+#endif
 #ifdef HYDROGEN_HAVE_MPC
 template BigInt Dot
 ( BlasInt n,

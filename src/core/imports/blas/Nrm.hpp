@@ -61,6 +61,9 @@ Nrm2( BlasInt n, const Complex<QuadDouble>* x, BlasInt incx );
 template Quad Nrm2( BlasInt n, const Quad* x, BlasInt incx );
 template Quad Nrm2( BlasInt n, const Complex<Quad>* x, BlasInt incx );
 #endif
+#ifdef HYDROGEN_HAVE_HALF
+template cpu_half_type Nrm2( BlasInt n, const cpu_half_type* x, BlasInt incx );
+#endif
 #ifdef HYDROGEN_HAVE_MPC
 template BigFloat Nrm2( BlasInt n, const BigFloat* x, BlasInt incx );
 template BigFloat Nrm2( BlasInt n, const Complex<BigFloat>* x, BlasInt incx );
@@ -101,6 +104,10 @@ template Quad
 Nrm1( BlasInt n, const Quad* x, BlasInt incx );
 template Quad
 Nrm1( BlasInt n, const Complex<Quad>* x, BlasInt incx );
+#endif
+#ifdef HYDROGEN_HAVE_HALF
+template cpu_half_type
+Nrm1( BlasInt n, const cpu_half_type* x, BlasInt incx );
 #endif
 #ifdef HYDROGEN_HAVE_MPC
 template BigInt
@@ -149,6 +156,10 @@ template Quad
 NrmInf( BlasInt n, const Quad* x, BlasInt incx );
 template Quad
 NrmInf( BlasInt n, const Complex<Quad>* x, BlasInt incx );
+#endif
+#ifdef HYDROGEN_HAVE_HALF
+template cpu_half_type
+NrmInf( BlasInt n, const cpu_half_type* x, BlasInt incx );
 #endif
 #ifdef HYDROGEN_HAVE_MPC
 template BigInt

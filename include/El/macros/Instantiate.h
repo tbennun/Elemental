@@ -161,6 +161,7 @@ PROTO_COMPLEX_QUAD
 PROTO_COMPLEX_BIGFLOAT
 #endif
 #if defined(EL_ENABLE_HALF) && defined(HYDROGEN_HAVE_HALF)
+// For instantiating Complex<cpu_half_type>, which requires a lot of work.
 // PROTO_COMPLEX_HALF
 #endif
 #endif
