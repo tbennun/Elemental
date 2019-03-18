@@ -44,12 +44,6 @@ public:
      */
     AbstractMatrix<T>& operator=(AbstractMatrix<T> const&);
 
-    /** @brief Move-assign an AbstractMatrix.
-     *
-     *  Views will be moved into views.
-     */
-    AbstractMatrix<T>& operator=(AbstractMatrix<T>&&) = default;
-
     /** @brief Destroy the AbstractMatrix. */
     virtual ~AbstractMatrix() = default;
 
@@ -323,6 +317,12 @@ protected:
      */
     AbstractMatrix(
         El::ViewType view, size_type height, size_type width, size_type ldim);
+
+    /** @brief Move-assign an AbstractMatrix.
+     *
+     *  Views will be moved into views.
+     */
+    AbstractMatrix<T>& operator=(AbstractMatrix<T>&&) = default;
 
     /** @brief Swap metadata only.
      *
