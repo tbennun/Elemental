@@ -378,11 +378,26 @@ ElementalMatrix<T>::Attach(
     this->rootConstrained_ = true;
     this->viewType_ = VIEW;
     this->SetShifts();
-    if( this->Participating() )
+    if (this->Participating())
     {
         Int localHeight = Length(height,this->colShift_,this->ColStride());
         Int localWidth = Length(width,this->rowShift_,this->RowStride());
-        this->Matrix().Attach_( localHeight, localWidth, buffer, ldim );
+
+        switch (this->GetLocalDevice())
+        {
+        case El::Device::CPU:
+            static_cast<Matrix<T,Device::CPU>&>(this->Matrix()).
+                Attach_(localHeight, localWidth, buffer, ldim);
+            break;
+#ifdef HYDROGEN_HAVE_CUDA
+        case El::Device::GPU:
+            static_cast<Matrix<T,Device::GPU>&>(this->Matrix()).
+                Attach_(localHeight, localWidth, buffer, ldim);
+            break;
+#endif
+        default:
+            LogicError("Bad device.");
+        }
     }
 }
 
@@ -427,11 +442,26 @@ ElementalMatrix<T>::LockedAttach(
     this->rootConstrained_ = true;
     this->viewType_ = LOCKED_VIEW;
     this->SetShifts();
-    if( this->Participating() )
+    if (this->Participating())
     {
         Int localHeight = Length(height,this->colShift_,this->ColStride());
         Int localWidth = Length(width,this->rowShift_,this->RowStride());
-        this->Matrix().LockedAttach_( localHeight, localWidth, buffer, ldim );
+
+        switch (this->GetLocalDevice())
+        {
+        case El::Device::CPU:
+            static_cast<Matrix<T,Device::CPU>&>(this->Matrix()).
+                LockedAttach_(localHeight, localWidth, buffer, ldim);
+            break;
+#ifdef HYDROGEN_HAVE_CUDA
+        case El::Device::GPU:
+            static_cast<Matrix<T,Device::GPU>&>(this->Matrix()).
+                LockedAttach_(localHeight, localWidth, buffer, ldim);
+            break;
+#endif
+        default:
+            LogicError("Bad device.");
+        }
     }
 }
 
@@ -542,7 +572,7 @@ ElementalMatrix<T>::operator=(ElementalMatrix<T>&& A)
     }
     else
     {
-        this->Matrix().ShallowSwap(A.Matrix());
+        this->Matrix().Swap(A.Matrix());
         this->viewType_ = A.viewType_;
         this->height_ = A.height_;
         this->width_ = A.width_;
@@ -815,7 +845,7 @@ template <typename T>
 void
 ElementalMatrix<T>::ShallowSwap(ElementalMatrix<T>& A)
 {
-    this->Matrix().ShallowSwap(A.Matrix());
+    this->Matrix().Swap(A.Matrix());
     std::swap(this->viewType_, A.viewType_);
     std::swap(this->height_ , A.height_);
     std::swap(this->width_, A.width_);
