@@ -170,6 +170,7 @@ version of Hydrogen:
         -DHydrogen_ENABLE_CUB=ON \
         -DHydrogen_ENABLE_ALUMINUM=ON \
         /path/to/hydrogen
+    ninja install
 ```
 
 ## Reporting issues
