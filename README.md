@@ -35,7 +35,7 @@ The most basic build of Hydrogen requires only:
 Optional dependencies of Hydrogen include:
 
 + [Aluminum](https://github.com/llnl/aluminum): Provides asynchronous
-  blocking and non-block communication routines with an MPI-like
+  blocking and non-blocking communication routines with an MPI-like
   syntax. The use of Aluminum is **highly** recommended.
 
 + [CUDA](https://developer.nvidia.com/cuda-zone): Version 9.2 or
