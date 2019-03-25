@@ -9,6 +9,9 @@
 #include <El.hpp>
 using namespace El;
 
+/*!
+  @brief Called by TestAxpy for checking.
+*/
 template<typename T,Device D>
 void TestCorrectness
 (T alpha, const DistMatrix<T,MC,MR,ELEMENT,D>& XPre,
@@ -56,7 +59,7 @@ void TestCorrectness
     {
         const Base<T> EFrobNorm = FrobeniusNorm(E);
         if(print)
-            Print(E, "E");
+            Print(E, "E (error)");
         Output
             ("|| E ||_F / || Y ||_F = ",
              EFrobNorm, "/", YFrobNorm, "=", EFrobNorm/YFrobNorm);
@@ -64,6 +67,9 @@ void TestCorrectness
 }
 
 
+/*!
+  @brief Exercise Ax+y and check for correctness.
+*/
 template<typename T,Device D=Device::CPU>
 void TestAxpy
 (Int m,
@@ -140,7 +146,7 @@ int
 main(int argc, char* argv[])
 {
     Environment env(argc, argv);
-    mpi::Comm comm = mpi::COMM_WORLD;
+    mpi::Comm comm = mpi::NewWorldComm();
 
     try
     {
@@ -166,14 +172,14 @@ main(int argc, char* argv[])
         if(gridHeight == 0)
             gridHeight = Grid::DefaultHeight(mpi::Size(comm));
         const GridOrder order = (colMajor ? COLUMN_MAJOR : ROW_MAJOR);
-        const Grid g(comm, gridHeight, order);
+        const Grid g(std::move(comm), gridHeight, order);
         SetBlocksize(nb);
         ldimX = Max(m, ldimX);
         ldimY = Max(m, ldimY);
         ComplainIfDebug();
 
         // Message
-        OutputFromRoot(comm,"Testing Axpy");
+        OutputFromRoot(g.Comm(),"Testing Axpy");
 
 #ifdef HYDROGEN_HAVE_CUDA
         if (testGPU)

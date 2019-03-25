@@ -1,3 +1,7 @@
+#pragma once
+#ifndef EL_CORE_PROFILING_HPP_
+#define EL_CORE_PROFILING_HPP_
+
 #include <string>
 
 #include "El-lite.hpp"
@@ -189,7 +193,7 @@ struct ProfileRegion
 
     // Allow move -- allows the Make function to work
     ProfileRegion(ProfileRegion&&) noexcept = default;
-    ProfileRegion& operator=(ProfileRegion&&) noexcept = default;
+    ProfileRegion& operator=(ProfileRegion&&) = default;
 
     std::string desc_;
 };// struct ProfileRegion
@@ -260,3 +264,4 @@ auto MakeSyncProfileRegion(
 #endif
 
 }// namespace El
+#endif /* EL_CORE_PROFILING_HPP_ */

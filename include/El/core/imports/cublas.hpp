@@ -83,9 +83,21 @@ struct CublasError : std::runtime_error
             }                                                           \
         }                                                               \
     } while (0)
+#define EL_FORCE_CHECK_CUBLAS_NOSYNC(cublas_call)                       \
+    do                                                                  \
+    {                                                                   \
+        /* Make cuBLAS call and check for errors without */             \
+        /* synchronizing. */                                            \
+        const cublasStatus_t status_CHECK_CUBLAS = (cublas_call);       \
+        if (status_CHECK_CUBLAS != CUBLAS_STATUS_SUCCESS)               \
+        {                                                               \
+            cudaDeviceReset();                                          \
+            throw CublasError(status_CHECK_CUBLAS,__FILE__,__LINE__);   \
+        }                                                               \
+    } while (0)
 
 #ifdef EL_RELEASE
-#define EL_CHECK_CUBLAS(cublas_call) (cublas_call)
+#define EL_CHECK_CUBLAS(cublas_call) EL_FORCE_CHECK_CUBLAS_NOSYNC(cublas_call)
 #else
 #define EL_CHECK_CUBLAS(cublas_call) EL_FORCE_CHECK_CUBLAS(cublas_call)
 #endif // #ifdef EL_RELEASE
@@ -149,6 +161,13 @@ namespace cublas
               ScalarType const* B, BlasInt BLDim, \
               ScalarType* C, BlasInt CLDim);
 
+#define ADD_DGMM_DECL(ScalarType)                 \
+    void Dgmm(LeftOrRight side,                    \
+              BlasInt m, BlasInt n,                \
+              ScalarType const* A, BlasInt ALDim,  \
+              ScalarType const* X, BlasInt IncX,   \
+              ScalarType* C, BlasInt CLDim);
+
 // BLAS 1
 ADD_AXPY_DECL(float)
 ADD_AXPY_DECL(double)
@@ -166,6 +185,9 @@ ADD_GEMM_DECL(double)
 // BLAS-like Extension
 ADD_GEAM_DECL(float)
 ADD_GEAM_DECL(double)
+
+ADD_DGMM_DECL(float)
+ADD_DGMM_DECL(double)
 
 }// namespace cublas
 }// namespace El

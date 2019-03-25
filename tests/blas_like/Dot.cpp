@@ -7,6 +7,10 @@
    http://opensource.org/licenses/BSD-2-Clause
 */
 
+/*
+  Test parallel matrix dot product.
+*/
+
 #include <El.hpp>
 using namespace El;
 
@@ -36,10 +40,12 @@ void TestDot(Int m, Int n, const Grid& g, bool print)
                             SyncInfoFromMatrix(A.LockedMatrix()));
   // The constant here is large because this is not an especially stable way
   // to compute the dot product, but it provides a dumb implementation baseline.
-  if (Abs(got - expected) > 700 * limits::Epsilon<El::Base<T>>())
+  auto diff = got - expected;
+  if (Abs(diff) > 700 * limits::Epsilon<El::Base<T>>())
   {
     Output("Results do not match, got=", got,
-           " instead of ", expected);
+           " instead of ", expected, "  A diff of ", diff,
+           " is greater than 700*", limits::Epsilon<El::Base<T>>());
     RuntimeError("got != expected");
   }
 }
@@ -47,7 +53,7 @@ void TestDot(Int m, Int n, const Grid& g, bool print)
 int main(int argc, char** argv)
 {
   Environment env(argc, argv);
-  mpi::Comm comm = mpi::COMM_WORLD;
+  mpi::Comm comm = mpi::NewWorldComm();
   try
   {
     const Int m = Input("--m", "height", 100);
@@ -56,8 +62,8 @@ int main(int argc, char** argv)
     ProcessInput();
     PrintInputReport();
 
-    const Grid g(comm);
-    OutputFromRoot(comm, "Testing Dot");
+    const Grid g(std::move(comm));
+    OutputFromRoot(g.Comm(), "Testing Dot");
     TestDot<float, ELEMENT>(m, n, g, print);
     TestDot<float, BLOCK>(m, n, g, print);
     TestDot<Complex<float>, ELEMENT>(m, n, g, print);
