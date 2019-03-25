@@ -366,12 +366,6 @@ private:
     template<typename S> friend class BlockMatrix;
 
     // These don't have debugging checks
-#if 0
-    virtual void Attach_(
-        Int height, Int width, T* buffer, Int leadingDimension) = 0;
-    virtual void LockedAttach_(
-        Int height, Int width, const T* buffer, Int leadingDimension) = 0;
-#endif
     void Empty_(bool freeMemory=true);
     void Resize_(Int height, Int width, Int leadingDimension);
 
