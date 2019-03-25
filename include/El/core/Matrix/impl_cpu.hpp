@@ -50,6 +50,7 @@ Matrix<T, Device::CPU>::Matrix(
 
 template <typename T>
 Matrix<T, Device::CPU>::Matrix(Matrix<T, Device::CPU> const& A)
+    : Matrix{A.Height(), A.Width(), A.Height()}
 {
     EL_DEBUG_CSE;
     Copy(A, *this);

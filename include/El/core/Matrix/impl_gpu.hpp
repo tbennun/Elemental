@@ -48,6 +48,7 @@ Matrix<T, Device::GPU>::Matrix
 
 template <typename T>
 Matrix<T, Device::GPU>::Matrix(Matrix<T, Device::GPU> const& A)
+    : Matrix{A.Height(), A.Width(), A.Height()}
 {
     EL_DEBUG_CSE;
     Copy(A, *this);
