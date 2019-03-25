@@ -169,6 +169,8 @@ version of Hydrogen:
         -DHydrogen_ENABLE_CUDA=ON \
         -DHydrogen_ENABLE_CUB=ON \
         -DHydrogen_ENABLE_ALUMINUM=ON \
+        -DCUB_DIR=/path/to/cub \
+        -DAluminum_DIR=/path/to/aluminum \
         /path/to/hydrogen
     ninja install
 ```
