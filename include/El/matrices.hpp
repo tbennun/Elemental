@@ -605,10 +605,10 @@ template<typename T>
 void MakeUniform( AbstractDistMatrix<T>& A, T center=0, Base<T> radius=1 );
 
 template<typename T>
-void Uniform( AbstractMatrix<T>& A, Int m, Int n, T center=0, Base<T> radius=1 );
+void Uniform( AbstractMatrix<T>& A, Int m, Int n, T center=T(0), Base<T> radius=Base<T>(1) );
 template<typename T>
 void Uniform
-( AbstractDistMatrix<T>& A, Int m, Int n, T center=0, Base<T> radius=1 );
+( AbstractDistMatrix<T>& A, Int m, Int n, T center=T(0), Base<T> radius=Base<T>(1) );
 
 // Lattice bases
 // =============

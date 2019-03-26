@@ -82,7 +82,7 @@ void BasicInstrumentedGemm
 }
 
 template <typename T>
-El::Base<T> tomdiff(T,T) noexcept { return 0; }
+El::Base<T> tomdiff(T,T) noexcept { return El::Base<T>(0); }
 
 float tomdiff(float x, float y) noexcept { return x-y; }
 double tomdiff(double x, double y) noexcept { return x-y; }
@@ -105,7 +105,7 @@ void TestGemm
     El::Timer timer;
 
     // Choose arbitrary coefficients.
-    const T alpha=2, beta=3;
+    const T alpha{2}, beta{3};
 
     if (testSequential && grid.Rank() == 0)
     {

@@ -33,7 +33,7 @@ void TestDot(Int m, Int n, const Grid& g, bool print)
   if (print)
     OutputFromRoot(g.Comm(), "result=", got);
   // Manually check results.
-  T expected = 0;
+  T expected{0};
   for (Int j = 0; j < A.LocalWidth(); ++j)
     for (Int i = 0; i < B.LocalHeight(); ++i)
       expected += Conj(A.GetLocal(i, j)) * B.GetLocal(i, j);

@@ -100,7 +100,7 @@ namespace limits {
 template<typename Real,
          typename=EnableIf<IsReal<Real>>>
 inline Real Base()
-{ return std::numeric_limits<Real>::radix; }
+{ return Real{std::numeric_limits<Real>::radix}; }
 #ifdef HYDROGEN_HAVE_QD
 template<>
 inline DoubleDouble Base<DoubleDouble>()

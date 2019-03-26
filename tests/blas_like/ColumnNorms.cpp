@@ -26,7 +26,7 @@ void TestColumnTwoNorms(Int m, Int n, const Grid& g, bool print)
   for (Int j = 0; j < A.LocalWidth(); ++j)
   {
     T got = norms.GetLocal(j, 0);
-    T expected = 0;
+    T expected{0};
     for (Int i = 0; i < A.LocalHeight(); ++i)
     {
       T val = A.GetLocal(i, j);
@@ -63,7 +63,7 @@ void TestColumnMaxNorms(Int m, Int n, const Grid& g, bool print)
   for (Int j = 0; j < A.LocalWidth(); ++j)
   {
     T got = norms.GetLocal(j, 0);
-    T expected = 0;
+    T expected{0};
     for (Int i = 0; i < A.LocalHeight(); ++i)
       expected = Max(expected, Abs(A.GetLocal(i, j)));
     T r;
