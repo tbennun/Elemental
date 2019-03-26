@@ -371,6 +371,7 @@ public:
 
     H_DEPRECATED("Single-entry access to GPU matrices will be removed soon.")
     T Get(Int i, Int j=0) const;
+
     H_DEPRECATED("Single-entry access to GPU matrices will be removed soon.")
     Base<T> GetRealPart(Int i, Int j=0) const;
     H_DEPRECATED("Single-entry access to GPU matrices will be removed soon.")

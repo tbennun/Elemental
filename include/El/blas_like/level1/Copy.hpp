@@ -551,6 +551,18 @@ void CopyFromNonRoot
 
 
 #ifdef HYDROGEN_HAVE_CUDA
+EL_EXTERN template void Copy(
+    const AbstractMatrix<gpu_half_type>& A, AbstractMatrix<gpu_half_type>& B );
+EL_EXTERN template void Copy
+( const Matrix<gpu_half_type,Device::GPU>& A, Matrix<gpu_half_type,Device::GPU>& B );
+EL_EXTERN template void Copy
+( const Matrix<gpu_half_type,Device::GPU>& A, Matrix<gpu_half_type,Device::CPU>& B );
+EL_EXTERN template void Copy
+( const Matrix<gpu_half_type,Device::CPU>& A, Matrix<gpu_half_type,Device::GPU>& B );
+EL_EXTERN template void CopyAsync
+( const Matrix<gpu_half_type,Device::GPU>& A, Matrix<gpu_half_type,Device::CPU>& B );
+EL_EXTERN template void CopyAsync
+( const Matrix<gpu_half_type,Device::CPU>& A, Matrix<gpu_half_type,Device::GPU>& B );
 EL_EXTERN template void Copy
 ( const Matrix<float,Device::GPU>& A, Matrix<float,Device::GPU>& B );
 EL_EXTERN template void Copy
