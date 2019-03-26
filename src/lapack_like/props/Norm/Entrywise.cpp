@@ -19,7 +19,7 @@ Base<Field> EntrywiseNorm( const AbstractMatrix<Field>& A, Base<Field> p )
 
     // TODO(poulson): Make this more numerically stable
     typedef Base<Field> Real;
-    Real sum = 0;
+    Real sum{0};
     const Int width = A.Width();
     const Int height = A.Height();
     for( Int j=0; j<width; ++j )
@@ -38,7 +38,7 @@ Base<Field> HermitianEntrywiseNorm
 
     // TODO(poulson): make this more numerically stable
     typedef Base<Field> Real;
-    Real sum = 0;
+    Real sum{0};
     const Int height = A.Height();
     const Int width = A.Width();
     if( uplo == UPPER )
@@ -88,7 +88,7 @@ Base<Field> EntrywiseNorm( const AbstractDistMatrix<Field>& A, Base<Field> p )
     Real norm;
     if( A.Participating() )
     {
-        Real localSum = 0;
+        Real localSum{0};
         const Int localHeight = A.LocalHeight();
         const Int localWidth = A.LocalWidth();
         const Matrix<Field>& ALoc = A.LockedMatrix();
@@ -115,7 +115,7 @@ Base<Field> HermitianEntrywiseNorm
     Real sum;
     if( A.Participating() )
     {
-        Real localSum = 0;
+        Real localSum{0};
         const Int localWidth = A.LocalWidth();
         const Matrix<Field>& ALoc = A.LockedMatrix();
         if( uplo == UPPER )

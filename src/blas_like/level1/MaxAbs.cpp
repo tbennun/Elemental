@@ -20,7 +20,7 @@ Base<Ring> MaxAbs( const Matrix<Ring>& A )
     const Ring* ABuf = A.LockedBuffer();
     const Int ALDim = A.LDim();
 
-    Base<Ring> value = 0;
+    Base<Ring> value{0};
     for( Int j=0; j<n; ++j )
         for( Int i=0; i<m; ++i )
             value = Max(value,Abs(ABuf[i+j*ALDim]));
@@ -43,7 +43,7 @@ Base<Ring> MaxAbs( const AbstractDistMatrix<Ring>& A )
             static_cast<Matrix<Ring,Device::CPU> const&>(
                 A.LockedMatrix()));
 
-    Base<Ring> value = 0;
+    Base<Ring> value{0};
     if( A.Participating() )
     {
         // Store the index/value of the local pivot candidate
@@ -73,7 +73,7 @@ Base<Ring> SymmetricMaxAbs( UpperOrLower uplo, const Matrix<Ring>& A )
     const Ring* ABuf = A.LockedBuffer();
     const Int ALDim = A.LDim();
 
-    Base<Ring> value = 0;
+    Base<Ring> value{0};
     if( uplo == LOWER )
     {
         for( Int j=0; j<n; ++j )
@@ -109,7 +109,7 @@ Base<Ring> SymmetricMaxAbs
             static_cast<Matrix<Ring,Device::CPU> const&>(
                 A.LockedMatrix()));
 
-    Base<Ring> value = 0;
+    Base<Ring> value{0};
     if( A.Participating() )
     {
         Int const mLocal = A.LocalHeight();

@@ -117,7 +117,7 @@ Real SampleUniformNaive( const Real& a, const Real& b )
     std::mt19937& gen = Generator();
     std::uniform_real_distribution<long double>
       uni((long double)a,(long double)b);
-    return uni(gen);
+    return Real(uni(gen));
 }
 
 template<typename Real,typename,typename,typename>
