@@ -286,6 +286,7 @@ MPI_ALLREDUCE_PROTO(Entry<double>)
 MPI_ALLREDUCE_PROTO(Entry<Complex<double>>)
 #ifdef HYDROGEN_HAVE_HALF
 MPI_ALLREDUCE_PROTO(cpu_half_type)
+MPI_ALLREDUCE_PROTO(ValueInt<cpu_half_type>)
 MPI_ALLREDUCE_PROTO(Entry<cpu_half_type>)
 #endif
 #ifdef HYDROGEN_HAVE_QD

@@ -2525,6 +2525,7 @@ MPI_PROTO(Entry<double>)
 MPI_PROTO(Entry<Complex<double>>)
 #ifdef HYDROGEN_HAVE_HALF
 MPI_PROTO(cpu_half_type)
+MPI_PROTO(ValueInt<cpu_half_type>)
 MPI_PROTO(Entry<cpu_half_type>)
 #endif
 #ifdef HYDROGEN_HAVE_QD
