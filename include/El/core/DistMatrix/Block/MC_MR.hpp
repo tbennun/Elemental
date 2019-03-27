@@ -39,16 +39,14 @@ public:
     DistMatrix( const El::Grid& grid=Grid::Default(), int root=0 );
 
     // Create a 0 x 0 distributed matrix with fixed block size
-    DistMatrix
-    ( const El::Grid& grid, Int blockHeight, Int blockWidth, int root=0 );
+    DistMatrix( const El::Grid& grid, Int blockHeight, Int blockWidth, int root=0 );
 
     // Create a height x width distributed matrix with default block size
-    DistMatrix
-    ( Int height, Int width, const El::Grid& grid=Grid::Default(), int root=0 );
+    DistMatrix( Int height, Int width, const El::Grid& grid=Grid::Default(), int root=0 );
 
     // Create a height x width distributed matrix with fixed block size
-    DistMatrix
-    ( Int height, Int width, const El::Grid& grid,
+    DistMatrix(
+      Int height, Int width, const El::Grid& grid,
       Int blockHeight, Int blockWidth, int root=0 );
 
     // Create a copy of distributed matrix A (redistributing if necessary)

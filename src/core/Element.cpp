@@ -52,6 +52,11 @@ string TypeName<float>()
 template<>
 string TypeName<double>()
 { return string("double"); }
+#ifdef HYDROGEN_HAVE_HALF
+template<>
+string TypeName<cpu_half_type>()
+{ return string("cpu_half_type"); }
+#endif
 #ifdef HYDROGEN_HAVE_QD
 template<>
 string TypeName<DoubleDouble>()
@@ -253,6 +258,10 @@ Quad Abs( const Complex<Quad>& alphaPre ) EL_NO_EXCEPT
     __imag__(alpha) = alphaPre.imag();
     return cabsq(alpha);
 }
+#endif
+
+#ifdef HYDROGEN_HAVE_HALF
+cpu_half_type Abs( const cpu_half_type& alpha ) EL_NO_EXCEPT { return fabs(alpha); }
 #endif
 
 #ifdef HYDROGEN_HAVE_MPC

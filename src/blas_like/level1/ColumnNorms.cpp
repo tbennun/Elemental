@@ -26,8 +26,8 @@ void ColumnTwoNormsHelper
                  localScaledSquares( nLocal, 1 );
     for( Int jLoc=0; jLoc<nLocal; ++jLoc )
     {
-        Real localScale = 0;
-        Real localScaledSquare = 1;
+        Real localScale{0};
+        Real localScaledSquare{1};
         for( Int iLoc=0; iLoc<mLocal; ++iLoc )
             UpdateScaledSquare
             ( ALoc(iLoc,jLoc), localScale, localScaledSquare );
@@ -53,8 +53,8 @@ void ColumnTwoNormsHelper
     Matrix<Real> localScales( nLocal, 1 ), localScaledSquares( nLocal, 1 );
     for( Int jLoc=0; jLoc<nLocal; ++jLoc )
     {
-        Real localScale = 0;
-        Real localScaledSquare = 1;
+        Real localScale{0};
+        Real localScaledSquare{1};
         for( Int iLoc=0; iLoc<mLocal; ++iLoc )
             UpdateScaledSquare
             ( ARealLoc(iLoc,jLoc), localScale, localScaledSquare );
@@ -96,7 +96,7 @@ void ColumnMaxNorms( const Matrix<Field>& X, Matrix<Base<Field>>& norms )
     for( Int j=0; j<n; ++j )
     {
         // TODO(poulson): Ensure that NaN's propagate
-        Real colMax = 0;
+        Real colMax{0};
         for( Int i=0; i<m; ++i )
             colMax = Max(colMax,Abs(X(i,j)));
         norms(j) = colMax;
@@ -242,6 +242,7 @@ void ColumnTwoNorms
 #define EL_ENABLE_QUADDOUBLE
 #define EL_ENABLE_QUAD
 #define EL_ENABLE_BIGFLOAT
+#define EL_ENABLE_HALF
 #include <El/macros/Instantiate.h>
 
 } // namespace El

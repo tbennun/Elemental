@@ -117,7 +117,7 @@ Real SampleUniformNaive( const Real& a, const Real& b )
     std::mt19937& gen = Generator();
     std::uniform_real_distribution<long double>
       uni((long double)a,(long double)b);
-    return uni(gen);
+    return Real(uni(gen));
 }
 
 template<typename Real,typename,typename,typename>
@@ -194,6 +194,15 @@ F SampleNormal( const F& mean, const Base<F>& stddev )
     return sample;
 }
 
+#ifdef HYDROGEN_HAVE_HALF
+template <>
+inline cpu_half_type SampleNormal<cpu_half_type>(
+    cpu_half_type const& mean, cpu_half_type const& stddev)
+{
+    return cpu_half_type(SampleNormal(float(mean), float(stddev)));
+}
+#endif // HYDROGEN_HAVE_HALF
+
 template<typename F,typename,typename>
 F SampleNormal( const F& mean, const Base<F>& stddev )
 { return SampleNormalMarsiglia( mean, stddev ); }
@@ -209,7 +218,7 @@ F SampleBall( const F& center, const Base<F>& radius )
 
 template<typename Real,typename>
 Real SampleBall( const Real& center, const Real& radius )
-{ return SampleUniform(center-radius,center+radius); }
+{ return SampleUniform(Real(center-radius),Real(center+radius)); }
 
 } // namespace El
 

@@ -143,6 +143,7 @@ void Scale( S alpha, AbstractDistMatrix<Real>& AReal,
   EL_EXTERN template void Scale \
   ( T alpha, AbstractDistMatrix<T>& A );
 
+#define EL_ENABLE_HALF
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE
 #define EL_ENABLE_QUAD

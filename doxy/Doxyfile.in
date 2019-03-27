@@ -788,7 +788,7 @@ RECURSIVE              = YES
 # Note that relative paths are relative to the directory from which doxygen is
 # run.
 
-EXCLUDE                =
+EXCLUDE                = @CMAKE_SOURCE_DIR@/include/El/core/DistMatrix/Block @CMAKE_SOURCE_DIR@/include/El/core/DistMatrix/Block.hpp @CMAKE_SOURCE_DIR@/src/core/DistMatrix/Block @CMAKE_SOURCE_DIR@/src/core/DistMatrix/Block.cpp
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
 # directories that are symbolic links (a Unix file system feature) are excluded
@@ -1012,7 +1012,7 @@ ALPHABETICAL_INDEX     = YES
 # Minimum value: 1, maximum value: 20, default value: 5.
 # This tag requires that the tag ALPHABETICAL_INDEX is set to YES.
 
-COLS_IN_ALPHA_INDEX    = 5
+COLS_IN_ALPHA_INDEX    = 2
 
 # In case all classes in a project start with a common prefix, all classes will
 # be put under the same header in the alphabetical index. The IGNORE_PREFIX tag

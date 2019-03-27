@@ -82,7 +82,7 @@ void BasicInstrumentedGemm
 }
 
 template <typename T>
-El::Base<T> tomdiff(T,T) noexcept { return 0; }
+El::Base<T> tomdiff(T,T) noexcept { return El::Base<T>(0); }
 
 float tomdiff(float x, float y) noexcept { return x-y; }
 double tomdiff(double x, double y) noexcept { return x-y; }
@@ -98,13 +98,14 @@ void TestGemm
 (El::Int m, El::Int n, El::Int k, const El::Grid& grid,
   bool testSequential, bool instrument)
 {
+    El::Output("Testing with ",El::TypeName<T>());
     El::Output(
         "Starting TestGemm for device: ", El::DeviceName<D>());
 
     El::Timer timer;
 
     // Choose arbitrary coefficients.
-    const T alpha=2, beta=3;
+    const T alpha{2}, beta{3};
 
     if (testSequential && grid.Rank() == 0)
     {
@@ -298,6 +299,10 @@ int main(int argc, char *argv[])
                 (m, n, k, grid, testSequential, instrument);
             TestGemm<El::Complex<double>,El::Device::CPU>
                 (m, n, k, grid, testSequential, instrument);
+#ifdef HYDROGEN_HAVE_HALF
+            TestGemm<El::cpu_half_type,El::Device::CPU>
+                (m, n, k, grid, testSequential, instrument);
+#endif
 
             if (testHigherPrec)
             {

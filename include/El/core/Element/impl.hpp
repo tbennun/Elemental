@@ -199,7 +199,7 @@ Real SafeNormAbs( const Real& chi0Abs, const Real& chi1Abs )
     else
     {
         const Real ratio = minAbs / maxAbs;
-        return maxAbs*Sqrt( 1 + ratio*ratio );
+        return Real{maxAbs*Sqrt( 1 + ratio*ratio )};
     }
 }
 
@@ -347,7 +347,7 @@ template<typename FBase,typename TExp,
          typename/*=EnableIf<IsStdField<FBase>>*/,
          typename/*=EnableIf<IsStdField<TExp>>*/>
 FBase Pow( const FBase& alpha, const TExp& beta )
-{ return std::pow( alpha, beta ); }
+{ return FBase{std::pow( alpha, beta )}; }
 
 template<typename FBase,typename TExp,
          typename/*=EnableIf<IsStdField<FBase>>*/,
@@ -452,7 +452,7 @@ double Log10( const Integer& alpha )
 template<typename F,
          typename/*=EnableIf<IsStdScalar<F>>*/>
 F Sqrt( const F& alpha )
-{ return std::sqrt(alpha); }
+{ return F(std::sqrt(alpha)); /* explicit conversion required because half_float::half(float&) is explicit. */ }
 
 // Use a branch cut on the negative real axis
 template<typename Real,
@@ -747,7 +747,7 @@ Complex<Real> Atanh( const Complex<Real>& alpha )
 template<typename Real,
          typename/*=EnableIf<IsReal<Real>>*/>
 Real Round( const Real& alpha )
-{ return std::round(alpha); }
+{ return Real{std::round(alpha)}; }
 
 template<typename Real>
 Complex<Real> Round( const Complex<Real>& alpha )

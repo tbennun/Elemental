@@ -6,6 +6,20 @@
    which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
+
+/*!
+  @file Macros for instantiating element types.
+
+  Before including this file, #define PROTO(T) to the instantiation code
+  for element type T.  Also #define EL_ENABLE_* to enable instantiation
+  for the matching element type.
+
+  Usage example: see src/core/DistMatrix/ElementMatrix.cpp.
+
+  Hydrogen need not support complex element types, so macros for
+  instantiating them can probably be removed.
+*/
+
 #ifndef PROTO_INT
 # define PROTO_INT(T) PROTO(T)
 #endif
@@ -50,6 +64,12 @@
 #endif
 #endif
 
+#if defined(HYDROGEN_HAVE_HALF) && defined(EL_ENABLE_HALF)
+#ifndef PROTO_HALF
+# define PROTO_HALF PROTO_REAL(cpu_half_type)
+#endif
+#endif
+
 #ifndef PROTO_COMPLEX
 # define PROTO_COMPLEX(T) PROTO(T)
 #endif
@@ -84,6 +104,12 @@
 #endif
 #endif
 
+#if defined(HYDROGEN_HAVE_HALF) && defined(EL_ENABLE_HALF)
+#ifndef PROTO_COMPLEX_HALF
+# define PROTO_COMPLEX_HALF PROTO_COMPLEX(Complex<cpu_half_type>)
+#endif
+#endif
+
 #ifndef EL_NO_INT_PROTO
 PROTO_INT(Int)
 #if defined(EL_ENABLE_BIGINT) && defined(HYDROGEN_HAVE_MPC)
@@ -110,6 +136,9 @@ PROTO_QUAD
 #if defined(EL_ENABLE_BIGFLOAT) && defined(HYDROGEN_HAVE_MPC)
 PROTO_BIGFLOAT
 #endif
+#if defined(EL_ENABLE_HALF) && defined(HYDROGEN_HAVE_HALF)
+PROTO_HALF
+#endif
 #endif
 
 #if !defined(EL_NO_COMPLEX_PROTO)
@@ -131,6 +160,10 @@ PROTO_COMPLEX_QUAD
 #if defined(EL_ENABLE_BIGFLOAT) && defined(HYDROGEN_HAVE_MPC)
 PROTO_COMPLEX_BIGFLOAT
 #endif
+#if defined(EL_ENABLE_HALF) && defined(HYDROGEN_HAVE_HALF)
+// For instantiating Complex<cpu_half_type>, which requires a lot of work.
+// PROTO_COMPLEX_HALF
+#endif
 #endif
 
 #undef PROTO
@@ -144,6 +177,7 @@ PROTO_COMPLEX_BIGFLOAT
 #undef PROTO_QUADDOUBLE
 #undef PROTO_QUAD
 #undef PROTO_BIGFLOAT
+#undef PROTO_HALF
 
 #undef PROTO_COMPLEX
 #undef PROTO_COMPLEX_FLOAT
@@ -158,11 +192,13 @@ PROTO_COMPLEX_BIGFLOAT
 #undef EL_ENABLE_QUAD
 #undef EL_ENABLE_BIGINT
 #undef EL_ENABLE_BIGFLOAT
+#undef EL_ENABLE_HALF
 
 #undef EL_NO_INT_PROTO
 #undef EL_NO_REAL_PROTO
 #undef EL_NO_FLOAT_PROTO
 #undef EL_NO_DOUBLE_PROTO
+#undef EL_NO_HALF_PROTO
 #undef EL_NO_COMPLEX_PROTO
 #undef EL_NO_COMPLEX_FLOAT_PROTO
 #undef EL_NO_COMPLEX_DOUBLE_PROTO

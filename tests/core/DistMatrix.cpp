@@ -284,6 +284,10 @@ main(int argc, char* argv[])
         DistMatrixTest<Complex<Quad>>(m, n, grid, print);
 #endif
 
+#ifdef HYDROGEN_HAVE_HALF
+        DistMatrixTest<cpu_half_type>(m, n, grid, print);
+#endif
+
 #ifdef EL_HAVE_MPC
         DistMatrixTest<BigInt>(m, n, grid, print);
         OutputFromRoot(g.Comm(),"Setting BigInt precision to 512 bits");
