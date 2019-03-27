@@ -165,6 +165,16 @@ void Initialize( int& argc, char**& argv )
         }
     }
 
+#ifdef HYDROGEN_HAVE_HALF
+    // FIXME move this somewhere better
+    {
+        MPI_Type_contiguous(sizeof(cpu_half_type), MPI_BYTE,
+                            &mpi::Types<cpu_half_type>::type);
+        MPI_Type_commit(&mpi::Types<cpu_half_type>::type);
+        mpi::Types<cpu_half_type>::createdType = true;
+    }
+#endif
+
 #ifdef HYDROGEN_HAVE_CUDA
     InitializeCUBLAS();
 #endif

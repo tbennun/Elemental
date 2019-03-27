@@ -33,28 +33,6 @@ template<> Datatype Types<double>::type = MPI_DOUBLE;
 template<> Datatype Types<Complex<float>>::type = MPI_C_FLOAT_COMPLEX;
 template<> Datatype Types<Complex<double>>::type = MPI_C_DOUBLE_COMPLEX;
 
-#ifdef HYDROGEN_HAVE_HALF
-namespace
-{
-inline MPI_Datatype create_cpu_half_type_mpi_type()
-{
-    MPI_Datatype type;
-    MPI_Type_contiguous(sizeof(cpu_half_type), MPI_BYTE, &type);
-    MPI_Type_commit(&type);
-    return type;
-}
-}
-
-template <>
-Datatype Types<cpu_half_type>::type = create_cpu_half_type_mpi_type();
-template <>
-bool Types<cpu_half_type>::createdTypeBeforeResize = false;
-template <>
-Datatype Types<cpu_half_type>::typeBeforeResize = MPI_DATATYPE_NULL;
-template <>
-bool Types<cpu_half_type>::createdType = true;
-#endif // HYDROGEN_HAVE_HALF
-
 template<typename T>
 bool Types<T>::createdTypeBeforeResize = false;
 template<typename T>
