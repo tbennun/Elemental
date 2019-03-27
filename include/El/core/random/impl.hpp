@@ -194,6 +194,15 @@ F SampleNormal( const F& mean, const Base<F>& stddev )
     return sample;
 }
 
+#ifdef HYDROGEN_HAVE_HALF
+template <>
+inline cpu_half_type SampleNormal<cpu_half_type>(
+    cpu_half_type const& mean, cpu_half_type const& stddev)
+{
+    return cpu_half_type(SampleNormal(float(mean), float(stddev)));
+}
+#endif // HYDROGEN_HAVE_HALF
+
 template<typename F,typename,typename>
 F SampleNormal( const F& mean, const Base<F>& stddev )
 { return SampleNormalMarsiglia( mean, stddev ); }
