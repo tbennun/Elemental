@@ -320,6 +320,16 @@ template void Gemm
   const Complex<Quad>& beta,
         Complex<Quad>* C, BlasInt CLDim );
 #endif
+#ifdef HYDROGEN_HAVE_HALF
+template void Gemm
+( char transA, char transB,
+  BlasInt m, BlasInt n, BlasInt k, 
+  const cpu_half_type& alpha,
+  const cpu_half_type* A, BlasInt ALDim,
+  const cpu_half_type* B, BlasInt BLDim,
+  const cpu_half_type& beta,
+        cpu_half_type* C, BlasInt CLDim );
+#endif
 #ifdef HYDROGEN_HAVE_MPC
 template void Gemm
 ( char transA, char transB,

@@ -347,6 +347,10 @@ MPI_REDUCE_PROTO(ValueInt<double>)
 MPI_REDUCE_PROTO(ValueInt<Complex<double>>)
 MPI_REDUCE_PROTO(Entry<double>)
 MPI_REDUCE_PROTO(Entry<Complex<double>>)
+#ifdef HYDROGEN_HAVE_HALF
+MPI_REDUCE_PROTO(cpu_half_type)
+MPI_REDUCE_PROTO(Entry<cpu_half_type>)
+#endif
 #ifdef HYDROGEN_HAVE_QD
 MPI_REDUCE_PROTO(DoubleDouble)
 MPI_REDUCE_PROTO(QuadDouble)

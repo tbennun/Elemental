@@ -374,6 +374,10 @@ QuadDouble Abs( const Complex<QuadDouble>& alpha ) EL_NO_EXCEPT;
 Quad Abs( const Quad& alpha ) EL_NO_EXCEPT;
 Quad Abs( const Complex<Quad>& alpha ) EL_NO_EXCEPT;
 #endif
+#ifdef HYDROGEN_HAVE_HALF
+cpu_half_type Abs( const cpu_half_type& alpha ) EL_NO_EXCEPT;
+cpu_half_type Abs( const Complex<cpu_half_type>& alpha ) EL_NO_EXCEPT;
+#endif
 #ifdef HYDROGEN_HAVE_MPC
 BigInt Abs( const BigInt& alpha ) EL_NO_EXCEPT;
 BigFloat Abs( const BigFloat& alpha ) EL_NO_EXCEPT;

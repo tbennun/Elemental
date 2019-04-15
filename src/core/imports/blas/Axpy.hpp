@@ -87,6 +87,13 @@ template void Axpy
   const Complex<Quad>* x, BlasInt incx,
         Complex<Quad>* y, BlasInt incy );
 #endif
+#ifdef HYDROGEN_HAVE_HALF
+template void Axpy
+( BlasInt n,
+  const cpu_half_type& alpha, 
+  const cpu_half_type* x, BlasInt incx,
+        cpu_half_type* y, BlasInt incy );
+#endif
 #ifdef HYDROGEN_HAVE_MPC
 template void Axpy
 ( BlasInt n,

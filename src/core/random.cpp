@@ -82,6 +82,14 @@ Quad SampleUniform( const Quad& a, const Quad& b )
 }
 #endif
 
+#ifdef HYDROGEN_HAVE_HALF
+template<>
+cpu_half_type SampleUniform( const cpu_half_type& a, const cpu_half_type& b )
+{
+    return SampleUniformNaive( a, b );
+}
+#endif
+
 #ifdef HYDROGEN_HAVE_MPC
 template<>
 BigFloat SampleUniform( const BigFloat& a, const BigFloat& b )

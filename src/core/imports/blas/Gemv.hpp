@@ -171,6 +171,15 @@ template void Gemv
   const Complex<QuadDouble>& beta,
         Complex<QuadDouble>* y, BlasInt incy );
 #endif
+#ifdef HYDROGEN_HAVE_HALF
+template void Gemv
+( char trans, BlasInt m, BlasInt n, 
+  const cpu_half_type& alpha,
+  const cpu_half_type* A, BlasInt ALDim,
+  const cpu_half_type* x, BlasInt incx, 
+  const cpu_half_type& beta,
+        cpu_half_type* y, BlasInt incy );
+#endif
 #ifdef HYDROGEN_HAVE_QUADMATH
 template void Gemv
 ( char trans, BlasInt m, BlasInt n, 

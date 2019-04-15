@@ -139,6 +139,13 @@ main(int argc, char* argv[])
           print, g);
 #endif
 
+#ifdef HYDROGEN_HAVE_HALF
+        TestGemv<cpu_half_type>
+        (orientA, m,
+          cpu_half_type(3), cpu_half_type(4),
+          print, g);
+#endif
+
 #ifdef EL_HAVE_MPC
         TestGemv<BigFloat>
         (orientA, m,

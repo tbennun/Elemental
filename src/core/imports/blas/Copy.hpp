@@ -108,5 +108,12 @@ void Copy
         dcomplex* y, BlasInt incy )
 { EL_BLAS(zcopy)( &n, x, &incx, y, &incy ); }
 
+#ifdef HYDROGEN_HAVE_HALF
+template void Copy
+( BlasInt n,
+  const cpu_half_type* x, BlasInt incx, 
+        cpu_half_type* y, BlasInt incy );
+#endif
+
 } // namespace blas
 } // namespace El

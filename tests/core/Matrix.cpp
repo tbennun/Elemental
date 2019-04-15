@@ -68,6 +68,10 @@ main( int argc, char* argv[] )
             TestMatrix<Complex<Quad>>( m, n, ldim );
 #endif
 
+#ifdef HYDROGEN_HAVE_HALF
+            TestMatrix<cpu_half_type>( m, n, ldim );
+#endif
+
 #ifdef EL_HAVE_MPC
             TestMatrix<BigInt>( m, n, ldim );
             TestMatrix<BigFloat>( m, n, ldim );
