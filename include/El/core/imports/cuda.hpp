@@ -117,11 +117,19 @@ inline bool IsGPUMemory(const void* ptr)
     }
     else
     {
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
         if ((err = cudaGetLastError()) == cudaSuccess)
             return (attrs.memoryType == cudaMemoryTypeDevice);
         else
             EL_FORCE_CHECK_CUDA(err);
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
     }
+
     return false;// silence compiler warning
 }
 
