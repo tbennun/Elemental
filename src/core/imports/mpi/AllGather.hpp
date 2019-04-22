@@ -163,6 +163,10 @@ MPI_ALLGATHER_PROTO(ValueInt<double>)
 MPI_ALLGATHER_PROTO(ValueInt<Complex<double>>)
 MPI_ALLGATHER_PROTO(Entry<double>)
 MPI_ALLGATHER_PROTO(Entry<Complex<double>>)
+#ifdef HYDROGEN_HAVE_HALF
+MPI_ALLGATHER_PROTO(cpu_half_type)
+MPI_ALLGATHER_PROTO(Entry<cpu_half_type>)
+#endif
 #ifdef HYDROGEN_HAVE_QD
 MPI_ALLGATHER_PROTO(DoubleDouble)
 MPI_ALLGATHER_PROTO(QuadDouble)

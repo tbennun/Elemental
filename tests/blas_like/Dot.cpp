@@ -7,12 +7,17 @@
    http://opensource.org/licenses/BSD-2-Clause
 */
 
+/*
+  Test parallel matrix dot product.
+*/
+
 #include <El.hpp>
 using namespace El;
 
 template <typename T, DistWrap W>
 void TestDot(Int m, Int n, const Grid& g, bool print)
 {
+  OutputFromRoot(g.Comm(),"Testing with ",TypeName<T>());
   // Generate random matrices to test.
   DistMatrix<T, MC, MR, W> A(g);
   Uniform(A, m, n);
@@ -28,7 +33,7 @@ void TestDot(Int m, Int n, const Grid& g, bool print)
   if (print)
     OutputFromRoot(g.Comm(), "result=", got);
   // Manually check results.
-  T expected = 0;
+  T expected{0};
   for (Int j = 0; j < A.LocalWidth(); ++j)
     for (Int i = 0; i < B.LocalHeight(); ++i)
       expected += Conj(A.GetLocal(i, j)) * B.GetLocal(i, j);
@@ -36,10 +41,12 @@ void TestDot(Int m, Int n, const Grid& g, bool print)
                             SyncInfoFromMatrix(A.LockedMatrix()));
   // The constant here is large because this is not an especially stable way
   // to compute the dot product, but it provides a dumb implementation baseline.
-  if (Abs(got - expected) > 700 * limits::Epsilon<El::Base<T>>())
+  auto diff = got - expected;
+  if (Abs(diff) > 700 * limits::Epsilon<El::Base<T>>())
   {
     Output("Results do not match, got=", got,
-           " instead of ", expected);
+           " instead of ", expected, "  A diff of ", diff,
+           " is greater than 700*", limits::Epsilon<El::Base<T>>());
     RuntimeError("got != expected");
   }
 }
@@ -58,6 +65,10 @@ int main(int argc, char** argv)
 
     const Grid g(std::move(comm));
     OutputFromRoot(g.Comm(), "Testing Dot");
+#if defined(HYDROGEN_HAVE_HALF)
+    TestDot<cpu_half_type, ELEMENT>(m, n, g, print);
+    TestDot<cpu_half_type, BLOCK>(m, n, g, print);
+#endif
     TestDot<float, ELEMENT>(m, n, g, print);
     TestDot<float, BLOCK>(m, n, g, print);
     TestDot<Complex<float>, ELEMENT>(m, n, g, print);

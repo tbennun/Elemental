@@ -398,7 +398,9 @@ if (Hydrogen_ENABLE_ALUMINUM)
     set(HYDROGEN_HAVE_NCCL2 FALSE)
     set(HYDROGEN_HAVE_AL_MPI_CUDA FALSE)
     set(Hydrogen_ENABLE_ALUMINUM FALSE)
-    message(WARNING "Aluminum support requested but not found. Disabling.")
+    message(FATAL_ERROR "Aluminum support requested but not found. "
+      "Please set Aluminum_DIR to point to the installation prefix "
+      "for Aluminum.")
   endif (Aluminum_FOUND)
 endif (Hydrogen_ENABLE_ALUMINUM)
 
@@ -449,9 +451,11 @@ add_subdirectory(src)
 
 configure_file("${PROJECT_SOURCE_DIR}/cmake/configure_files/config.h.in"
   "${PROJECT_BINARY_DIR}/include/El/config.h")
-configure_file(
-  "${PROJECT_SOURCE_DIR}/cmake/configure_files/hydrogen_config.h.in"
+configure_file("${PROJECT_SOURCE_DIR}/cmake/configure_files/hydrogen_config.h.in"
   "${PROJECT_BINARY_DIR}/include/El/hydrogen_config.h")
+
+configure_file("${PROJECT_SOURCE_DIR}/doxy/Doxyfile.in"
+  "${PROJECT_BINARY_DIR}/doxy/Doxyfile")
 
 add_library(Hydrogen "${HYDROGEN_SOURCES}" "${HYDROGEN_HEADERS}")
 target_include_directories(Hydrogen PUBLIC

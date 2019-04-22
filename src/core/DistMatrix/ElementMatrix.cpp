@@ -824,7 +824,7 @@ ElementalMatrix<T>::ShallowSwap( ElementalMatrix<T>& A )
     std::swap( this->grid_, A.grid_ );
 }
 
-// Instantiations for {Int,Real,Complex<Real>} for each Real in {float,double}
+// Instantiations for {Int,Real,Complex<Real>} for each Real in {float,double,half}
 // ###########################################################################
 
 #ifndef EL_RELEASE
@@ -850,6 +850,7 @@ ElementalMatrix<T>::ShallowSwap( ElementalMatrix<T>& A )
 #define EL_ENABLE_QUAD
 #define EL_ENABLE_BIGINT
 #define EL_ENABLE_BIGFLOAT
+#define EL_ENABLE_HALF
 #include <El/macros/Instantiate.h>
 
 } // namespace El

@@ -25,6 +25,7 @@ std::string TypeName()
 
 template<> std::string TypeName<bool>();
 template<> std::string TypeName<char>();
+template<> std::string TypeName<unsigned char>();
 template<> std::string TypeName<char*>();
 template<> std::string TypeName<const char*>();
 template<> std::string TypeName<std::string>();
@@ -188,6 +189,7 @@ template<> struct IsData<Unsigned> { static const bool value=true; };
 template<> struct IsData<Int> { static const bool value=true; };
 template<> struct IsData<float> { static const bool value=true; };
 template<> struct IsData<double> { static const bool value=true; };
+template<> struct IsData<unsigned char> : std::true_type {};
 #ifdef HYDROGEN_HAVE_HALF
 template <> struct IsData<cpu_half_type> : std::true_type {};
 #endif
@@ -371,6 +373,10 @@ QuadDouble Abs( const Complex<QuadDouble>& alpha ) EL_NO_EXCEPT;
 #ifdef HYDROGEN_HAVE_QUADMATH
 Quad Abs( const Quad& alpha ) EL_NO_EXCEPT;
 Quad Abs( const Complex<Quad>& alpha ) EL_NO_EXCEPT;
+#endif
+#ifdef HYDROGEN_HAVE_HALF
+cpu_half_type Abs( const cpu_half_type& alpha ) EL_NO_EXCEPT;
+cpu_half_type Abs( const Complex<cpu_half_type>& alpha ) EL_NO_EXCEPT;
 #endif
 #ifdef HYDROGEN_HAVE_MPC
 BigInt Abs( const BigInt& alpha ) EL_NO_EXCEPT;

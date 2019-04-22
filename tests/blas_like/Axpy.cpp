@@ -9,6 +9,9 @@
 #include <El.hpp>
 using namespace El;
 
+/*!
+  @brief Called by TestAxpy for checking.
+*/
 template<typename T,Device D>
 void TestCorrectness
 (T alpha, const DistMatrix<T,MC,MR,ELEMENT,D>& XPre,
@@ -56,7 +59,7 @@ void TestCorrectness
     {
         const Base<T> EFrobNorm = FrobeniusNorm(E);
         if(print)
-            Print(E, "E");
+            Print(E, "E (error)");
         Output
             ("|| E ||_F / || Y ||_F = ",
              EFrobNorm, "/", YFrobNorm, "=", EFrobNorm/YFrobNorm);
@@ -64,6 +67,9 @@ void TestCorrectness
 }
 
 
+/*!
+  @brief Exercise Ax+y and check for correctness.
+*/
 template<typename T,Device D=Device::CPU>
 void TestAxpy
 (Int m,
@@ -193,6 +199,9 @@ main(int argc, char* argv[])
             TestAxpy<Complex<float>>(m, n, ldimX, ldimY, numThreads, g, print, correctness);
             TestAxpy<double>(m, n, ldimX, ldimY, numThreads, g, print, correctness);
             TestAxpy<Complex<double>>(m, n, ldimX, ldimY, numThreads, g, print, correctness);
+#ifdef HYDROGEN_HAVE_HALF
+            TestAxpy<cpu_half_type>(m, n, ldimX, ldimY, numThreads, g, print, correctness);
+#endif
 #ifdef EL_HAVE_QD
             TestAxpy<DoubleDouble>(m, n, ldimX, ldimY, numThreads, g, print, correctness);
             TestAxpy<QuadDouble>(m, n, ldimX, ldimY, numThreads, g, print, correctness);
@@ -202,6 +211,9 @@ main(int argc, char* argv[])
 #ifdef EL_HAVE_QUAD
             TestAxpy<Quad>(m, n, ldimX, ldimY, numThreads, g, print, correctness);
             TestAxpy<Complex<Quad>>(m, n, ldimX, ldimY, numThreads, g, print, correctness);
+#endif
+#ifdef HYDROGEN_HAVE_HALF
+            TestAxpy<cpu_half_type>(m, n, ldimX, ldimY, numThreads, g, print, correctness);
 #endif
 #ifdef EL_HAVE_MPC
             TestAxpy<BigFloat>(m, n, ldimX, ldimY, numThreads, g, print, correctness);

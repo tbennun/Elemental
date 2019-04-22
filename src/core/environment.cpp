@@ -121,6 +121,48 @@ void Initialize()
     Initialize( argc, argv );
 }
 
+#ifdef HYDROGEN_HAVE_HALF
+namespace
+{
+// FIXME (trb): move this somewhere better
+
+void HalfSumFunc(void * a, void * b, int * len, MPI_Datatype *) EL_NO_EXCEPT
+{
+    auto in = static_cast<cpu_half_type const*>(a);
+    auto out = static_cast<cpu_half_type*>(b);
+    auto const size = *len;
+    for (auto ii = decltype(size){0}; ii < size; ++ii)
+        out[ii] += in[ii];
+}
+void HalfProductFunc(void * a, void * b, int * len, MPI_Datatype *) EL_NO_EXCEPT
+{
+    auto in = static_cast<cpu_half_type const*>(a);
+    auto out = static_cast<cpu_half_type*>(b);
+    auto const size = *len;
+    for (auto ii = decltype(size){0}; ii < size; ++ii)
+        out[ii] *= in[ii];
+}
+void HalfMaxFunc(void * a, void * b, int * len, MPI_Datatype *) EL_NO_EXCEPT
+{
+    auto in = static_cast<cpu_half_type const*>(a);
+    auto out = static_cast<cpu_half_type*>(b);
+    auto const size = *len;
+    for (auto ii = decltype(size){0}; ii < size; ++ii)
+        if (in[ii] > out[ii])
+            out[ii] = in[ii];
+}
+void HalfMinFunc(void * a, void * b, int * len, MPI_Datatype *) EL_NO_EXCEPT
+{
+    auto in = static_cast<cpu_half_type const*>(a);
+    auto out = static_cast<cpu_half_type*>(b);
+    auto const size = *len;
+    for (auto ii = decltype(size){0}; ii < size; ++ii)
+        if (in[ii] < out[ii])
+            out[ii] = in[ii];
+}
+}// namespace <anon>
+#endif // HYDROGEN_HAVE_HALF
+
 void Initialize( int& argc, char**& argv )
 {
     if( ::numElemInits > 0 )
@@ -164,6 +206,30 @@ void Initialize( int& argc, char**& argv )
             ("MPI initialized with inadequate thread support for Elemental");
         }
     }
+
+#ifdef HYDROGEN_HAVE_HALF
+    // FIXME (trb): move this somewhere better
+    {
+        MPI_Type_contiguous(sizeof(cpu_half_type), MPI_BYTE,
+                            &mpi::Types<cpu_half_type>::type);
+        MPI_Type_commit(&mpi::Types<cpu_half_type>::type);
+        mpi::Types<cpu_half_type>::createdType = true;
+
+        bool const commutes = true;
+        MPI_Op_create((mpi::UserFunction*)HalfSumFunc, commutes,
+                      &mpi::Types<cpu_half_type>::sumOp.op);
+        mpi::Types<cpu_half_type>::createdSumOp = true;
+        MPI_Op_create((mpi::UserFunction*)HalfProductFunc, commutes,
+                      &mpi::Types<cpu_half_type>::prodOp.op);
+        mpi::Types<cpu_half_type>::createdProdOp = true;
+        MPI_Op_create((mpi::UserFunction*)HalfMaxFunc, commutes,
+                      &mpi::Types<cpu_half_type>::maxOp.op);
+        mpi::Types<cpu_half_type>::createdMaxOp = true;
+        MPI_Op_create((mpi::UserFunction*)HalfMinFunc, commutes,
+                      &mpi::Types<cpu_half_type>::minOp.op);
+        mpi::Types<cpu_half_type>::createdMinOp = true;
+    }
+#endif
 
 #ifdef HYDROGEN_HAVE_CUDA
     InitializeCUBLAS();
@@ -412,6 +478,7 @@ Int Find( const vector<Int>& sortedInds, Int index )
 #define EL_ENABLE_QUADDOUBLE
 #define EL_ENABLE_QUAD
 #define EL_ENABLE_BIGFLOAT
+#define EL_ENABLE_HALF
 #include <El/macros/Instantiate.h>
 
 } // namespace El

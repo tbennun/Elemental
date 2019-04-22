@@ -25,8 +25,8 @@ void RowTwoNormsHelper
     Matrix<Real> localScales(mLocal,1 ), localScaledSquares(mLocal,1);
     for( Int iLoc=0; iLoc<mLocal; ++iLoc )
     {
-        Real localScale = 0;
-        Real localScaledSquare = 1;
+        Real localScale{0};
+        Real localScaledSquare{1};
         for( Int jLoc=0; jLoc<nLocal; ++jLoc )
             UpdateScaledSquare
             ( ALoc(iLoc,jLoc), localScale, localScaledSquare );
@@ -64,7 +64,7 @@ void RowMaxNorms( const Matrix<Field>& A, Matrix<Base<Field>>& norms )
     norms.Resize( m, 1 );
     for( Int i=0; i<m; ++i )
     {
-        Real rowMax = 0;
+        Real rowMax{0};
         for( Int j=0; j<n; ++j )
             rowMax = Max(rowMax,Abs(A(i,j)));
         norms(i) = rowMax;
@@ -132,6 +132,7 @@ void RowMaxNorms
 #define EL_ENABLE_QUADDOUBLE
 #define EL_ENABLE_QUAD
 #define EL_ENABLE_BIGFLOAT
+#define EL_ENABLE_HALF
 #include <El/macros/Instantiate.h>
 
 } // namespace El

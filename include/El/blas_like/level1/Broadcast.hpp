@@ -147,6 +147,7 @@ void Broadcast( AbstractDistMatrix<T>& A, mpi::Comm const& comm, int rank )
   EL_EXTERN template void Broadcast \
   ( AbstractDistMatrix<T>& A, mpi::Comm const& comm, int rank );
 
+#define EL_ENABLE_HALF
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE
 #define EL_ENABLE_QUAD
