@@ -95,6 +95,7 @@ void AllReduce(AbstractDistMatrix<T>& A, mpi::Comm const& comm, mpi::Op op)
   EL_EXTERN template void AllReduce \
   (AbstractDistMatrix<T>& A, mpi::Comm const& comm, mpi::Op op);
 
+#define EL_ENABLE_HALF
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE
 #define EL_ENABLE_QUAD

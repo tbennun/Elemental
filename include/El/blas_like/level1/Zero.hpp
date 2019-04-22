@@ -132,6 +132,7 @@ void Zero( AbstractDistMatrix<T>& A )
   EL_EXTERN template void Zero( AbstractMatrix<T>& A ); \
   EL_EXTERN template void Zero( AbstractDistMatrix<T>& A );
 
+#define EL_ENABLE_HALF
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE
 #define EL_ENABLE_QUAD

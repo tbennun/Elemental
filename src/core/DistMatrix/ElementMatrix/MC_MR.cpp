@@ -246,7 +246,7 @@ template <typename T, Device D>
 int DM::PartialUnionRowRank() const EL_NO_EXCEPT
 { return (this->Grid().InGrid() ? 0 : mpi::UNDEFINED); }
 
-// Instantiate {Int,Real,Complex<Real>} for each Real in {float,double}
+// Instantiate {Int,Real,Complex<Real>} for each Real in {float,double,half}
 // ####################################################################
 
 #define SELF(T,U,V,D)                                                    \
@@ -352,6 +352,7 @@ DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::CPU>::operator=(
 #define EL_ENABLE_QUAD
 #define EL_ENABLE_BIGINT
 #define EL_ENABLE_BIGFLOAT
+#define EL_ENABLE_HALF
 #include <El/macros/Instantiate.h>
 
 } // namespace El

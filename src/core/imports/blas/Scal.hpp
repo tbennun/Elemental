@@ -61,6 +61,12 @@ template void Scal
   const Complex<Quad>& alpha,
   Complex<Quad>* x, BlasInt incx );
 #endif
+#ifdef HYDROGEN_HAVE_HALF
+template void Scal
+( BlasInt n,
+  const cpu_half_type& alpha,
+  cpu_half_type* x, BlasInt incx );
+#endif
 #ifdef HYDROGEN_HAVE_MPC
 template void Scal
 ( BlasInt n,

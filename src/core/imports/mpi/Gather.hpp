@@ -161,6 +161,10 @@ MPI_COLLECTIVE_PROTO(ValueInt<double>)
 MPI_COLLECTIVE_PROTO(ValueInt<Complex<double>>)
 MPI_COLLECTIVE_PROTO(Entry<double>)
 MPI_COLLECTIVE_PROTO(Entry<Complex<double>>)
+#ifdef HYDROGEN_HAVE_HALF
+MPI_COLLECTIVE_PROTO(cpu_half_type)
+MPI_COLLECTIVE_PROTO(Entry<cpu_half_type>)
+#endif
 #ifdef HYDROGEN_HAVE_QD
 MPI_COLLECTIVE_PROTO(DoubleDouble)
 MPI_COLLECTIVE_PROTO(QuadDouble)

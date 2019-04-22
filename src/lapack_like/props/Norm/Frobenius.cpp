@@ -34,8 +34,8 @@ Base<Field> FrobeniusNorm(const Matrix<Field>& A)
 {
     EL_DEBUG_CSE
     typedef Base<Field> Real;
-    Real scale = 0;
-    Real scaledSquare = 1;
+    Real scale{0};
+    Real scaledSquare{1};
     const Int width = A.Width();
     const Int height = A.Height();
     for (Int j=0; j<width; ++j)
@@ -52,8 +52,8 @@ Base<Field> HermitianFrobeniusNorm(UpperOrLower uplo, const Matrix<Field>& A)
         LogicError("Hermitian matrices must be square.");
 
     typedef Base<Field> Real;
-    Real scale = 0;
-    Real scaledSquare = 1;
+    Real scale{0};
+    Real scaledSquare{1};
     const Int height = A.Height();
     const Int width = A.Width();
     if (uplo == UPPER)
@@ -110,7 +110,7 @@ Real NormFromScaledSquare
         return scale*Sqrt(scaledSquare);
     }
     else
-      return 0;
+        return Real{0};
 }
 
 template<typename Field>
@@ -121,7 +121,7 @@ Base<Field> FrobeniusNorm(const AbstractDistMatrix<Field>& A)
     Real norm;
     if (A.Participating())
     {
-        Real localScale=0, localScaledSquare=1;
+        Real localScale{0}, localScaledSquare{1};
         const Int localHeight = A.LocalHeight();
         const Int localWidth = A.LocalWidth();
 
@@ -153,8 +153,8 @@ Base<Field> HermitianFrobeniusNorm
     Real norm;
     if (A.Participating())
     {
-        Real localScale = 0;
-        Real localScaledSquare = 1;
+        Real localScale{0};
+        Real localScaledSquare{1};
         const Int localWidth = A.LocalWidth();
         const Int localHeight = A.LocalHeight();
         const Matrix<Field>& ALoc =
@@ -226,6 +226,7 @@ Base<Field> SymmetricFrobeniusNorm
 #define EL_ENABLE_QUADDOUBLE
 #define EL_ENABLE_QUAD
 #define EL_ENABLE_BIGFLOAT
+#define EL_ENABLE_HALF
 #include <El/macros/Instantiate.h>
 
 } // namespace El

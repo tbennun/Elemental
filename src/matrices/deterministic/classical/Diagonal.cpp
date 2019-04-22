@@ -47,7 +47,7 @@ void Diagonal( AbstractDistMatrix<S>& D, const vector<T>& d )
     for( Int jLoc=0; jLoc<localWidth; ++jLoc )
     {
         const Int j = D.GlobalCol(jLoc);
-        D.Set( j, j, d[j] );
+        D.Set( j, j, S(d[j]) );
     }
 }
 
@@ -64,7 +64,7 @@ void Diagonal( AbstractDistMatrix<S>& D, const Matrix<T>& d )
     for( Int jLoc=0; jLoc<localWidth; ++jLoc )
     {
         const Int j = D.GlobalCol(jLoc);
-        D.Set( j, j, d(j) );
+        D.Set( j, j, S(d(j)) );
     }
 }
 
@@ -83,7 +83,7 @@ void Diagonal( AbstractDistMatrix<S>& D, const AbstractDistMatrix<T>& d )
         for( Int iLoc=0; iLoc<localHeight; ++iLoc )
         {
             const Int i = d.GlobalRow(iLoc);
-            D.QueueUpdate( i, i, d.GetLocal(iLoc,0) );
+            D.QueueUpdate( i, i, S(d.GetLocal(iLoc,0)) );
         }
     }
     D.ProcessQueues();
@@ -114,6 +114,7 @@ void Diagonal( AbstractDistMatrix<S>& D, const AbstractDistMatrix<T>& d )
 #define EL_ENABLE_QUAD
 #define EL_ENABLE_BIGINT
 #define EL_ENABLE_BIGFLOAT
+#define EL_ENABLE_HALF
 #include <El/macros/Instantiate.h>
 
 } // namespace El

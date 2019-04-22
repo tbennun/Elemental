@@ -140,6 +140,10 @@ MPI_ALLTOALL_PROTO(ValueInt<double>)
 MPI_ALLTOALL_PROTO(ValueInt<Complex<double>>)
 MPI_ALLTOALL_PROTO(Entry<double>)
 MPI_ALLTOALL_PROTO(Entry<Complex<double>>)
+#ifdef HYDROGEN_HAVE_HALF
+MPI_ALLTOALL_PROTO(cpu_half_type)
+MPI_ALLTOALL_PROTO(Entry<cpu_half_type>)
+#endif
 #ifdef HYDROGEN_HAVE_QD
 MPI_ALLTOALL_PROTO(DoubleDouble)
 MPI_ALLTOALL_PROTO(QuadDouble)

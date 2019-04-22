@@ -41,8 +41,8 @@ template<typename F>
 Base<F> Nrm2( BlasInt n, const F* x, BlasInt incx )
 {
     typedef Base<F> Real;
-    Real scale = 0;
-    Real scaledSquare = 1;
+    Real scale{0};
+    Real scaledSquare{1};
     for( BlasInt i=0; i<n; ++i )
         UpdateScaledSquare( x[i*incx], scale, scaledSquare );
     return scale*Sqrt(scaledSquare);
@@ -61,6 +61,9 @@ Nrm2( BlasInt n, const Complex<QuadDouble>* x, BlasInt incx );
 template Quad Nrm2( BlasInt n, const Quad* x, BlasInt incx );
 template Quad Nrm2( BlasInt n, const Complex<Quad>* x, BlasInt incx );
 #endif
+#ifdef HYDROGEN_HAVE_HALF
+template cpu_half_type Nrm2( BlasInt n, const cpu_half_type* x, BlasInt incx );
+#endif
 #ifdef HYDROGEN_HAVE_MPC
 template BigFloat Nrm2( BlasInt n, const BigFloat* x, BlasInt incx );
 template BigFloat Nrm2( BlasInt n, const Complex<BigFloat>* x, BlasInt incx );
@@ -77,7 +80,7 @@ Base<F> Nrm1( BlasInt n, const F* x, BlasInt incx )
 {
     // TODO: Avoid temporaries since constructing BigInt/BigFloat involves
     //       a memory allocation
-    Base<F> sum=0;
+    Base<F> sum{0};
     for( BlasInt i=0; i<n; ++i )
         sum += Abs(x[i*incx]);
     return sum;
@@ -102,6 +105,10 @@ Nrm1( BlasInt n, const Quad* x, BlasInt incx );
 template Quad
 Nrm1( BlasInt n, const Complex<Quad>* x, BlasInt incx );
 #endif
+#ifdef HYDROGEN_HAVE_HALF
+template cpu_half_type
+Nrm1( BlasInt n, const cpu_half_type* x, BlasInt incx );
+#endif
 #ifdef HYDROGEN_HAVE_MPC
 template BigInt
 Nrm1( BlasInt n, const BigInt* x, BlasInt incx );
@@ -121,7 +128,7 @@ Base<F> NrmInf( BlasInt n, const F* x, BlasInt incx )
 {
     // TODO: Avoid temporaries since constructing BigInt/BigFloat involves
     //       a memory allocation
-    Base<F> maxAbs=0;
+    Base<F> maxAbs{0};
     for( BlasInt i=0; i<n; ++i )
         maxAbs = Max( maxAbs, Abs(x[i*incx]) );
     return maxAbs;
@@ -149,6 +156,10 @@ template Quad
 NrmInf( BlasInt n, const Quad* x, BlasInt incx );
 template Quad
 NrmInf( BlasInt n, const Complex<Quad>* x, BlasInt incx );
+#endif
+#ifdef HYDROGEN_HAVE_HALF
+template cpu_half_type
+NrmInf( BlasInt n, const cpu_half_type* x, BlasInt incx );
 #endif
 #ifdef HYDROGEN_HAVE_MPC
 template BigInt

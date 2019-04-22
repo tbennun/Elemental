@@ -9,6 +9,8 @@
 #ifndef EL_MATRICES_HPP
 #define EL_MATRICES_HPP
 
+#include "El/core/NumericTypeConversion.hpp"
+
 namespace El {
 
 // Deterministic
@@ -574,11 +576,11 @@ void MakeGaussian
 template<typename Field>
 void Gaussian
 ( AbstractMatrix<Field>& A, Int m, Int n,
-  Field mean=0, Base<Field> stddev=1 );
+  Field mean=To<Field>(0), Base<Field> stddev=To<Base<Field> >(1) );
 template<typename Field>
 void Gaussian
 ( AbstractDistMatrix<Field>& A, Int m, Int n,
-  Field mean=0, Base<Field> stddev=1 );
+  Field mean=To<Field>(0), Base<Field> stddev=To<Base<Field> >(1) );
 
 // Rademacher
 // ----------
@@ -603,10 +605,10 @@ template<typename T>
 void MakeUniform( AbstractDistMatrix<T>& A, T center=0, Base<T> radius=1 );
 
 template<typename T>
-void Uniform( AbstractMatrix<T>& A, Int m, Int n, T center=0, Base<T> radius=1 );
+void Uniform( AbstractMatrix<T>& A, Int m, Int n, T center=T(0), Base<T> radius=Base<T>(1) );
 template<typename T>
 void Uniform
-( AbstractDistMatrix<T>& A, Int m, Int n, T center=0, Base<T> radius=1 );
+( AbstractDistMatrix<T>& A, Int m, Int n, T center=T(0), Base<T> radius=Base<T>(1) );
 
 // Lattice bases
 // =============

@@ -578,7 +578,7 @@ AbstractDistMatrix<T>::ShallowSwap(AbstractDistMatrix<T>& A)
     std::swap(grid_, A.grid_);
 }
 
-// Instantiations for {Int,Real,Complex<Real>} for each Real in {float,double}
+// Instantiations for {Int,Real,Complex<Real>} for each Real in {float,double,half}
 // ###########################################################################
 
 #define PROTO(T) template class AbstractDistMatrix<T>;
@@ -588,6 +588,7 @@ AbstractDistMatrix<T>::ShallowSwap(AbstractDistMatrix<T>& A)
 #define EL_ENABLE_QUAD
 #define EL_ENABLE_BIGINT
 #define EL_ENABLE_BIGFLOAT
+#define EL_ENABLE_HALF
 #include <El/macros/Instantiate.h>
 
 } // namespace El
