@@ -33,15 +33,22 @@ public:
     /** @name Constructors and destructors */
     ///@{
 
-    /** @brief Create a 0x0 matrix */
+    /** @brief Create a 0x0 matrix. */
     Matrix();
 
-    /** @brief Create a matrix with the specified dimensions and leading dimension */
-    Matrix(size_type height, size_type width, size_type leadingDimension=size_type{0});
+    /** @brief Create a matrix with the specified dimensions and
+     *         leading dimension.
+     */
+    Matrix(size_type height, size_type width,
+           size_type leadingDimension=size_type{0});
 
-    /** @brief Construct a matrix around an existing (possibly immutable) buffer */
-    Matrix(size_type height, size_type width, value_type* buffer, size_type leadingDimension);
-    Matrix(size_type height, size_type width, value_type const* buffer, size_type leadingDimension);
+    /** @brief Construct a matrix around an existing (possibly
+     *         immutable) buffer.
+     */
+    Matrix(size_type height, size_type width,
+           value_type* buffer, size_type leadingDimension);
+    Matrix(size_type height, size_type width,
+           value_type const* buffer, size_type leadingDimension);
 
     /** @brief Create a (deep) copy of a matrix.
      *
