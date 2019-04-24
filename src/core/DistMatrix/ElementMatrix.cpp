@@ -528,7 +528,7 @@ const ElementalMatrix<T>&
 ElementalMatrix<T>::operator+=(const ElementalMatrix<T>& A)
 {
     EL_DEBUG_CSE;
-    Axpy(T(1), A, *this);
+    Axpy(FromInt<T>(1), A, *this);
     return *this;
 }
 
@@ -537,7 +537,7 @@ const ElementalMatrix<T>&
 ElementalMatrix<T>::operator+=(const AbstractDistMatrix<T>& A)
 {
     EL_DEBUG_CSE;
-    Axpy(T(1), A, *this);
+    Axpy(FromInt<T>(1), A, *this);
     return *this;
 }
 
@@ -546,7 +546,7 @@ const ElementalMatrix<T>&
 ElementalMatrix<T>::operator-=(const ElementalMatrix<T>& A)
 {
     EL_DEBUG_CSE;
-    Axpy(T(-1), A, *this);
+    Axpy(FromInt<T>(-1), A, *this);
     return *this;
 }
 
@@ -555,7 +555,7 @@ const ElementalMatrix<T>&
 ElementalMatrix<T>::operator-=(const AbstractDistMatrix<T>& A)
 {
     EL_DEBUG_CSE;
-    Axpy(T(-1), A, *this);
+    Axpy(FromInt<T>(-1), A, *this);
     return *this;
 }
 
@@ -880,6 +880,8 @@ ElementalMatrix<T>::ShallowSwap(ElementalMatrix<T>& A)
 #else
 #define PROTO(T) template class ElementalMatrix<T>;
 #endif
+
+PROTO(gpu_half_type)
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

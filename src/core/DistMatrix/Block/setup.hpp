@@ -277,7 +277,7 @@ template <typename T, Device D>
 const BDM& BDM::operator+=( const BCM& A )
 {
     EL_DEBUG_CSE
-    Axpy( T(1), A, *this );
+    Axpy( TypeTraits<T>::One(), A, *this );
     return *this;
 }
 
@@ -285,7 +285,7 @@ template <typename T, Device D>
 const BDM& BDM::operator+=( const ADM& A )
 {
     EL_DEBUG_CSE
-    Axpy( T(1), A, *this );
+    Axpy( TypeTraits<T>::One(), A, *this );
     return *this;
 }
 
@@ -293,7 +293,7 @@ template <typename T, Device D>
 const BDM& BDM::operator-=( const BCM& A )
 {
     EL_DEBUG_CSE
-    Axpy( T(-1), A, *this );
+    Axpy( -TypeTraits<T>::One(), A, *this );
     return *this;
 }
 
@@ -301,7 +301,7 @@ template <typename T, Device D>
 const BDM& BDM::operator-=( const ADM& A )
 {
     EL_DEBUG_CSE
-    Axpy( T(-1), A, *this );
+    Axpy( -TypeTraits<T>::One(), A, *this );
     return *this;
 }
 
@@ -406,7 +406,7 @@ EL_NO_RELEASE_EXCEPT
         mpi::Broadcast(value, this->Root(), CrossComm(), syncInfoA);
     }
     else
-        value = 0;
+        value = TypeTraits<Base<T>>::Zero();
     return value;
 }
 
