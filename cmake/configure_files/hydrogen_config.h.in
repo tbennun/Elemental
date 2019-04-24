@@ -26,12 +26,18 @@
 #cmakedefine HYDROGEN_HAVE_MKL
 #cmakedefine HYDROGEN_HAVE_MKL_GEMMT
 
-// Communication stuff
-#cmakedefine HYDROGEN_HAVE_ALUMINUM
-
 // CUDA stuff
 #cmakedefine HYDROGEN_HAVE_CUDA
 #cmakedefine HYDROGEN_HAVE_CUB
+
+// General GPU stuff
+#ifdef HYDROGEN_HAVE_CUDA
+#define HYDROGEN_HAVE_GPU
+#define HYDROGEN_GPU_USE_FP16
+#endif // HYDROGEN_HAVE_CUDA
+
+// Aluminum stuff
+#cmakedefine HYDROGEN_HAVE_ALUMINUM
 #cmakedefine HYDROGEN_HAVE_NCCL2
 #cmakedefine HYDROGEN_HAVE_AL_MPI_CUDA
 
