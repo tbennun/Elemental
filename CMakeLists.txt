@@ -348,13 +348,12 @@ if (Hydrogen_ENABLE_CUDA)
         INTERFACE_LINK_LIBRARIES "${_CUDA_TOOLKIT_LIBS}")
 
       set_property(TARGET cuda::toolkit PROPERTY
-        INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CUDA>:-arch=sm_30>)
+        INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CUDA>:-arch=sm_60>)
 
       set_property(TARGET cuda::toolkit PROPERTY
         INTERFACE_INCLUDE_DIRECTORIES "${CUDA_INCLUDE_DIRS}")
     endif ()
     set(HYDROGEN_HAVE_CUDA TRUE)
-
   else ()
 
     message(FATAL_ERROR
@@ -365,6 +364,8 @@ if (Hydrogen_ENABLE_CUDA)
   endif ()
 
 endif (Hydrogen_ENABLE_CUDA)
+
+set(HYDROGEN_HAVE_GPU ${HYDROGEN_HAVE_CUDA})
 
 if (Hydrogen_ENABLE_ALUMINUM)
   find_package(Aluminum 0.2.0 NO_MODULE QUIET
@@ -455,32 +456,49 @@ configure_file("${PROJECT_SOURCE_DIR}/cmake/configure_files/hydrogen_config.h.in
 configure_file("${PROJECT_SOURCE_DIR}/doxy/Doxyfile.in"
   "${PROJECT_BINARY_DIR}/doxy/Doxyfile")
 
-add_library(Hydrogen "${HYDROGEN_SOURCES}" "${HYDROGEN_HEADERS}")
-target_include_directories(Hydrogen PUBLIC
+add_library(Hydrogen_CXX "${HYDROGEN_SOURCES}" "${HYDROGEN_HEADERS}")
+target_include_directories(Hydrogen_CXX PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/El>
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-# These flags don't need to be propagated. Just because Hydrogen is
+# These flags don't need to be propagated. Just because Hydrogen_CXX is
 # built with "-Werror", for instance, doesn't mean downstreams should
 # be forced to build with that (even though they maybe should)...
-target_compile_options(Hydrogen PRIVATE ${EXTRA_CXX_FLAGS})
+target_compile_options(Hydrogen_CXX PRIVATE ${EXTRA_CXX_FLAGS})
 
-target_link_libraries(Hydrogen PUBLIC ${Aluminum_LIBRARIES})
-target_link_libraries(Hydrogen PUBLIC ${HALF_LIBRARIES})
+target_link_libraries(Hydrogen_CXX PUBLIC ${Aluminum_LIBRARIES})
+target_link_libraries(Hydrogen_CXX PUBLIC ${HALF_LIBRARIES})
 
 if (TARGET OpenMP::OpenMP_CXX)
-  target_link_libraries(Hydrogen PUBLIC OpenMP::OpenMP_CXX)
+  target_link_libraries(Hydrogen_CXX PUBLIC OpenMP::OpenMP_CXX)
 endif ()
-target_link_libraries(Hydrogen PUBLIC MPI::MPI_CXX)
-target_link_libraries(Hydrogen PUBLIC LAPACK::lapack)
-target_link_libraries(Hydrogen PUBLIC EP::extended_precision)
+target_link_libraries(Hydrogen_CXX PUBLIC MPI::MPI_CXX)
+target_link_libraries(Hydrogen_CXX PUBLIC LAPACK::lapack)
+target_link_libraries(Hydrogen_CXX PUBLIC EP::extended_precision)
 
-target_link_libraries(Hydrogen PUBLIC ${VTUNE_LIBRARIES})
-target_link_libraries(Hydrogen PUBLIC ${NVTX_LIBRARIES})
+target_link_libraries(Hydrogen_CXX PUBLIC ${VTUNE_LIBRARIES})
+target_link_libraries(Hydrogen_CXX PUBLIC ${NVTX_LIBRARIES})
 if (HYDROGEN_HAVE_CUDA)
-  target_link_libraries(Hydrogen PUBLIC cuda::toolkit)
+  target_link_libraries(Hydrogen_CXX PUBLIC cuda::toolkit)
+endif ()
+
+# Add the CXX library to "Hydrogen"
+set(HYDROGEN_LIBRARIES Hydrogen_CXX)
+
+if (HYDROGEN_HAVE_CUDA)
+  add_library(Hydrogen_CUDA "${HYDROGEN_CUDA_SOURCES}")
+  target_include_directories(Hydrogen_CUDA PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
+
+  target_link_libraries(Hydrogen_CUDA PUBLIC ${HALF_LIBRARIES})
+  target_link_libraries(Hydrogen_CUDA PUBLIC ${NVTX_LIBRARIES})
+  target_link_libraries(Hydrogen_CUDA PUBLIC cuda::toolkit)
+
+  list(APPEND HYDROGEN_LIBRARIES Hydrogen_CUDA)
 endif ()
 
 # Setup the tests
@@ -490,7 +508,7 @@ if (Hydrogen_ENABLE_TESTING)
 endif ()
 
 # Setup the library install
-install(TARGETS Hydrogen
+install(TARGETS ${HYDROGEN_LIBRARIES}
   EXPORT HydrogenTargets
   RUNTIME DESTINATION bin
   ARCHIVE DESTINATION lib

@@ -1,7 +1,20 @@
-#ifndef EL_CORE_SIMPLEBUFFER_HPP_
-#define EL_CORE_SIMPLEBUFFER_HPP_
+#ifndef HYDROGEN_UTILS_SIMPLEBUFFER_HPP_
+#define HYDROGEN_UTILS_SIMPLEBUFFER_HPP_
 
-namespace El
+#include <El/hydrogen_config.h>
+
+#include <hydrogen/Device.hpp>
+#include <hydrogen/SyncInfo.hpp>
+#ifdef HYDROGEN_HAVE_CUDA
+#include <hydrogen/device/gpu/CUDA.hpp>
+#endif // HYDROGEN_HAVE_CUDA
+
+#include <El/core/Memory/decl.hpp>
+
+#include <algorithm>
+#include <vector>
+
+namespace hydrogen
 {
 
 // A simple data management class for temporary contiguous memory blocks
@@ -14,12 +27,12 @@ public:
     // Construct uninitialized memory of a given size
     explicit simple_buffer(size_t size,
                            SyncInfo<D> const& = SyncInfo<D>{},
-                           unsigned int mode = DefaultMemoryMode<D>());
+                           unsigned int mode = El::DefaultMemoryMode<D>());
 
     // Construct and initialize memory of a given size
     explicit simple_buffer(size_t size, T const& value,
                            SyncInfo<D> const& = SyncInfo<D>{},
-                           unsigned int mode = DefaultMemoryMode<D>());
+                           unsigned int mode = El::DefaultMemoryMode<D>());
     // Enable moves
     simple_buffer(simple_buffer<T,D>&&) = default;
 
@@ -37,7 +50,7 @@ public:
     T const* data() const noexcept;
 
 private:
-    Memory<T,D> mem_;
+    El::Memory<T,D> mem_;
     T* data_ = nullptr;
     size_t size_ = 0;
 }; // class simple_buffer
@@ -58,15 +71,15 @@ template <typename T>
 void setBufferToValue(T* buffer, size_t size, T const& value,
                       SyncInfo<Device::GPU> syncInfo = SyncInfo<Device::GPU>{})
 {
-    if( value == T(0) )
+    if( value == TypeTraits<T>::Zero() )
     {
-        EL_CHECK_CUDA(cudaMemsetAsync(buffer, 0x0, size*sizeof(T),
+        H_CHECK_CUDA(cudaMemsetAsync(buffer, 0x0, size*sizeof(T),
                                       syncInfo.stream_));
     }
     else
     {
         std::vector<T> tmp(size, value);
-        EL_CHECK_CUDA(
+        H_CHECK_CUDA(
             cudaMemcpyAsync(
                 buffer, tmp.data(), size*sizeof(T),
                 CUDAMemcpyKind<Device::CPU,Device::GPU>(),
@@ -118,5 +131,5 @@ T const* simple_buffer<T,D>::data() const noexcept
 {
     return data_;
 }
-}// namespace El
-#endif // EL_CORE_SIMPLEBUFFER_HPP_
+}// namespace hydrogen
+#endif // HYDROGEN_UTILS_SIMPLEBUFFER_HPP_

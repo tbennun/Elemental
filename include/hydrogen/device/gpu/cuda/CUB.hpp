@@ -1,9 +1,10 @@
 #ifndef HYDROGEN_IMPORTS_CUB_HPP_
 #define HYDROGEN_IMPORTS_CUB_HPP_
 
-#include "cub/util_allocator.cuh"
+#include <cuda_runtime.h>
+#include <cub/util_allocator.cuh>
 
-namespace El
+namespace hydrogen
 {
 namespace cub
 {
@@ -14,6 +15,6 @@ namespace cub
     void DestroyMemoryPool();
 
 } // namespace cub
-} // namespace El
+} // namespace hydrogen
 
 #endif // HYDROGEN_IMPORTS_CUB_HPP_
