@@ -121,7 +121,7 @@ void Initialize()
     Initialize( argc, argv );
 }
 
-#ifdef HYDROGEN_HAVE_CUDA
+#ifdef HYDROGEN_GPU_USE_FP16
 namespace
 {
 // FIXME (trb): move this somewhere better
@@ -162,7 +162,7 @@ void GPUHalfMinFunc(void * a, void * b, int * len, MPI_Datatype *) EL_NO_EXCEPT
             out[ii] = in[ii];
 }
 }// namespace <anon>
-#endif // HYDROGEN_HAVE_CUDA
+#endif // HYDROGEN_GPU_USE_FP16
 
 #ifdef HYDROGEN_HAVE_HALF
 namespace
@@ -250,10 +250,10 @@ void Initialize( int& argc, char**& argv )
         }
     }
 
-#ifdef HYDROGEN_HAVE_CUDA
+#ifdef HYDROGEN_GPU_USE_FP16
     {
-        mpi::Types<cpu_half_type>::type = MPI_SHORT;
-        mpi::Types<cpu_half_type>::createdType = false;
+        mpi::Types<gpu_half_type>::type = MPI_SHORT;
+        mpi::Types<gpu_half_type>::createdType = false;
 
         bool const commutes = true;
         MPI_Op_create((mpi::UserFunction*)GPUHalfSumFunc, commutes,
@@ -269,7 +269,7 @@ void Initialize( int& argc, char**& argv )
                       &mpi::Types<gpu_half_type>::minOp.op);
         mpi::Types<gpu_half_type>::createdMinOp = true;
     }
-#endif // HYDROGEN_HAVE_CUDA
+#endif // HYDROGEN_GPU_USE_FP16
 
 #ifdef HYDROGEN_HAVE_HALF
     // FIXME (trb): move this somewhere better
