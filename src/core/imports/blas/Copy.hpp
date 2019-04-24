@@ -2,8 +2,8 @@
    Copyright (c) 2009-2016, Jack Poulson
    All rights reserved.
 
-   This file is part of Elemental and is under the BSD 2-Clause License, 
-   which can be found in the LICENSE file in the root directory, or at 
+   This file is part of Elemental and is under the BSD 2-Clause License,
+   which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
 
@@ -47,43 +47,43 @@ template void Copy
 #ifdef HYDROGEN_HAVE_QD
 template void Copy
 ( BlasInt n,
-  const DoubleDouble* x, BlasInt incx, 
+  const DoubleDouble* x, BlasInt incx,
         DoubleDouble* y, BlasInt incy );
 template void Copy
 ( BlasInt n,
-  const QuadDouble* x, BlasInt incx, 
+  const QuadDouble* x, BlasInt incx,
         QuadDouble* y, BlasInt incy );
 template void Copy
 ( BlasInt n,
-  const Complex<DoubleDouble>* x, BlasInt incx, 
+  const Complex<DoubleDouble>* x, BlasInt incx,
         Complex<DoubleDouble>* y, BlasInt incy );
 template void Copy
 ( BlasInt n,
-  const Complex<QuadDouble>* x, BlasInt incx, 
+  const Complex<QuadDouble>* x, BlasInt incx,
         Complex<QuadDouble>* y, BlasInt incy );
 #endif
 #ifdef HYDROGEN_HAVE_QUADMATH
 template void Copy
 ( BlasInt n,
-  const Quad* x, BlasInt incx, 
+  const Quad* x, BlasInt incx,
         Quad* y, BlasInt incy );
 template void Copy
 ( BlasInt n,
-  const Complex<Quad>* x, BlasInt incx, 
+  const Complex<Quad>* x, BlasInt incx,
         Complex<Quad>* y, BlasInt incy );
 #endif
 #ifdef HYDROGEN_HAVE_MPC
 template void Copy
 ( BlasInt n,
-  const BigInt* x, BlasInt incx, 
+  const BigInt* x, BlasInt incx,
         BigInt* y, BlasInt incy );
 template void Copy
 ( BlasInt n,
-  const BigFloat* x, BlasInt incx, 
+  const BigFloat* x, BlasInt incx,
         BigFloat* y, BlasInt incy );
 template void Copy
 ( BlasInt n,
-  const Complex<BigFloat>* x, BlasInt incx, 
+  const Complex<BigFloat>* x, BlasInt incx,
         Complex<BigFloat>* y, BlasInt incy );
 #endif
 
@@ -109,10 +109,14 @@ void Copy
 { EL_BLAS(zcopy)( &n, x, &incx, y, &incy ); }
 
 #ifdef HYDROGEN_HAVE_HALF
-template void Copy
-( BlasInt n,
-  const cpu_half_type* x, BlasInt incx, 
-        cpu_half_type* y, BlasInt incy );
+template void Copy(BlasInt n,
+                   cpu_half_type const* x, BlasInt incx,
+                   cpu_half_type* y, BlasInt incy );
+#endif
+#ifdef HYDROGEN_GPU_USE_FP16
+template void Copy(BlasInt n,
+                   gpu_half_type const* x, BlasInt incx,
+                   gpu_half_type* y, BlasInt incy );
 #endif
 
 } // namespace blas
