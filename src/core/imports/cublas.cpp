@@ -21,6 +21,10 @@ cublasHandle_t GetLibraryHandle() noexcept
 void Initialize()
 {
     GPUManager::InitializeCUBLAS();
+#ifdef HYDROGEN_CUBLAS_USE_TENSOR_OP_MATH
+    H_CHECK_CUBLAS(
+        cublasSetMathMode(GetLibraryHandle(), CUBLAS_TENSOR_OP_MATH));
+#endif // HYDROGEN_CUBLAS_USE_TENSOR_OP_MATH
 }
 
 SyncManager::SyncManager(cublasHandle_t handle,

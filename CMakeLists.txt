@@ -149,6 +149,14 @@ if (Hydrogen_ENABLE_CUDA)
   option(Hydrogen_ENABLE_CUB
     "Search for CUB support and enable related features if found."
     ON)
+
+  option(Hydrogen_ENABLE_CUBLAS_TENSOR_MATH
+    "Use the cuBLAS tensor operation math."
+    ON)
+
+  option(Hydrogen_ENABLE_GPU_FP16
+    "Enable FP16 arithmetic in GPU code."
+    ON)
 endif ()
 
 #
@@ -317,6 +325,14 @@ if (Hydrogen_ENABLE_CUDA)
     find_package(CUDA REQUIRED) # Enable all the macros
     find_package(NVML REQUIRED)
 
+    if (Hydrogen_ENABLE_CUBLAS_TENSOR_MATH)
+      set(HYDROGEN_CUBLAS_USE_TENSOR_OP_MATH TRUE)
+    endif ()
+
+    if (Hydrogen_ENABLE_GPU_FP16)
+      set(HYDROGEN_GPU_USE_FP16 TRUE)
+    endif ()
+    
     if (Hydrogen_ENABLE_CUB)
       find_package(CUB REQUIRED)
       set(HYDROGEN_HAVE_CUB TRUE)
