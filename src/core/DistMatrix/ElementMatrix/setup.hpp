@@ -13,7 +13,8 @@
 
 #include "El/blas_like/level1/Copy/internal_impl.hpp"
 
-namespace El {
+namespace El
+{
 
 #define DM DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D>
 #define EM ElementalMatrix<T>
@@ -384,32 +385,32 @@ const DM& DM::operator*=(T alpha)
 template <typename T, Device D>
 const DM& DM::operator+=(const EM& A)
 {
-    EL_DEBUG_CSE
-    Axpy(T(1), A, *this);
+    EL_DEBUG_CSE;
+    Axpy(FromInt<T>(1), A, *this);
     return *this;
 }
 
 template <typename T, Device D>
 const DM& DM::operator+=(const ADM& A)
 {
-    EL_DEBUG_CSE
-    Axpy(T(1), A, *this);
+    EL_DEBUG_CSE;
+    Axpy(FromInt<T>(1), A, *this);
     return *this;
 }
 
 template <typename T, Device D>
 const DM& DM::operator-=(const EM& A)
 {
-    EL_DEBUG_CSE
-    Axpy(T(-1), A, *this);
+    EL_DEBUG_CSE;
+    Axpy(FromInt<T>(-1), A, *this);
     return *this;
 }
 
 template <typename T, Device D>
 const DM& DM::operator-=(const ADM& A)
 {
-    EL_DEBUG_CSE
-    Axpy(T(-1), A, *this);
+    EL_DEBUG_CSE;
+    Axpy(FromInt<T>(-1), A, *this);
     return *this;
 }
 
@@ -514,7 +515,7 @@ EL_NO_RELEASE_EXCEPT
         mpi::Broadcast(value, this->Root(), CrossComm(), syncInfoA);
     }
     else
-        value = 0;
+        value = BaseFromInt<T>(0);
     return value;
 }
 
