@@ -5,8 +5,8 @@
 #include <string>
 
 #include "El-lite.hpp"
-#include "El/core/Device.hpp"
-#include "El/core/SyncInfo.hpp"
+#include "hydrogen/Device.hpp"
+#include "hydrogen/SyncInfo.hpp"
 
 namespace El
 {
