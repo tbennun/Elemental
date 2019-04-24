@@ -3,8 +3,8 @@
 #define EL_IMPORTS_MPI_META_HPP_
 
 #include <El/config.h>
-#include <El/core/Device.hpp>
-#include <El/core/SyncInfo.hpp>
+#include <hydrogen/Device.hpp>
+#include <hydrogen/SyncInfo.hpp>
 
 #include <type_traits>
 #include <utility>

@@ -60,29 +60,29 @@ void RowwiseVectorExchange
 
 // NOTE: Only instantiated for (U,V)=(MC,MR) and (U,V)=(MR,MC)
 template<typename T,Dist U,Dist V,
-         typename=EnableIf<IsDeviceValidType<T,Device::CPU>>>
+         typename=EnableIf<IsStorageType<T,Device::CPU>>>
 void TransposeDist( DistMatrix<T,U,V,ELEMENT,Device::CPU> const& A,
                     DistMatrix<T,V,U,ELEMENT,Device::CPU>& B );
 
 #ifdef HYDROGEN_HAVE_CUDA
 template<typename T,Dist U,Dist V,
-         typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
+         typename=EnableIf<IsStorageType<T,Device::GPU>>>
 void TransposeDist( DistMatrix<T,U,V,ELEMENT,Device::GPU> const& A,
                     DistMatrix<T,V,U,ELEMENT,Device::GPU>& B );
 #endif // HYDROGEN_HAVE_CUDA
 
 template<typename T,Dist U,Dist V,Device D,
-         typename=DisableIf<IsDeviceValidType<T,D>>,typename=void>
+         typename=DisableIf<IsStorageType<T,D>>,typename=void>
 void TransposeDist( DistMatrix<T,U,V,ELEMENT,D> const& A,
                     DistMatrix<T,V,U,ELEMENT,D>& B );
 
 template<typename T,Dist U,Dist V,Device D,
-         typename=EnableIf<IsDeviceValidType<T,D>>>
+         typename=EnableIf<IsStorageType<T,D>>>
 void Filter
 ( DistMatrix<T,Collect<U>(),Collect<V>(),ELEMENT,D> const& A,
   DistMatrix<T,U,V,ELEMENT,D>& B );
 template<typename T,Dist U,Dist V,Device D,
-         typename=DisableIf<IsDeviceValidType<T,D>>,typename=void>
+         typename=DisableIf<IsStorageType<T,D>>,typename=void>
 void Filter
 ( DistMatrix<T,Collect<U>(),Collect<V>(),ELEMENT,D> const& A,
   DistMatrix<T,U,V,ELEMENT,D>& B );

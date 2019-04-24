@@ -14,33 +14,28 @@ namespace El
 {
 
 #ifdef HYDROGEN_HAVE_CUDA
-namespace gpu_details
+template <typename T, typename=EnableIf<IsComputeType<T,Device::GPU>>>
+void Scale(T const& alpha, Matrix<T,Device::GPU>& A)
 {
-template <typename T, typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
-void Scale(T const& alpha, T* ABuf,
-           Int const& height, Int const& width, Int const& ALDim)
-{
-    cublas::Geam( 'N', 'N', height, width,
-                  alpha, ABuf, ALDim,
-                  T(0), ABuf, ALDim, ABuf, ALDim );
+    gpu_blas::Scale(A.Height(), A.Width(), alpha,
+                    A.Buffer(), A.LDim(),
+                    SyncInfoFromMatrix(A));
 }
 
 template <typename T,
-          typename=DisableIf<IsDeviceValidType<T,Device::GPU>>,
+          typename=DisableIf<IsComputeType<T,Device::GPU>>,
           typename=void>
-void Scale(T const&, T*, Int const&, Int const&, Int const&)
+void Scale(T const&, Matrix<T,Device::GPU>&)
 {
     LogicError("Scale: Bad device/type combo!");
 }
-
-}// namespace gpu_details
 #endif // HYDROGEN_HAVE_CUDA
 
-
-template<typename T,typename S>
-void Scale( S alphaS, AbstractMatrix<T>& A )
+template <typename T, typename S,
+          typename=EnableIf<IsComputeType<T,Device::CPU>>>
+void Scale(S alphaS, Matrix<T,Device::CPU>& A)
 {
-    EL_DEBUG_CSE
+    EL_DEBUG_CSE;
     const T alpha = T(alphaS);
 
     const Int ALDim = A.LDim();
@@ -48,38 +43,61 @@ void Scale( S alphaS, AbstractMatrix<T>& A )
     const Int width = A.Width();
     T* ABuf = A.Buffer();
 
-    if( alpha == T(0) )
+    if( alpha == TypeTraits<T>::Zero() )
     {
         Zero( A );
+    }
+    else
+    {
+        if( width == 1 || ALDim == height )
+        {
+            EL_PARALLEL_FOR
+            for( Int i=0; i<height*width; ++i )
+            {
+                ABuf[i] *= alpha;
+            }
+        }
+        else
+        {
+            EL_PARALLEL_FOR_COLLAPSE2
+            for( Int j=0; j<width; ++j )
+            {
+                for( Int i=0; i<height; ++i )
+                {
+                    ABuf[i+j*ALDim] *= alpha;
+                }
+            }
+        }
+    }
+}
+template <typename T, typename S,
+          typename=DisableIf<IsComputeType<T,Device::CPU>>,
+          typename=void>
+void Scale(S, Matrix<T,Device::CPU>&)
+{
+    LogicError("Scale: Bad device/type combo!");
+}
+
+template<typename T,typename S>
+void Scale( S alphaS, AbstractMatrix<T>& A )
+{
+    EL_DEBUG_CSE;
+    const T alpha = T(alphaS);
+
+    if( alpha == TypeTraits<T>::Zero() )
+    {
+        Zero(A);
     }
     else
     {
         switch (A.GetDevice())
         {
         case Device::CPU:
-            if( width == 1 || ALDim == height )
-            {
-                EL_PARALLEL_FOR
-                for( Int i=0; i<height*width; ++i )
-                {
-                    ABuf[i] *= alpha;
-                }
-            }
-            else
-            {
-                EL_PARALLEL_FOR_COLLAPSE2
-                for( Int j=0; j<width; ++j )
-                {
-                    for( Int i=0; i<height; ++i )
-                    {
-                        ABuf[i+j*ALDim] *= alpha;
-                    }
-                }
-            }
+            Scale(alpha, static_cast<Matrix<T,Device::CPU>&>(A));
             break;
 #ifdef HYDROGEN_HAVE_CUDA
         case Device::GPU:
-            gpu_details::Scale(alpha, ABuf, height, width, ALDim);
+            Scale(alpha, static_cast<Matrix<T,Device::GPU>&>(A));
             break;
 #endif // HYDROGEN_HAVE_CUDA
         default:
@@ -92,8 +110,8 @@ void Scale( S alphaS, AbstractMatrix<T>& A )
 template<typename Real,typename S,typename>
 void Scale( S alphaS, AbstractMatrix<Real>& AReal, AbstractMatrix<Real>& AImag )
 {
-    EL_DEBUG_CSE
-     typedef Complex<Real> C;
+    EL_DEBUG_CSE;
+    typedef Complex<Real> C;
     const C alpha = C(alphaS);
     if( alpha != C(1) )
     {
@@ -130,7 +148,6 @@ void Scale( S alpha, AbstractDistMatrix<Real>& AReal,
     Scale( alpha, AReal.Matrix(), AImag.Matrix() );
 }
 
-
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
 # define EL_EXTERN
 #else
@@ -142,6 +159,10 @@ void Scale( S alpha, AbstractDistMatrix<Real>& AReal,
   ( T alpha, AbstractMatrix<T>& A ); \
   EL_EXTERN template void Scale \
   ( T alpha, AbstractDistMatrix<T>& A );
+
+#ifdef HYDROGEN_GPU_USE_FP16
+PROTO(gpu_half_type)
+#endif // HYDROGEN_GPU_USE_FP16
 
 #define EL_ENABLE_HALF
 #define EL_ENABLE_DOUBLEDOUBLE

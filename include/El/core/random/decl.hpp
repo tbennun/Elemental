@@ -2,8 +2,8 @@
    Copyright (c) 2009-2016, Jack Poulson
    All rights reserved.
 
-   This file is part of Elemental and is under the BSD 2-Clause License, 
-   which can be found in the LICENSE file in the root directory, or at 
+   This file is part of Elemental and is under the BSD 2-Clause License,
+   which can be found in the LICENSE file in the root directory, or at
    http://opensource.org/licenses/BSD-2-Clause
 */
 #ifndef EL_RANDOM_DECL_HPP
@@ -65,6 +65,14 @@ template<>
 BigFloat SampleUniform( const BigFloat& a, const BigFloat& b );
 #endif
 
+#ifdef HYDROGEN_GPU_USE_FP16
+inline gpu_half_type
+SampleUniform(gpu_half_type const& a, gpu_half_type const& b)
+{
+    return SampleUniform(float(a), float(b));
+}
+#endif // HYDROGEN_GPU_USE_FP16
+
 template<typename T,typename=EnableIf<IsIntegral<T>>,typename=void>
 T SampleUniform( const T& a, const T& b );
 template<>
@@ -92,11 +100,11 @@ template<>
 Complex<Quad> SampleNormal( const Complex<Quad>& mean, const Quad& stddev );
 #endif
 
-// Generate a sample from a uniform PDF over the (closed) unit ball about the 
+// Generate a sample from a uniform PDF over the (closed) unit ball about the
 // additive identity of the ring T using the most natural metric.
-template<typename F> 
+template<typename F>
 F SampleBall( const F& center=F(0), const Base<F>& radius=Base<F>(1) );
-template<typename Real,typename=EnableIf<IsReal<Real>>> 
+template<typename Real,typename=EnableIf<IsReal<Real>>>
 Real SampleBall( const Real& center=Real(0), const Real& radius=Real(1) );
 
 // To be used internally by Elemental

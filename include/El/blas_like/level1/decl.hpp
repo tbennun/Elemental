@@ -425,14 +425,14 @@ void CopyFromNonRoot( DistMatrix<T,CIRC,CIRC,BLOCK>& B,
 namespace copy {
 namespace util {
 
-template <typename T, typename=EnableIf<IsDeviceValidType<T,Device::CPU>>>
+template <typename T, typename=EnableIf<IsStorageType<T,Device::CPU>>>
 void InterleaveMatrix(
     Int height, Int width,
     T const* A, Int colStrideA, Int rowStrideA,
     T* B, Int colStrideB, Int rowStrideB,
     SyncInfo<Device::CPU>);
 
-template <typename T, typename=EnableIf<IsDeviceValidType<T,Device::CPU>>>
+template <typename T, typename=EnableIf<IsStorageType<T,Device::CPU>>>
 void RowStridedPack(
     Int height, Int width,
     Int rowAlign, Int rowStride,
@@ -440,7 +440,7 @@ void RowStridedPack(
     T* BPortions, Int portionSize,
     SyncInfo<Device::CPU> );
 
-template <typename T, typename=EnableIf<IsDeviceValidType<T,Device::CPU>>>
+template <typename T, typename=EnableIf<IsStorageType<T,Device::CPU>>>
 void RowStridedUnpack(
  Int height, Int width,
   Int rowAlign, Int rowStride,
@@ -448,7 +448,7 @@ void RowStridedUnpack(
         T* B, Int BLDim,
   SyncInfo<Device::CPU> );
 
-template <typename T, typename=EnableIf<IsDeviceValidType<T,Device::CPU>>>
+template <typename T, typename=EnableIf<IsStorageType<T,Device::CPU>>>
 void PartialRowStridedPack(
     Int height, Int width,
     Int rowAlign, Int rowStride,
@@ -458,7 +458,7 @@ void PartialRowStridedPack(
     T* BPortions, Int portionSize,
     SyncInfo<Device::CPU> );
 
-template <typename T, typename=EnableIf<IsDeviceValidType<T,Device::CPU>>>
+template <typename T, typename=EnableIf<IsStorageType<T,Device::CPU>>>
 void PartialRowStridedUnpack(
     Int height, Int width,
     Int rowAlign, Int rowStride,
@@ -469,14 +469,14 @@ void PartialRowStridedUnpack(
     SyncInfo<Device::CPU> );
 
 #ifdef HYDROGEN_HAVE_CUDA
-template <typename T, typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
+template <typename T, typename=EnableIf<IsStorageType<T,Device::GPU>>>
 void InterleaveMatrix(
     Int height, Int width,
     T const* A, Int colStrideA, Int rowStrideA,
     T* B, Int colStrideB, Int rowStrideB,
     SyncInfo<Device::GPU>);
 
-template <typename T, typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
+template <typename T, typename=EnableIf<IsStorageType<T,Device::GPU>>>
 void RowStridedPack(
     Int height, Int width,
     Int rowAlign, Int rowStride,
@@ -484,7 +484,7 @@ void RowStridedPack(
     T* BPortions, Int portionSize,
     SyncInfo<Device::GPU> );
 
-template <typename T, typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
+template <typename T, typename=EnableIf<IsStorageType<T,Device::GPU>>>
 void RowStridedUnpack(
  Int height, Int width,
   Int rowAlign, Int rowStride,
@@ -492,7 +492,7 @@ void RowStridedUnpack(
         T* B, Int BLDim,
   SyncInfo<Device::GPU> );
 
-template <typename T, typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
+template <typename T, typename=EnableIf<IsStorageType<T,Device::GPU>>>
 void PartialRowStridedPack(
     Int height, Int width,
     Int rowAlign, Int rowStride,
@@ -502,7 +502,7 @@ void PartialRowStridedPack(
     T* BPortions, Int portionSize,
     SyncInfo<Device::GPU> );
 
-template <typename T, typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
+template <typename T, typename=EnableIf<IsStorageType<T,Device::GPU>>>
 void PartialRowStridedUnpack(
     Int height, Int width,
     Int rowAlign, Int rowStride,
@@ -515,7 +515,7 @@ void PartialRowStridedUnpack(
 #endif // HYDROGEN_HAVE_CUDA
 
 template <typename T, Device D,
-          typename=DisableIf<IsDeviceValidType<T,D>>, typename=void>
+          typename=DisableIf<IsStorageType<T,D>>, typename=void>
 void InterleaveMatrix(
     Int const&, Int const&,
     T const*, Int const&, Int const&,
@@ -523,21 +523,21 @@ void InterleaveMatrix(
     SyncInfo<D> const&);
 
 template <typename T, Device D,
-          typename=DisableIf<IsDeviceValidType<T,D>>, typename=void>
+          typename=DisableIf<IsStorageType<T,D>>, typename=void>
 void RowStridedPack(
     Int const&, Int const&, Int const&, Int const&,
     T const*, Int const&, T const*, Int const&,
     SyncInfo<D> const&);
 
 template <typename T, Device D,
-          typename=DisableIf<IsDeviceValidType<T,D>>, typename=void>
+          typename=DisableIf<IsStorageType<T,D>>, typename=void>
 void RowStridedUnpack(
     Int const&, Int const&, Int const&, Int const&,
     T const*, Int const&, T const*, Int const&,
     SyncInfo<D> const&);
 
 template <typename T, Device D,
-          typename=DisableIf<IsDeviceValidType<T,D>>, typename=void>
+          typename=DisableIf<IsStorageType<T,D>>, typename=void>
 void PartialRowStridedPack(
     Int const&, Int const&, Int const&, Int const&,
     Int const&, Int const&, Int const&, Int const&,
@@ -545,7 +545,7 @@ void PartialRowStridedPack(
     SyncInfo<D> const&);
 
 template <typename T, Device D,
-          typename=DisableIf<IsDeviceValidType<T,D>>, typename=void>
+          typename=DisableIf<IsStorageType<T,D>>, typename=void>
 void PartialRowStridedUnpack(
     Int const&, Int const&, Int const&, Int const&,
     Int const&, Int const&, Int const&, Int const&,
@@ -553,7 +553,7 @@ void PartialRowStridedUnpack(
     SyncInfo<D> const&);
 
 template <typename T, Device D,
-          typename=DisableIf<IsDeviceValidType<T,D>>,
+          typename=DisableIf<IsStorageType<T,D>>,
           typename=void>
 void PartialColStridedColumnPack(
     Int const&, Int const&, Int const&,
@@ -562,20 +562,20 @@ void PartialColStridedColumnPack(
     SyncInfo<D> const&);
 
 template <typename T, Device D,
-          typename=DisableIf<IsDeviceValidType<T,D>>,
+          typename=DisableIf<IsStorageType<T,D>>,
           typename=void>
 void ColStridedPack(
     Int const&, Int const&, Int const&, Int const&,
     T const*, Int const&, T const*, Int const&, SyncInfo<D> const&);
 
 template <typename T, Device D,
-          typename=DisableIf<IsDeviceValidType<T,D>>,
+          typename=DisableIf<IsStorageType<T,D>>,
           typename=void>
 void ColStridedUnpack(
     Int const&, Int const&, Int const&, Int const&,
     T const*, Int const&, T const*, Int const&, SyncInfo<D> const&);
 
-template <typename T, Device D, typename=EnableIf<IsDeviceValidType<T,D>>>
+template <typename T, Device D, typename=EnableIf<IsStorageType<T,D>>>
 void ColStridedPack(
     Int height, Int width,
     Int colAlign, Int colStride,
@@ -583,7 +583,7 @@ void ColStridedPack(
     T* BPortions, Int portionSize,
     SyncInfo<D>);
 
-template <typename T, Device D, typename=EnableIf<IsDeviceValidType<T,D>>>
+template <typename T, Device D, typename=EnableIf<IsStorageType<T,D>>>
 void ColStridedColumnPack(
     Int height,
     Int colAlign, Int colStride,
@@ -592,7 +592,7 @@ void ColStridedColumnPack(
     SyncInfo<D> );
 
 template<typename T, Device D=Device::CPU,
-         typename=EnableIf<IsDeviceValidType<T,D>>>
+         typename=EnableIf<IsStorageType<T,D>>>
 void ColStridedUnpack(
     Int height, Int width,
     Int colAlign, Int colStride,
@@ -601,7 +601,7 @@ void ColStridedUnpack(
     SyncInfo<D> );
 
 template <typename T, Device D=Device::CPU,
-         typename=EnableIf<IsDeviceValidType<T,D>>>
+         typename=EnableIf<IsStorageType<T,D>>>
 void PartialColStridedPack(
     Int height, Int width,
     Int colAlign, Int colStride,
@@ -612,7 +612,7 @@ void PartialColStridedPack(
     SyncInfo<D> );
 
 template <typename T, Device D=Device::CPU,
-          typename=EnableIf<IsDeviceValidType<T,D>>>
+          typename=EnableIf<IsStorageType<T,D>>>
 void PartialColStridedUnpack(
     Int height, Int width,
     Int colAlign, Int colStride,
@@ -623,7 +623,7 @@ void PartialColStridedUnpack(
     SyncInfo<D> );
 
 template <typename T, Device D,
-          typename=EnableIf<IsDeviceValidType<T,D>>>
+          typename=EnableIf<IsStorageType<T,D>>>
 void PartialColStridedColumnPack(
     Int height,
     Int colAlign, Int colStride,
@@ -634,7 +634,7 @@ void PartialColStridedColumnPack(
     SyncInfo<D>);
 
 template <typename T, Device D,
-          typename=EnableIf<IsDeviceValidType<T,D>>>
+          typename=EnableIf<IsStorageType<T,D>>>
 void PartialColStridedColumnUnpack(
     Int height,
     Int colAlign, Int colStride,
@@ -644,7 +644,7 @@ void PartialColStridedColumnUnpack(
     T* B, SyncInfo<D> );
 
 template<typename T, Device D,
-         typename=EnableIf<IsDeviceValidType<T,D>>>
+         typename=EnableIf<IsStorageType<T,D>>>
 void StridedPack(
     Int height, Int width,
     Int colAlign, Int colStride,
@@ -654,7 +654,7 @@ void StridedPack(
     SyncInfo<D> );
 
 template<typename T, Device D,
-         typename=EnableIf<IsDeviceValidType<T,D>>>
+         typename=EnableIf<IsStorageType<T,D>>>
 void StridedUnpack(
     Int height, Int width,
     Int colAlign, Int colStride,

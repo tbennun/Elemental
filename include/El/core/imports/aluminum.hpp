@@ -1,7 +1,7 @@
 #ifndef HYDROGEN_IMPORTS_ALUMINUM_HPP_
 #define HYDROGEN_IMPORTS_ALUMINUM_HPP_
 
-#include <El/core/Device.hpp>
+#include <hydrogen/Device.hpp>
 
 #ifdef HYDROGEN_HAVE_ALUMINUM
 #include <Al.hpp>
@@ -72,6 +72,7 @@ ADD_ALUMINUM_TYPE(                   int, Al::NCCLBackend);
 ADD_ALUMINUM_TYPE(          unsigned int, Al::NCCLBackend);
 ADD_ALUMINUM_TYPE(         long long int, Al::NCCLBackend);
 ADD_ALUMINUM_TYPE(unsigned long long int, Al::NCCLBackend);
+ADD_ALUMINUM_TYPE(         gpu_half_type, Al::NCCLBackend);
 ADD_ALUMINUM_TYPE(                 float, Al::NCCLBackend);
 ADD_ALUMINUM_TYPE(                double, Al::NCCLBackend);
 #endif // HYDROGEN_HAVE_NCCL2

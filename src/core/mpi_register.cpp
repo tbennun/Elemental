@@ -103,6 +103,8 @@ template struct Types<long long int>; // Avoid conflict with Int
   template struct Types<ValueInt<T>>; \
   template struct Types<Entry<T>>;
 
+PROTO(gpu_half_type)
+
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE
 #define EL_ENABLE_QUAD

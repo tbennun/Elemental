@@ -14,7 +14,7 @@
 #endif
 
 #ifdef HYDROGEN_HAVE_CUDA
-#include "GPU/Fill.hpp"
+#include <hydrogen/blas/gpu/Fill.hpp>
 #endif
 
 namespace El {
@@ -59,7 +59,7 @@ void Zero_seq(AbstractDistMatrix<T>& A)
 template<typename T>
 void Zero( AbstractMatrix<T>& A )
 {
-    EL_DEBUG_CSE
+    EL_DEBUG_CSE;
     const Int height = A.Height();
     const Int width = A.Width();
     const Int size = height * width;
@@ -103,7 +103,10 @@ void Zero( AbstractMatrix<T>& A )
         break;
 #ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
-        Fill_GPU_impl(height, width, T(0), ABuf, ALDim);
+        hydrogen::Fill_GPU_impl(
+            height, width, FromInt<T>(0), ABuf, ALDim,
+            SyncInfoFromMatrix(
+                static_cast<Matrix<T,Device::GPU>&>(A)).stream_);
         break;
 #endif // HYDROGEN_HAVE_CUDA
     default:
@@ -131,6 +134,8 @@ void Zero( AbstractDistMatrix<T>& A )
   EL_EXTERN template void Zero_seq( AbstractDistMatrix<T>& A ); \
   EL_EXTERN template void Zero( AbstractMatrix<T>& A ); \
   EL_EXTERN template void Zero( AbstractDistMatrix<T>& A );
+
+PROTO(gpu_half_type)
 
 #define EL_ENABLE_HALF
 #define EL_ENABLE_DOUBLEDOUBLE

@@ -390,6 +390,12 @@ template void Copy
   const cpu_half_type* A, BlasInt lda,
         cpu_half_type* B, BlasInt ldb );
 #endif
+#ifdef HYDROGEN_GPU_USE_FP16
+template void Copy(
+    char uplo, BlasInt m, BlasInt n,
+    gpu_half_type const* A, BlasInt lda,
+    gpu_half_type* B, BlasInt ldb);
+#endif
 
 #ifndef HYDROGEN_HAVE_LAPACK
 

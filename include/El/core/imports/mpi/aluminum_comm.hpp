@@ -6,8 +6,8 @@
 #include <El/core/imports/aluminum.hpp>
 #include <El/core/imports/mpi/comm_impl.hpp>
 #include <El/core/imports/mpi/meta.hpp>
-#include <El/core/Device.hpp>
-#include <El/core/SyncInfo.hpp>
+#include <hydrogen/Device.hpp>
+#include <hydrogen/SyncInfo.hpp>
 
 #include <forward_list>
 #include <memory>

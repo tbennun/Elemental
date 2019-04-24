@@ -109,75 +109,79 @@ void Broadcast( T& b, int root, Comm const& comm, SyncInfo<D> const& syncInfo )
 
 #define MPI_BROADCAST_PROTO_DEV(T,D)                                    \
     template void Broadcast(T*, int, int, Comm const&, SyncInfo<D> const&);       \
-    template void Broadcast(T&, int, Comm const&, SyncInfo<D> const&);
+    template void Broadcast(T&, int, Comm const&, SyncInfo<D> const&)
 
 #ifndef HYDROGEN_HAVE_CUDA
 #define MPI_BROADCAST_PROTO(T)                  \
     MPI_BROADCAST_PROTO_DEV(T,Device::CPU)
 #else
 #define MPI_BROADCAST_PROTO(T)                  \
-    MPI_BROADCAST_PROTO_DEV(T,Device::CPU)      \
+    MPI_BROADCAST_PROTO_DEV(T,Device::CPU);     \
     MPI_BROADCAST_PROTO_DEV(T,Device::GPU)
 #endif // HYDROGEN_HAVE_CUDA
 
-MPI_BROADCAST_PROTO(byte)
-MPI_BROADCAST_PROTO(int)
-MPI_BROADCAST_PROTO(unsigned)
-MPI_BROADCAST_PROTO(long int)
-MPI_BROADCAST_PROTO(unsigned long)
-MPI_BROADCAST_PROTO(float)
-MPI_BROADCAST_PROTO(double)
-MPI_BROADCAST_PROTO(long long int)
-MPI_BROADCAST_PROTO(unsigned long long)
-MPI_BROADCAST_PROTO(ValueInt<Int>)
-MPI_BROADCAST_PROTO(Entry<Int>)
-MPI_BROADCAST_PROTO(Complex<float>)
-MPI_BROADCAST_PROTO(ValueInt<float>)
-MPI_BROADCAST_PROTO(ValueInt<Complex<float>>)
-MPI_BROADCAST_PROTO(Entry<float>)
-MPI_BROADCAST_PROTO(Entry<Complex<float>>)
-MPI_BROADCAST_PROTO(Complex<double>)
-MPI_BROADCAST_PROTO(ValueInt<double>)
-MPI_BROADCAST_PROTO(ValueInt<Complex<double>>)
-MPI_BROADCAST_PROTO(Entry<double>)
-MPI_BROADCAST_PROTO(Entry<Complex<double>>)
+MPI_BROADCAST_PROTO(byte);
+MPI_BROADCAST_PROTO(int);
+MPI_BROADCAST_PROTO(unsigned);
+MPI_BROADCAST_PROTO(long int);
+MPI_BROADCAST_PROTO(unsigned long);
+MPI_BROADCAST_PROTO(float);
+MPI_BROADCAST_PROTO(double);
+MPI_BROADCAST_PROTO(long long int);
+MPI_BROADCAST_PROTO(unsigned long long);
+MPI_BROADCAST_PROTO(ValueInt<Int>);
+MPI_BROADCAST_PROTO(Entry<Int>);
+MPI_BROADCAST_PROTO(Complex<float>);
+MPI_BROADCAST_PROTO(ValueInt<float>);
+MPI_BROADCAST_PROTO(ValueInt<Complex<float>>);
+MPI_BROADCAST_PROTO(Entry<float>);
+MPI_BROADCAST_PROTO(Entry<Complex<float>>);
+MPI_BROADCAST_PROTO(Complex<double>);
+MPI_BROADCAST_PROTO(ValueInt<double>);
+MPI_BROADCAST_PROTO(ValueInt<Complex<double>>);
+MPI_BROADCAST_PROTO(Entry<double>);
+MPI_BROADCAST_PROTO(Entry<Complex<double>>);
 #ifdef HYDROGEN_HAVE_HALF
-MPI_BROADCAST_PROTO(cpu_half_type)
-MPI_BROADCAST_PROTO(ValueInt<cpu_half_type>)
-MPI_BROADCAST_PROTO(Entry<cpu_half_type>)
+MPI_BROADCAST_PROTO(cpu_half_type);
+MPI_BROADCAST_PROTO(ValueInt<cpu_half_type>);
+MPI_BROADCAST_PROTO(Entry<cpu_half_type>);
+#endif
+#ifdef HYDROGEN_GPU_USE_FP16
+MPI_BROADCAST_PROTO(gpu_half_type);
+MPI_BROADCAST_PROTO(Entry<gpu_half_type>);
 #endif
 #ifdef HYDROGEN_HAVE_QD
-MPI_BROADCAST_PROTO(DoubleDouble)
-MPI_BROADCAST_PROTO(QuadDouble)
-MPI_BROADCAST_PROTO(Complex<DoubleDouble>)
-MPI_BROADCAST_PROTO(Complex<QuadDouble>)
-MPI_BROADCAST_PROTO(ValueInt<DoubleDouble>)
-MPI_BROADCAST_PROTO(ValueInt<QuadDouble>)
-MPI_BROADCAST_PROTO(ValueInt<Complex<DoubleDouble>>)
-MPI_BROADCAST_PROTO(ValueInt<Complex<QuadDouble>>)
-MPI_BROADCAST_PROTO(Entry<DoubleDouble>)
-MPI_BROADCAST_PROTO(Entry<QuadDouble>)
-MPI_BROADCAST_PROTO(Entry<Complex<DoubleDouble>>)
-MPI_BROADCAST_PROTO(Entry<Complex<QuadDouble>>)
+MPI_BROADCAST_PROTO(DoubleDouble);
+MPI_BROADCAST_PROTO(QuadDouble);
+MPI_BROADCAST_PROTO(Complex<DoubleDouble>);
+MPI_BROADCAST_PROTO(Complex<QuadDouble>);
+MPI_BROADCAST_PROTO(ValueInt<DoubleDouble>);
+MPI_BROADCAST_PROTO(ValueInt<QuadDouble>);
+MPI_BROADCAST_PROTO(ValueInt<Complex<DoubleDouble>>);
+MPI_BROADCAST_PROTO(ValueInt<Complex<QuadDouble>>);
+MPI_BROADCAST_PROTO(Entry<DoubleDouble>);
+MPI_BROADCAST_PROTO(Entry<QuadDouble>);
+MPI_BROADCAST_PROTO(Entry<Complex<DoubleDouble>>);
+MPI_BROADCAST_PROTO(Entry<Complex<QuadDouble>>);
 #endif
 #ifdef HYDROGEN_HAVE_QUADMATH
-MPI_BROADCAST_PROTO(Quad)
-MPI_BROADCAST_PROTO(Complex<Quad>)
-MPI_BROADCAST_PROTO(ValueInt<Quad>)
-MPI_BROADCAST_PROTO(ValueInt<Complex<Quad>>)
-MPI_BROADCAST_PROTO(Entry<Quad>)
-MPI_BROADCAST_PROTO(Entry<Complex<Quad>>)
+MPI_BROADCAST_PROTO(Quad);
+MPI_BROADCAST_PROTO(Complex<Quad>);
+MPI_BROADCAST_PROTO(ValueInt<Quad>);
+MPI_BROADCAST_PROTO(ValueInt<Complex<Quad>>);
+MPI_BROADCAST_PROTO(Entry<Quad>);
+MPI_BROADCAST_PROTO(Entry<Complex<Quad>>);
 #endif
 #ifdef HYDROGEN_HAVE_MPC
-MPI_BROADCAST_PROTO(BigInt)
-MPI_BROADCAST_PROTO(BigFloat)
-MPI_BROADCAST_PROTO(Complex<BigFloat>)
-MPI_BROADCAST_PROTO(ValueInt<BigInt>)
-MPI_BROADCAST_PROTO(ValueInt<BigFloat>)
-MPI_BROADCAST_PROTO(ValueInt<Complex<BigFloat>>)
-MPI_BROADCAST_PROTO(Entry<BigInt>)
-MPI_BROADCAST_PROTO(Entry<BigFloat>)
-MPI_BROADCAST_PROTO(Entry<Complex<BigFloat>>)
+MPI_BROADCAST_PROTO(BigInt);
+MPI_BROADCAST_PROTO(BigFloat);
+MPI_BROADCAST_PROTO(Complex<BigFloat>);
+MPI_BROADCAST_PROTO(ValueInt<BigInt>);
+MPI_BROADCAST_PROTO(ValueInt<BigFloat>);
+MPI_BROADCAST_PROTO(ValueInt<Complex<BigFloat>>);
+MPI_BROADCAST_PROTO(Entry<BigInt>);
+MPI_BROADCAST_PROTO(Entry<BigFloat>);
+MPI_BROADCAST_PROTO(Entry<Complex<BigFloat>>);
 #endif
 
 }// namespace mpi

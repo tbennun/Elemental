@@ -38,6 +38,21 @@ void Axpy(S alphaS, AbstractMatrix<T> const& X, AbstractMatrix<T>& Y)
     }
 }
 
+#ifdef HYDROGEN_GPU_USE_FP16
+template <>
+inline void Axpy(
+    gpu_half_type alphaS,
+    AbstractMatrix<gpu_half_type> const& X, AbstractMatrix<gpu_half_type>& Y)
+{
+    if (X.GetDevice() != Device::GPU || X.GetDevice() != Y.GetDevice())
+        LogicError("Axpy<gpu_half_type,gpu_half_type>: Incompatible devices!");
+
+    Axpy(alphaS,
+         static_cast<Matrix<gpu_half_type,Device::GPU> const&>(X),
+         static_cast<Matrix<gpu_half_type,Device::GPU>&>(Y));
+}
+#endif // HYDROGEN_GPU_USE_FP16
+
 template<typename T,typename S>
 void Axpy(S alphaS, const Matrix<T,Device::CPU>& X, Matrix<T,Device::CPU>& Y)
 {
@@ -104,6 +119,14 @@ void Axpy(S alphaS, const Matrix<T,Device::GPU>& X, Matrix<T,Device::GPU>& Y)
     LogicError("Axpy: Invalid type-device combination.");
 }
 
+template <typename T>
+void DoGpuAxpy(Int const& mX, Int const& nX, T const& alpha,
+               T const* XBuf, Int const& ldX, T* YBuf, Int const& ldY,
+               SyncInfo<Device::GPU> const& si)
+{
+    gpu_blas::Axpy(mX, nX, alpha, XBuf, ldX, YBuf, ldY, si);
+}
+
 template<typename T,typename S,
          typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
 void Axpy(S alphaS, Matrix<T,Device::GPU> const& X, Matrix<T,Device::GPU>& Y)
@@ -119,17 +142,10 @@ void Axpy(S alphaS, Matrix<T,Device::GPU> const& X, Matrix<T,Device::GPU>& Y)
     T const* XBuf = X.LockedBuffer();
     T* YBuf = Y.Buffer();
 
-    SyncInfo<Device::GPU> syncInfoA = SyncInfoFromMatrix(X), syncInfoB = SyncInfoFromMatrix(Y);
+    SyncInfo<Device::GPU>
+        syncInfoA = SyncInfoFromMatrix(X),
+        syncInfoB = SyncInfoFromMatrix(Y);
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
-
-    // Keep the old stream so we can restore it. I don't know if this
-    // is necessary, but it might be good to keep the cuBLAS handle
-    // "looking const" outside this function.
-    cudaStream_t old_stream;
-    EL_CHECK_CUBLAS(
-        cublasGetStream(GPUManager::cuBLASHandle(), &old_stream));
-    EL_CHECK_CUBLAS(
-        cublasSetStream(GPUManager::cuBLASHandle(), syncInfoB.stream_));
 
     // If X and Y are vectors, we can allow one to be a column and the other
     // to be a row. Otherwise we force X and Y to be the same dimension.
@@ -144,17 +160,14 @@ void Axpy(S alphaS, Matrix<T,Device::GPU> const& X, Matrix<T,Device::GPU>& Y)
         if (XLength != YLength)
             LogicError("Nonconformal Axpy");
 #endif // !EL_RELEASE
-        cublas::Axpy(XLength, alpha, XBuf, XStride, YBuf, YStride);
+        gpu_blas::Axpy(
+            XLength, alpha, XBuf, XStride, YBuf, YStride, syncInfoB);
     }
     else
     {
-        cublas::Geam('N', 'N', mX, nX,
-                     alpha, XBuf, ldX,
-                     T(1), YBuf, ldY, YBuf, ldY);
+        gpu_blas::Axpy(
+            mX, nX, alpha, XBuf, ldX, YBuf, ldY, syncInfoB);
     }
-    // Restore the "default" stream
-    EL_CHECK_CUBLAS(
-        cublasSetStream(GPUManager::cuBLASHandle(), old_stream));
 }
 #endif // HYDROGEN_HAVE_CUDA
 

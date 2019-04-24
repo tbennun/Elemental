@@ -30,34 +30,34 @@ void ContractDispatch
         B.AlignAndResize
         (A.ColAlign(), A.RowAlign(), A.Height(), A.Width(), false, false);
         Zero(B.Matrix());
-        AxpyContract(T(1), A, B);
+        AxpyContract(TypeTraits<T>::One(), A, B);
     }
     else if(A.ColDist() == Partial(U) && A.RowDist() == V)
     {
         B.AlignAndResize
         (A.ColAlign(), A.RowAlign(), A.Height(), A.Width(), false, false);
         Zero(B.Matrix());
-        AxpyContract(T(1), A, B);
+        AxpyContract(TypeTraits<T>::One(), A, B);
     }
     else if(A.ColDist() == U && A.RowDist() == Collect(V))
     {
         B.AlignColsAndResize
         (A.ColAlign(), A.Height(), A.Width(), false, false);
         Zero(B.Matrix());
-        AxpyContract(T(1), A, B);
+        AxpyContract(TypeTraits<T>::One(), A, B);
     }
     else if(A.ColDist() == Collect(U) && A.RowDist() == V)
     {
         B.AlignRowsAndResize
         (A.RowAlign(), A.Height(), A.Width(), false, false);
         Zero(B.Matrix());
-        AxpyContract(T(1), A, B);
+        AxpyContract(TypeTraits<T>::One(), A, B);
     }
     else if(A.ColDist() == Collect(U) && A.RowDist() == Collect(V))
     {
         B.Resize(A.Height(), A.Width());
         Zero(B.Matrix());
-        AxpyContract(T(1), A, B);
+        AxpyContract(TypeTraits<T>::One(), A, B);
     }
     else
         LogicError("Incompatible distributions");
@@ -118,7 +118,7 @@ void Contract
           A.ColAlign(), A.RowAlign(), A.ColCut(), A.RowCut(),
           A.Height(), A.Width(), false, false);
         Zero(B.Matrix());
-        AxpyContract(T(1), A, B);
+        AxpyContract(TypeTraits<T>::One(), A, B);
     }
     else if(A.ColDist() == Partial(U) && A.RowDist() == V)
     {
@@ -127,7 +127,7 @@ void Contract
           A.ColAlign(), A.RowAlign(), A.ColCut(), A.RowCut(),
           A.Height(), A.Width(), false, false);
         Zero(B.Matrix());
-        AxpyContract(T(1), A, B);
+        AxpyContract(TypeTraits<T>::One(), A, B);
     }
     else if(A.ColDist() == U && A.RowDist() == Collect(V))
     {
@@ -135,7 +135,7 @@ void Contract
         (A.BlockHeight(), A.ColAlign(), A.ColCut(), A.Height(), A.Width(),
           false, false);
         Zero(B.Matrix());
-        AxpyContract(T(1), A, B);
+        AxpyContract(TypeTraits<T>::One(), A, B);
     }
     else if(A.ColDist() == Collect(U) && A.RowDist() == V)
     {
@@ -143,13 +143,13 @@ void Contract
         (A.BlockWidth(), A.RowAlign(), A.RowCut(), A.Height(), A.Width(),
           false, false);
         Zero(B.Matrix());
-        AxpyContract(T(1), A, B);
+        AxpyContract(TypeTraits<T>::One(), A, B);
     }
     else if(A.ColDist() == Collect(U) && A.RowDist() == Collect(V))
     {
         B.Resize(A.Height(), A.Width());
         Zero(B.Matrix());
-        AxpyContract(T(1), A, B);
+        AxpyContract(TypeTraits<T>::One(), A, B);
     }
     else
         LogicError("Incompatible distributions");
@@ -168,6 +168,10 @@ void Contract
   EL_EXTERN template void Contract \
   (const BlockMatrix<T>& A, \
           BlockMatrix<T>& B);
+
+#ifdef HYDROGEN_GPU_USE_FP16
+PROTO(gpu_half_type)
+#endif // HYDROGEN_GPU_USE_FP16
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

@@ -126,7 +126,7 @@ void Copy(const Matrix<T,Device::GPU>& A, Matrix<T,Device::GPU>& B)
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 
     // Launch the copy
-    EL_CHECK_CUDA(
+    H_CHECK_CUDA(
         cudaMemcpy2DAsync(BBuf, ldB*sizeof(T),
                           ABuf, ldA*sizeof(T),
                           height*sizeof(T), width,

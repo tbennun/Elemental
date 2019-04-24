@@ -34,8 +34,8 @@ Base<Field> FrobeniusNorm(const Matrix<Field>& A)
 {
     EL_DEBUG_CSE
     typedef Base<Field> Real;
-    Real scale{0};
-    Real scaledSquare{1};
+    Real scale = TypeTraits<Real>::Zero();
+    Real scaledSquare = TypeTraits<Real>::One();
     const Int width = A.Width();
     const Int height = A.Height();
     for (Int j=0; j<width; ++j)
@@ -52,8 +52,8 @@ Base<Field> HermitianFrobeniusNorm(UpperOrLower uplo, const Matrix<Field>& A)
         LogicError("Hermitian matrices must be square.");
 
     typedef Base<Field> Real;
-    Real scale{0};
-    Real scaledSquare{1};
+    Real scale = TypeTraits<Real>::Zero();
+    Real scaledSquare = TypeTraits<Real>::One();
     const Int height = A.Height();
     const Int width = A.Width();
     if (uplo == UPPER)
@@ -98,7 +98,7 @@ Real NormFromScaledSquare
     const Real scale = mpi::AllReduce(localScale, mpi::MAX, comm,
                                       SyncInfo<Device::CPU>());
 
-    if (scale != Real(0))
+    if (scale != TypeTraits<Real>::Zero())
     {
         // Equilibrate our local scaled sum to the maximum scale
         Real relScale = localScale/scale;
@@ -110,7 +110,7 @@ Real NormFromScaledSquare
         return scale*Sqrt(scaledSquare);
     }
     else
-        return Real{0};
+        return TypeTraits<Real>::Zero();
 }
 
 template<typename Field>
@@ -121,7 +121,8 @@ Base<Field> FrobeniusNorm(const AbstractDistMatrix<Field>& A)
     Real norm;
     if (A.Participating())
     {
-        Real localScale{0}, localScaledSquare{1};
+        Real localScale = TypeTraits<Real>::Zero(),
+            localScaledSquare = TypeTraits<Real>::One();
         const Int localHeight = A.LocalHeight();
         const Int localWidth = A.LocalWidth();
 
@@ -153,8 +154,8 @@ Base<Field> HermitianFrobeniusNorm
     Real norm;
     if (A.Participating())
     {
-        Real localScale{0};
-        Real localScaledSquare{1};
+        Real localScale = TypeTraits<Real>::Zero();
+        Real localScaledSquare = TypeTraits<Real>::One();
         const Int localWidth = A.LocalWidth();
         const Int localHeight = A.LocalHeight();
         const Matrix<Field>& ALoc =
@@ -220,6 +221,10 @@ Base<Field> SymmetricFrobeniusNorm
   (UpperOrLower uplo, const Matrix<Field>& A); \
   template Base<Field> SymmetricFrobeniusNorm \
   (UpperOrLower uplo, const AbstractDistMatrix<Field>& A);
+
+#ifdef HYDROGEN_GPU_USE_FP16
+PROTO(gpu_half_type)
+#endif
 
 #define EL_NO_INT_PROTO
 #define EL_ENABLE_DOUBLEDOUBLE

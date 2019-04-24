@@ -10,7 +10,7 @@
 #define EL_BLAS_AXPY_UTIL_HPP
 
 #ifdef HYDROGEN_HAVE_CUDA
-#include "../GPU/Axpy.hpp"
+#include <hydrogen/blas/gpu/Axpy.hpp>
 #endif
 
 namespace El
@@ -43,10 +43,11 @@ void InterleaveMatrixUpdate(
     T* B, Int colStrideB, Int rowStrideB,
     SyncInfo<Device::GPU> syncInfo)
 {
-    EL_DEBUG_CSE
-    Axpy_GPU_impl(height, width, alpha,
-                  A, colStrideA, rowStrideA,
-                  B, colStrideB, rowStrideB, syncInfo.stream_);
+    EL_DEBUG_CSE;
+    hydrogen::Axpy_GPU_impl(height, width, alpha,
+                            A, colStrideA, rowStrideA,
+                            B, colStrideB, rowStrideB,
+                            syncInfo.stream_);
 }
 #endif // HYDROGEN_HAVE_CUDA
 

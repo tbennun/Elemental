@@ -10,7 +10,7 @@
 #define EL_BLAS_HADAMARD_HPP
 
 #ifdef HYDROGEN_HAVE_CUDA
-#include "GPU/Hadamard.hpp"
+#include <hydrogen/blas/gpu/Hadamard.hpp>
 #endif // HYDROGEN_HAVE_CUDA
 
 // C(i,j) := A(i,j) B(i,j)
@@ -80,10 +80,22 @@ void Hadamard(AbstractMatrix<T> const& A, AbstractMatrix<T> const& B,
         break;
 #ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
-        Hadamard_GPU_impl( height, width,
-                           ABuf, 1, ALDim, BBuf, 1, BLDim,
-                           CBuf, 1, CLDim );
-        break;
+    {
+        auto si_A = SyncInfoFromMatrix(
+            static_cast<Matrix<T,Device::GPU> const&>(A));
+        auto si_B = SyncInfoFromMatrix(
+            static_cast<Matrix<T,Device::GPU> const&>(B));
+        auto si_C = SyncInfoFromMatrix(
+            static_cast<Matrix<T,Device::GPU>&>(C));
+
+        auto syncHelper = MakeMultiSync(si_C, si_A, si_B);
+
+        hydrogen::Hadamard_GPU_impl(height, width,
+                                    ABuf, 1, ALDim, BBuf, 1, BLDim,
+                                    CBuf, 1, CLDim,
+                                    si_C.stream_);
+    }
+    break;
 #endif // HYDROGEN_HAVE_CUDA
     default:
         LogicError("Bad device type for Hadamard.");

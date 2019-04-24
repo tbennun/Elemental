@@ -90,32 +90,32 @@ static void Gemm_impl(
 {
     AUTO_PROFILE_REGION("Gemm_impl.GPU", SyncInfoFromMatrix(C));
 
-    const char transA = OrientationToChar(orientA);
-    const char transB = OrientationToChar(orientB);
+    auto const transA = OrientationToTransposeMode(orientA);
+    auto const transB = OrientationToTransposeMode(orientB);
     const Int m = C.Height();
     const Int n = C.Width();
     const Int k = (orientA == NORMAL ? A.Width() : A.Height());
 
+    auto master_sync = SyncInfoFromMatrix(C);
     auto SyncManager = MakeMultiSync(
-        SyncInfoFromMatrix(C),
-        SyncInfoFromMatrix(A), SyncInfoFromMatrix(B));
+        master_sync, SyncInfoFromMatrix(A), SyncInfoFromMatrix(B));
 
     // Keep the old stream so we can restore it. I don't know if this
     // is necessary, but it might be good to keep the cuBLAS handle
     // "looking const" outside this function.
     cudaStream_t old_stream;
-    EL_CHECK_CUBLAS(
+    H_CHECK_CUBLAS(
         cublasGetStream(GPUManager::cuBLASHandle(), &old_stream));
-    EL_CHECK_CUBLAS(
+    H_CHECK_CUBLAS(
         cublasSetStream(GPUManager::cuBLASHandle(), C.Stream()));
 
-    cublas::Gemm(transA, transB, m, n, k,
-                 alpha, A.LockedBuffer(), A.LDim(),
-                 B.LockedBuffer(), B.LDim(),
-                 beta, C.Buffer(), C.LDim());
+    gpu_blas::Gemm(transA, transB, m, n, k,
+                   alpha, A.LockedBuffer(), A.LDim(),
+                   B.LockedBuffer(), B.LDim(),
+                   beta, C.Buffer(), C.LDim(), master_sync);
 
     // Restore the "default" stream
-    EL_CHECK_CUBLAS(
+    H_CHECK_CUBLAS(
         cublasSetStream(GPUManager::cuBLASHandle(), old_stream));
 }
 
@@ -202,7 +202,7 @@ void Gemm (
     const Int n = (orientB==NORMAL ? B.Width() : B.Height());
     C.Resize(m, n);
     Zero(C);
-    Gemm(orientA, orientB, alpha, A, B, T(0), C);
+    Gemm(orientA, orientB, alpha, A, B, TypeTraits<T>::Zero(), C);
 }
 
 template<typename T>
@@ -248,7 +248,7 @@ void Gemm
     const Int n = (orientB==NORMAL ? B.Width() : B.Height());
     C.Resize(m, n);
     Zero(C);
-    Gemm(orientA, orientB, alpha, A, B, T(0), C, alg);
+    Gemm(orientA, orientB, alpha, A, B, TypeTraits<T>::Zero(), C, alg);
 }
 
 template<typename T>
@@ -373,7 +373,7 @@ void LocalGemm
     const Int n = (orientB==NORMAL ? B.Width() : B.Height());
     C.Resize(m, n);
     Zero(C);
-    LocalGemm(orientA, orientB, alpha, A, B, T(0), C);
+    LocalGemm(orientA, orientB, alpha, A, B, TypeTraits<T>::Zero(), C);
 }
 
 #ifdef HYDROGEN_HAVE_CUDA
@@ -389,43 +389,58 @@ template void Gemm(Orientation orientA, Orientation orientB,
                    Matrix<double,Device::GPU> const& B,
                    double beta,
                    Matrix<double,Device::GPU>& C);
+#ifdef HYDROGEN_GPU_USE_FP16
+template void Gemm(Orientation orientA, Orientation orientB,
+                   gpu_half_type alpha,
+                   Matrix<gpu_half_type,Device::GPU> const& A,
+                   Matrix<gpu_half_type,Device::GPU> const& B,
+                   gpu_half_type beta,
+                   Matrix<gpu_half_type,Device::GPU>& C);
+#endif // HYDROGEN_GPU_USE_FP16
 #endif // HYDROGEN_HAVE_CUDA
 
-#define PROTO(T) \
-  template void Gemm                                          \
-  (Orientation, Orientation, T,                                 \
-   AbstractMatrix<T> const&, AbstractMatrix<T> const&,          \
-   T, AbstractMatrix<T>&);                                      \
-  template void Gemm \
-  (Orientation orientA, Orientation orientB, \
-   T alpha, const Matrix<T,Device::CPU>& A,     \
-             const Matrix<T,Device::CPU>& B, \
-    T beta,        Matrix<T,Device::CPU>& C); \
-  template void Gemm \
-  (Orientation orientA, Orientation orientB, \
-    T alpha, const Matrix<T,Device::CPU>& A, \
-             const Matrix<T,Device::CPU>& B, \
-                   Matrix<T,Device::CPU>& C); \
-  template void Gemm \
-  (Orientation orientA, Orientation orientB, \
-    T alpha, const AbstractDistMatrix<T>& A, \
-             const AbstractDistMatrix<T>& B, \
-    T beta,        AbstractDistMatrix<T>& C, GemmAlgorithm alg); \
-  template void Gemm \
-  (Orientation orientA, Orientation orientB, \
-    T alpha, const AbstractDistMatrix<T>& A, \
-             const AbstractDistMatrix<T>& B, \
-                   AbstractDistMatrix<T>& C, GemmAlgorithm alg); \
-  template void LocalGemm \
-  (Orientation orientA, Orientation orientB, \
-    T alpha, const AbstractDistMatrix<T>& A, \
-             const AbstractDistMatrix<T>& B, \
-    T beta,        AbstractDistMatrix<T>& C); \
-  template void LocalGemm \
-  (Orientation orientA, Orientation orientB, \
-    T alpha, const AbstractDistMatrix<T>& A, \
-             const AbstractDistMatrix<T>& B, \
-                   AbstractDistMatrix<T>& C);
+#define ABSTRACT_PROTO(T)                                               \
+    template void Gemm(                                                 \
+        Orientation, Orientation, T,                                    \
+        AbstractMatrix<T> const&, AbstractMatrix<T> const&,             \
+        T, AbstractMatrix<T>&);                                         \
+    template void Gemm(                                                 \
+        Orientation orientA, Orientation orientB,                       \
+        T alpha, const AbstractDistMatrix<T>& A,                        \
+        const AbstractDistMatrix<T>& B,                                 \
+        T beta, AbstractDistMatrix<T>& C, GemmAlgorithm alg);           \
+    template void Gemm(                                                 \
+        Orientation orientA, Orientation orientB,                       \
+        T alpha, const AbstractDistMatrix<T>& A,                        \
+        const AbstractDistMatrix<T>& B,                                 \
+        AbstractDistMatrix<T>& C, GemmAlgorithm alg);                   \
+    template void LocalGemm(                                            \
+        Orientation orientA, Orientation orientB,                       \
+        T alpha, const AbstractDistMatrix<T>& A,                        \
+        const AbstractDistMatrix<T>& B,                                 \
+        T beta,        AbstractDistMatrix<T>& C);                       \
+    template void LocalGemm(                                            \
+        Orientation orientA, Orientation orientB,                       \
+        T alpha, const AbstractDistMatrix<T>& A,                        \
+        const AbstractDistMatrix<T>& B,                                 \
+        AbstractDistMatrix<T>& C)
+
+#define PROTO(T)                                        \
+    ABSTRACT_PROTO(T);                                  \
+    template void Gemm(                                 \
+        Orientation orientA, Orientation orientB,       \
+        T alpha, const Matrix<T,Device::CPU>& A,        \
+        const Matrix<T,Device::CPU>& B,                 \
+        T beta,        Matrix<T,Device::CPU>& C);       \
+    template void Gemm(                                 \
+        Orientation orientA, Orientation orientB,       \
+        T alpha, const Matrix<T,Device::CPU>& A,        \
+        const Matrix<T,Device::CPU>& B,                 \
+        Matrix<T,Device::CPU>& C);
+
+#ifdef HYDROGEN_GPU_USE_FP16
+ABSTRACT_PROTO(gpu_half_type);
+#endif // HYDROGEN_GPU_USE_FP16
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

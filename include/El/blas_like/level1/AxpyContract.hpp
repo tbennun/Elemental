@@ -60,7 +60,7 @@ void PartialColScatter
         // We explicitly zero-initialize rather than calling FastResize to avoid
         // inadvertently causing a floating-point exception in the reduction of
         // the padding entries.
-        simple_buffer<T,D> buffer(sendSize, T(0), syncInfoB);
+        simple_buffer<T,D> buffer(sendSize, TypeTraits<T>::Zero(), syncInfoB);
 
         // Pack
         copy::util::PartialColStridedPack(
@@ -118,7 +118,7 @@ void PartialRowScatter(
         const Int recvSize = mpi::Pad( height*maxLocalWidth );
         const Int sendSize = rowStrideUnion*recvSize;
 
-        simple_buffer<T,D> buffer(sendSize, T(0), syncInfoB);
+        simple_buffer<T,D> buffer(sendSize, TypeTraits<T>::Zero(), syncInfoB);
 
         // Pack
         copy::util::PartialRowStridedPack(
@@ -197,7 +197,7 @@ void ColScatter
 
         const Int recvSize = mpi::Pad( maxLocalHeight*localWidth );
         const Int sendSize = colStride*recvSize;
-        simple_buffer<T,D> buffer(sendSize, T(0), syncInfoB);
+        simple_buffer<T,D> buffer(sendSize, TypeTraits<T>::Zero(), syncInfoB);
 
         // Pack
         copy::util::ColStridedPack(
@@ -230,7 +230,7 @@ void ColScatter
         const Int recvSize_SR = localHeight*localWidth;
 
         simple_buffer<T,D> buffer(
-            recvSize_RS + Max(sendSize_RS,recvSize_SR), T(0), syncInfoB);
+            recvSize_RS + Max(sendSize_RS,recvSize_SR), TypeTraits<T>::Zero(), syncInfoB);
         T* firstBuf = buffer.data();
         T* secondBuf = buffer.data() + recvSize_RS;
 
@@ -290,7 +290,7 @@ void RowScatter
         {
             const Int localHeight = B.LocalHeight();
             const Int portionSize = mpi::Pad( localHeight );
-            simple_buffer<T,D> buffer(portionSize, T(0), syncInfoB);
+            simple_buffer<T,D> buffer(portionSize, TypeTraits<T>::Zero(), syncInfoB);
 
             // Reduce to rowAlign
             const Int rowAlign = B.RowAlign();
@@ -319,7 +319,7 @@ void RowScatter
             const Int sendSize = rowStride*portionSize;
 
             // Pack
-            simple_buffer<T,D> buffer(sendSize, T(0), syncInfoB);
+            simple_buffer<T,D> buffer(sendSize, TypeTraits<T>::Zero(), syncInfoB);
             copy::util::RowStridedPack(
                 localHeight, width,
                 rowAlign, rowStride,
@@ -355,7 +355,7 @@ void RowScatter
         if( width == 1 )
         {
             simple_buffer<T,D> buffer(
-                localHeight + localHeightA, T(0), syncInfoB);
+                localHeight + localHeightA, TypeTraits<T>::Zero(), syncInfoB);
             T* sendBuf = buffer.data();
             T* recvBuf = buffer.data() + localHeightA;
 
@@ -392,7 +392,7 @@ void RowScatter
             const Int recvSize_SR = localHeight * localWidth;
 
             simple_buffer<T,D> buffer(
-                recvSize_RS + Max(sendSize_RS,recvSize_SR), T(0), syncInfoB);
+                recvSize_RS + Max(sendSize_RS,recvSize_SR), TypeTraits<T>::Zero(), syncInfoB);
             T* firstBuf = buffer.data();
             T* secondBuf = buffer.data() + recvSize_RS;
 
@@ -457,7 +457,7 @@ void Scatter
 
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 
-    simple_buffer<T,D> buffer(sendSize, T(0), syncInfoB);
+    simple_buffer<T,D> buffer(sendSize, TypeTraits<T>::Zero(), syncInfoB);
 
     // Pack
     copy::util::StridedPack(
@@ -569,6 +569,12 @@ void AxpyContract
     const BlockMatrix<T>& A, \
           BlockMatrix<T>& B );
 
+#ifdef HYDROGEN_GPU_USE_FP16
+EL_EXTERN template void AxpyContract(
+    gpu_half_type alpha,
+    const ElementalMatrix<gpu_half_type>& A,
+    ElementalMatrix<gpu_half_type>& B );
+#endif // HYDROGEN_GPU_USE_FP16
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE
 #define EL_ENABLE_QUAD

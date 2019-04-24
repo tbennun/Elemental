@@ -60,12 +60,12 @@ Matrix<T, Device::GPU>::Matrix(Matrix<T, Device::CPU> const& A)
 {
     EL_DEBUG_CSE;
     auto stream = this->Stream();
-    EL_CHECK_CUDA(cudaMemcpy2DAsync(data_, this->LDim()*sizeof(T),
+    H_CHECK_CUDA(cudaMemcpy2DAsync(data_, this->LDim()*sizeof(T),
                                     A.LockedBuffer(), A.LDim()*sizeof(T),
                                     A.Height()*sizeof(T), A.Width(),
                                     cudaMemcpyHostToDevice,
                                     stream));
-    EL_CHECK_CUDA(cudaStreamSynchronize(stream));
+    H_CHECK_CUDA(cudaStreamSynchronize(stream));
 }
 
 template <typename T>
@@ -267,10 +267,10 @@ T Matrix<T, Device::GPU>::Get(Int i, Int j) const
     if (j == END) j = this->Width() - 1;
     auto stream = this->Stream();
     T val;
-    EL_CHECK_CUDA(cudaMemcpyAsync( &val, &data_[i+j*this->LDim()],
+    H_CHECK_CUDA(cudaMemcpyAsync( &val, &data_[i+j*this->LDim()],
                                    sizeof(T), cudaMemcpyDeviceToHost,
                                    stream ));
-    EL_CHECK_CUDA(cudaStreamSynchronize(stream));
+    H_CHECK_CUDA(cudaStreamSynchronize(stream));
     return val;
 }
 
@@ -310,10 +310,10 @@ void Matrix<T, Device::GPU>::Set(Int i, Int j, T const& alpha)
 #endif
     if (i == END) i = this->Height() - 1;
     if (j == END) j = this->Width() - 1;
-    EL_CHECK_CUDA(cudaMemcpyAsync(&data_[i+j*this->LDim()], &alpha,
+    H_CHECK_CUDA(cudaMemcpyAsync(&data_[i+j*this->LDim()], &alpha,
                                   sizeof(T), cudaMemcpyHostToDevice,
                                   stream_ ));
-    EL_CHECK_CUDA(cudaStreamSynchronize(stream_));
+    H_CHECK_CUDA(cudaStreamSynchronize(stream_));
 }
 
 template <typename T>

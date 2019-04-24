@@ -9,8 +9,14 @@
 #ifndef EL_MEMORY_DECL_HPP
 #define EL_MEMORY_DECL_HPP
 
+#include <hydrogen/Device.hpp>
+#include <hydrogen/SyncInfo.hpp>
+
 namespace El
 {
+
+using hydrogen::Device;
+using hydrogen::SyncInfo;
 
 template <Device D>
 constexpr unsigned DefaultMemoryMode();
@@ -47,10 +53,10 @@ public:
     Memory<G,D>& operator=(Memory<G,D>&& mem);
 
     // Exchange metadata with 'mem'
-    void ShallowSwap(Memory<G,D>& mem) EL_NO_EXCEPT;
+    void ShallowSwap(Memory<G,D>& mem) noexcept;
 
-    G* Buffer() const EL_NO_EXCEPT;
-    size_t Size() const EL_NO_EXCEPT;
+    G* Buffer() const noexcept;
+    size_t Size() const noexcept;
 
     G* Require(size_t size);
     void Release();

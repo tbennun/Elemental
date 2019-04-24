@@ -15,7 +15,7 @@ template <typename T, typename S>
 void TransposeAxpy(
     S alphaS, AbstractMatrix<T> const& X, AbstractMatrix<T>& Y, bool conjugate)
 {
-    EL_DEBUG_CSE
+    EL_DEBUG_CSE;
     if (X.GetDevice() != Y.GetDevice())
         LogicError("X and Y must have same device for TransposeAxpy.");
 
@@ -43,10 +43,10 @@ void TransposeAxpy(
 
 template<typename T,typename S>
 void TransposeAxpy
-(       S alphaS,
+(      S alphaS,
   const Matrix<T>& X,
         Matrix<T>& Y,
-        bool conjugate )
+        bool conjugate)
 {
     EL_DEBUG_CSE
     const T alpha = T(alphaS);
@@ -59,49 +59,49 @@ void TransposeAxpy
           T* YBuf = Y.Buffer();
     // If X and Y are vectors, we can allow one to be a column and the other
     // to be a row. Otherwise we force X and Y to be the same dimension.
-    if( mX == 1 || nX == 1 )
+    if(mX == 1 || nX == 1)
     {
-        const Int lengthX = ( nX==1 ? mX : nX );
-        const Int incX = ( nX==1 ? 1  : ldX );
-        const Int incY = ( nY==1 ? 1  : ldY );
-        EL_DEBUG_ONLY(
-          const Int mY = Y.Height();
-          const Int lengthY = ( nY==1 ? mY : nY );
-          if( lengthX != lengthY )
-              LogicError("Nonconformal TransposeAxpy");
-        )
-        if( conjugate )
-            for( Int j=0; j<lengthX; ++j )
+        const Int lengthX = (nX==1 ? mX : nX);
+        const Int incX = (nX==1 ? 1  : ldX);
+        const Int incY = (nY==1 ? 1  : ldY);
+#ifdef HYDROGEN_ENABLE_BOUNDS_CHECKING
+        const Int mY = Y.Height();
+        const Int lengthY = (nY==1 ? mY : nY);
+        if(lengthX != lengthY)
+            LogicError("Nonconformal TransposeAxpy");
+#endif // HYDROGEN_ENABLE_BOUNDS_CHECKING
+        if(conjugate)
+            for(Int j=0; j<lengthX; ++j)
                 YBuf[j*incY] += alpha*Conj(XBuf[j*incX]);
         else
-            blas::Axpy( lengthX, alpha, XBuf, incX, YBuf, incY );
+            blas::Axpy(lengthX, alpha, XBuf, incX, YBuf, incY);
     }
     else
     {
-        EL_DEBUG_ONLY(
-          const Int mY = Y.Height();
-          if( mX != nY || nX != mY )
-              LogicError("Nonconformal TransposeAxpy");
-        )
-        if( nX <= mX )
+#ifdef HYDROGEN_ENABLE_BOUNDS_CHECKING
+        const Int mY = Y.Height();
+        if(mX != nY || nX != mY)
+            LogicError("Nonconformal TransposeAxpy");
+#endif // HYDROGEN_ENABLE_BOUNDS_CHECKING
+        if(nX <= mX)
         {
-            if( conjugate )
-                for( Int j=0; j<nX; ++j )
-                    for( Int i=0; i<mX; ++i )
+            if(conjugate)
+                for(Int j=0; j<nX; ++j)
+                    for(Int i=0; i<mX; ++i)
                         YBuf[j+i*ldY] += alpha*Conj(XBuf[i+j*ldX]);
             else
-                for( Int j=0; j<nX; ++j )
-                    blas::Axpy( mX, alpha, &XBuf[j*ldX], 1, &YBuf[j], ldY );
+                for(Int j=0; j<nX; ++j)
+                    blas::Axpy(mX, alpha, &XBuf[j*ldX], 1, &YBuf[j], ldY);
         }
         else
         {
-            if( conjugate )
-                for( Int i=0; i<mX; ++i )
-                    for( Int j=0; j<nX; ++j )
+            if(conjugate)
+                for(Int i=0; i<mX; ++i)
+                    for(Int j=0; j<nX; ++j)
                         YBuf[j+i*ldY] += alpha*Conj(XBuf[i+j*ldX]);
             else
-                for( Int i=0; i<mX; ++i )
-                    blas::Axpy( nX, alpha, &XBuf[i], ldX, &YBuf[i*ldY], 1 );
+                for(Int i=0; i<mX; ++i)
+                    blas::Axpy(nX, alpha, &XBuf[i], ldX, &YBuf[i*ldY], 1);
         }
     }
 }
@@ -114,7 +114,7 @@ void TransposeAxpy(S alphaS,
                    Matrix<T,Device::GPU>& Y,
                    bool conjugate)
 {
-    EL_DEBUG_CSE
+    EL_DEBUG_CSE;
     const T alpha = T(alphaS);
     const Int mX = X.Height();
     const Int nX = X.Width();
@@ -133,45 +133,33 @@ void TransposeAxpy(S alphaS,
     auto syncInfoA = SyncInfoFromMatrix(X), syncInfoB = SyncInfoFromMatrix(Y);
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 
-    // Keep the old stream so we can restore it. I don't know if this
-    // is necessary, but it might be good to keep the cuBLAS handle
-    // "looking const" outside this function.
-    cudaStream_t old_stream;
-    EL_CHECK_CUBLAS(
-        cublasGetStream(GPUManager::cuBLASHandle(), &old_stream));
-    EL_CHECK_CUBLAS(
-        cublasSetStream(GPUManager::cuBLASHandle(), syncInfoB.stream_));
-
     // If X and Y are vectors, we can allow one to be a column and the other
     // to be a row. Otherwise we force X and Y to be the same dimension.
-    if( mX == 1 || nX == 1 )
+    if(mX == 1 || nX == 1)
     {
-        const Int lengthX = ( nX==1 ? mX : nX );
-        const Int incX = ( nX==1 ? 1  : ldX );
-        const Int incY = ( nY==1 ? 1  : ldY );
+        const Int lengthX = (nX==1 ? mX : nX);
+        const Int incX = (nX==1 ? 1  : ldX);
+        const Int incY = (nY==1 ? 1  : ldY);
 #ifndef EL_RELEASE
         const Int mY = Y.Height();
-        const Int lengthY = ( nY==1 ? mY : nY );
-        if( lengthX != lengthY )
+        const Int lengthY = (nY==1 ? mY : nY);
+        if(lengthX != lengthY)
             LogicError("Nonconformal TransposeAxpy");
 #endif // !EL_RELEASE
 
-        cublas::Axpy( lengthX, alpha, XBuf, incX, YBuf, incY );
+        gpu_blas::Axpy(lengthX, alpha, XBuf, incX, YBuf, incY, syncInfoB);
     }
     else
     {
-        EL_DEBUG_ONLY(
-          const Int mY = Y.Height();
-          if( mX != nY || nX != mY )
-              LogicError("Nonconformal TransposeAxpy");
-        )
-        cublas::Geam(conjugate ? 'C' : 'T', 'N', nX, mX,
-                     alpha, XBuf, ldX,
-                     T(1), YBuf, ldY, YBuf, ldY);
+#ifdef HYDROGEN_ENABLE_BOUNDS_CHECKING
+        const Int mY = Y.Height();
+        if(mX != nY || nX != mY)
+            LogicError("Nonconformal TransposeAxpy");
+#endif // HYDROGEN_ENABLE_BOUNDS_CHECKING
+
+        LogicError("Fix this call.");
+        gpu_blas::Axpy(nX, mX, alpha, XBuf, ldX, YBuf, ldY, syncInfoB);
     }
-    // Restore the "default" stream
-    EL_CHECK_CUBLAS(
-        cublasSetStream(GPUManager::cuBLASHandle(), old_stream));
 }
 
 template <typename T, typename S,
@@ -179,7 +167,7 @@ template <typename T, typename S,
 void TransposeAxpy (S alphaS,
                     Matrix<T,Device::GPU> const& X,
                     Matrix<T,Device::GPU>& Y,
-                    bool conjugate )
+                    bool conjugate)
 {
     LogicError("TransposeAxpy: Bad type/device combo.");
 }
@@ -187,52 +175,52 @@ void TransposeAxpy (S alphaS,
 
 template<typename T,typename S>
 void TransposeAxpy
-(       S alphaS,
+(      S alphaS,
   const ElementalMatrix<T>& A,
         ElementalMatrix<T>& B,
-        bool conjugate )
+        bool conjugate)
 {
     EL_DEBUG_CSE
     EL_DEBUG_ONLY(
-      AssertSameGrids( A, B );
-      if( A.Height() != B.Width() || A.Width() != B.Height() )
+      AssertSameGrids(A, B);
+      if(A.Height() != B.Width() || A.Width() != B.Height())
           LogicError("A and B must have transposed dimensions");
-    )
+   )
     const T alpha = T(alphaS);
 
     const DistData& ADistData = A.DistData();
     const DistData& BDistData = B.DistData();
-    if( ADistData.colDist == BDistData.rowDist &&
+    if(ADistData.colDist == BDistData.rowDist &&
         ADistData.rowDist == BDistData.colDist &&
         ADistData.colAlign==BDistData.rowAlign &&
-        ADistData.rowAlign==BDistData.colAlign )
+        ADistData.rowAlign==BDistData.colAlign)
     {
-        TransposeAxpy( alpha, A.LockedMatrix(), B.Matrix(), conjugate );
+        TransposeAxpy(alpha, A.LockedMatrix(), B.Matrix(), conjugate);
     }
     else
     {
         unique_ptr<ElementalMatrix<T>>
-            C( B.ConstructTranspose(A.Grid(),A.Root()) );
-        C->AlignRowsWith( B.DistData() );
-        C->AlignColsWith( B.DistData() );
-        Copy( A, *C );
-        TransposeAxpy( alpha, C->LockedMatrix(), B.Matrix(), conjugate );
+            C(B.ConstructTranspose(A.Grid(),A.Root()));
+        C->AlignRowsWith(B.DistData());
+        C->AlignColsWith(B.DistData());
+        Copy(A, *C);
+        TransposeAxpy(alpha, C->LockedMatrix(), B.Matrix(), conjugate);
     }
 }
 
 template<typename T,typename S>
-void AdjointAxpy( S alphaS, const Matrix<T>& X, Matrix<T>& Y )
+void AdjointAxpy(S alphaS, const Matrix<T>& X, Matrix<T>& Y)
 {
     EL_DEBUG_CSE
-    TransposeAxpy( alphaS, X, Y, true );
+    TransposeAxpy(alphaS, X, Y, true);
 }
 
 template<typename T,typename S>
 void AdjointAxpy
-( S alphaS, const ElementalMatrix<T>& X, ElementalMatrix<T>& Y )
+(S alphaS, const ElementalMatrix<T>& X, ElementalMatrix<T>& Y)
 {
     EL_DEBUG_CSE
-    TransposeAxpy( alphaS, X, Y, true );
+    TransposeAxpy(alphaS, X, Y, true);
 }
 
 #ifdef EL_INSTANTIATE_BLAS_LEVEL1
@@ -243,28 +231,28 @@ void AdjointAxpy
 
 #define PROTO_TYPES(T,S) \
   EL_EXTERN template void TransposeAxpy \
-  (       S alpha, \
+  (      S alpha, \
     const AbstractMatrix<T>& A, \
           AbstractMatrix<T>& B, \
-          bool conjugate ); \
+          bool conjugate); \
   EL_EXTERN template void TransposeAxpy \
-  (       S alpha, \
+  (      S alpha, \
     const Matrix<T>& A, \
           Matrix<T>& B, \
-          bool conjugate ); \
+          bool conjugate); \
   EL_EXTERN template void TransposeAxpy \
-  (       S alpha, \
+  (      S alpha, \
     const ElementalMatrix<T>& A, \
           ElementalMatrix<T>& B, \
-          bool conjugate ); \
+          bool conjugate); \
   EL_EXTERN template void AdjointAxpy \
-  (       S alpha, \
+  (      S alpha, \
     const Matrix<T>& A, \
-          Matrix<T>& B ); \
+          Matrix<T>& B); \
   EL_EXTERN template void AdjointAxpy \
-  (       S alpha, \
+  (      S alpha, \
     const ElementalMatrix<T>& A, \
-          ElementalMatrix<T>& B );
+          ElementalMatrix<T>& B);
 
 #define PROTO_INT(T) PROTO_TYPES(T,T)
 

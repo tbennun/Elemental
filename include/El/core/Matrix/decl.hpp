@@ -9,7 +9,7 @@
 #ifndef EL_MATRIX_DECL_HPP
 #define EL_MATRIX_DECL_HPP
 
-#include <El/core/Device.hpp>
+#include <hydrogen/Device.hpp>
 #include <El/core/Grid.hpp>
 #include <El/core/Memory.hpp>
 

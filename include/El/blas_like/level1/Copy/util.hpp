@@ -10,7 +10,7 @@
 #define EL_BLAS_COPY_UTIL_HPP
 
 #ifdef HYDROGEN_HAVE_CUDA
-#include "../GPU/Copy.hpp"
+#include <hydrogen/blas/gpu/Copy.hpp>
 #endif
 
 namespace El
@@ -23,7 +23,7 @@ namespace util
 // Beginning of DisableIf overload set
 
 template <typename T, Device D,
-          typename=DisableIf<IsDeviceValidType<T,D>>,
+          typename=DisableIf<IsStorageType<T,D>>,
           typename=void>
 void DeviceStridedMemCopy(
     T*, Int const&, T const*, Int const&, Int const&, SyncInfo<D>)
@@ -32,7 +32,7 @@ void DeviceStridedMemCopy(
 }
 
 template <typename T, Device D,
-          typename/*=DisableIf<IsDeviceValidType<T,D>>*/,
+          typename/*=DisableIf<IsStorageType<T,D>>*/,
           typename/*=void*/>
 void InterleaveMatrix(
     Int const&, Int const&, T const*, Int const&, Int const&,
@@ -42,7 +42,7 @@ void InterleaveMatrix(
 }
 
 template <typename T, Device D,
-          typename/*=DisableIf<IsDeviceValidType<T,D>>*/,
+          typename/*=DisableIf<IsStorageType<T,D>>*/,
           typename/*=void*/>
 void RowStridedPack(
     Int const&, Int const&, Int const&, Int const&,
@@ -53,7 +53,7 @@ void RowStridedPack(
 }
 
 template <typename T, Device D,
-          typename/*=DisableIf<IsDeviceValidType<T,D>>*/,
+          typename/*=DisableIf<IsStorageType<T,D>>*/,
           typename/*=void*/>
 void RowStridedUnpack(
     Int const&, Int const&, Int const&, Int const&,
@@ -64,7 +64,7 @@ void RowStridedUnpack(
 }
 
 template <typename T, Device D,
-          typename/*=DisableIf<IsDeviceValidType<T,D>>*/,
+          typename/*=DisableIf<IsStorageType<T,D>>*/,
           typename/*=void*/>
 void PartialRowStridedPack(
     Int const&, Int const&, Int const&, Int const&,
@@ -76,7 +76,7 @@ void PartialRowStridedPack(
 }
 
 template <typename T, Device D,
-          typename/*=DisableIf<IsDeviceValidType<T,D>>*/,
+          typename/*=DisableIf<IsStorageType<T,D>>*/,
           typename/*=void*/>
 void PartialRowStridedUnpack(
     Int const&, Int const&, Int const&, Int const&,
@@ -88,7 +88,7 @@ void PartialRowStridedUnpack(
 }
 
 template <typename T, Device D,
-          typename/*=DisableIf<IsDeviceValidType<T,D>>*/,
+          typename/*=DisableIf<IsStorageType<T,D>>*/,
           typename/*=void*/>
 void ColStridedPack(
     Int const&, Int const&, Int const&, Int const&,
@@ -98,7 +98,7 @@ void ColStridedPack(
 }
 
 template <typename T, Device D,
-          typename/*=DisableIf<IsDeviceValidType<T,D>>*/,
+          typename/*=DisableIf<IsStorageType<T,D>>*/,
           typename/*=void*/>
 void ColStridedUnpack(
     Int const&, Int const&, Int const&, Int const&,
@@ -110,7 +110,7 @@ void ColStridedUnpack(
 // End of DisableIf overload set
 
 template <typename T,
-          typename=EnableIf<IsDeviceValidType<T,Device::CPU>>>
+          typename=EnableIf<IsStorageType<T,Device::CPU>>>
 void DeviceStridedMemCopy(
     T* dest, Int destStride,
     const T* source, Int sourceStride, Int numEntries,
@@ -132,15 +132,15 @@ void InterleaveMatrix(
     else
     {
 #ifdef HYDROGEN_HAVE_MKL
-        mkl::omatcopy
-            (NORMAL, height, width, T(1),
-             A, rowStrideA, colStrideA,
-             B, rowStrideB, colStrideB);
+        mkl::omatcopy(
+            NORMAL, height, width, T(1),
+            A, rowStrideA, colStrideA,
+            B, rowStrideB, colStrideB);
 #else
         for(Int j=0; j<width; ++j)
-            StridedMemCopy
-                (&B[j*rowStrideB], colStrideB,
-                 &A[j*rowStrideA], colStrideA, height);
+            StridedMemCopy(
+                &B[j*rowStrideB], colStrideB,
+                &A[j*rowStrideA], colStrideA, height);
 #endif
     }
 }
@@ -157,10 +157,10 @@ void RowStridedPack(
     {
         const Int rowShift = Shift_(k, rowAlign, rowStride);
         const Int localWidth = Length_(width, rowShift, rowStride);
-        lapack::Copy
-            ('F', height, localWidth,
-             &A[rowShift*ALDim],        rowStride*ALDim,
-             &BPortions[k*portionSize], height);
+        lapack::Copy(
+            'F', height, localWidth,
+            &A[rowShift*ALDim],        rowStride*ALDim,
+            &BPortions[k*portionSize], height);
     }
 }
 
@@ -176,10 +176,10 @@ void RowStridedUnpack(
     {
         const Int rowShift = Shift_(k, rowAlign, rowStride);
         const Int localWidth = Length_(width, rowShift, rowStride);
-        lapack::Copy
-            ('F', height, localWidth,
-             &APortions[k*portionSize], height,
-             &B[rowShift*BLDim],        rowStride*BLDim);
+        lapack::Copy(
+            'F', height, localWidth,
+            &APortions[k*portionSize], height,
+            &B[rowShift*BLDim],        rowStride*BLDim);
     }
 }
 
@@ -199,10 +199,10 @@ void PartialRowStridedPack(
             Shift_(rowRankPart+k*rowStridePart, rowAlign, rowStride);
         const Int rowOffset = (rowShift-rowShiftA) / rowStridePart;
         const Int localWidth = Length_(width, rowShift, rowStride);
-        lapack::Copy
-            ('F', height, localWidth,
-             &A[rowOffset*ALDim],       rowStrideUnion*ALDim,
-             &BPortions[k*portionSize], height);
+        lapack::Copy(
+            'F', height, localWidth,
+            &A[rowOffset*ALDim],       rowStrideUnion*ALDim,
+            &BPortions[k*portionSize], height);
     }
 }
 
@@ -222,27 +222,26 @@ void PartialRowStridedUnpack(
             Shift_(rowRankPart+k*rowStridePart, rowAlign, rowStride);
         const Int rowOffset = (rowShift-rowShiftB) / rowStridePart;
         const Int localWidth = Length_(width, rowShift, rowStride);
-        lapack::Copy
-            ('F', height, localWidth,
-             &APortions[k*portionSize], height,
-             &B[rowOffset*BLDim],       rowStrideUnion*BLDim);
+        lapack::Copy(
+            'F', height, localWidth,
+            &APortions[k*portionSize], height,
+            &B[rowOffset*BLDim],       rowStrideUnion*BLDim);
     }
 }
 
 #ifdef HYDROGEN_HAVE_CUDA
 template <typename T,
-          typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
+          typename=EnableIf<IsStorageType<T,Device::GPU>>>
 void DeviceStridedMemCopy(
     T* dest, Int destStride,
     const T* source, Int sourceStride, Int numEntries,
-    SyncInfo<Device::GPU>)
+    SyncInfo<Device::GPU> const& si)
 {
-    // FIXME: Set the cublas stream!
-    cublas::Copy(
-        numEntries, source, sourceStride, dest, destStride);
+    gpu_blas::Copy(
+        numEntries, source, sourceStride, dest, destStride, si);
 }
 
-template <typename T, typename/*=EnableIf<IsDeviceValidType<T,Device::GPU>>*/>
+template <typename T, typename/*=EnableIf<IsStorageType<T,Device::GPU>>*/>
 void InterleaveMatrix(
     Int height, Int width,
     T const* A, Int colStrideA, Int rowStrideA,
@@ -251,7 +250,7 @@ void InterleaveMatrix(
 {
     if (colStrideA == 1 && colStrideB == 1)
     {
-        EL_CHECK_CUDA(
+        H_CHECK_CUDA(
             cudaMemcpy2DAsync(B, rowStrideB*sizeof(T),
                               A, rowStrideA*sizeof(T),
                               height*sizeof(T), width,
@@ -260,14 +259,14 @@ void InterleaveMatrix(
     }
     else
     {
-        Copy_GPU_impl(height, width,
-                      A, colStrideA, rowStrideA,
-                      B, colStrideB, rowStrideB,
-                      syncInfo.stream_);
+        hydrogen::Copy_GPU_impl(height, width,
+                                A, colStrideA, rowStrideA,
+                                B, colStrideB, rowStrideB,
+                                syncInfo.stream_);
     }
 }
 
-template <typename T, typename/*=EnableIf<IsDeviceValidType<T,Device::GPU>>*/>
+template <typename T, typename/*=EnableIf<IsStorageType<T,Device::GPU>>*/>
 void RowStridedPack(
     Int height, Int width,
     Int rowAlign, Int rowStride,
@@ -279,7 +278,7 @@ void RowStridedPack(
     {
         const Int rowShift = Shift_(k, rowAlign, rowStride);
         const Int localWidth = Length_(width, rowShift, rowStride);
-        EL_CHECK_CUDA(
+        H_CHECK_CUDA(
             cudaMemcpy2DAsync(BPortions + k*portionSize, height*sizeof(T),
                               A+rowShift*ALDim, rowStride*ALDim*sizeof(T),
                               height*sizeof(T), localWidth,
@@ -288,7 +287,7 @@ void RowStridedPack(
     }
 }
 
-template <typename T, typename/*=EnableIf<IsDeviceValidType<T,Device::GPU>>*/>
+template <typename T, typename/*=EnableIf<IsStorageType<T,Device::GPU>>*/>
 void RowStridedUnpack(
     Int height, Int width,
     Int rowAlign, Int rowStride,
@@ -300,7 +299,7 @@ void RowStridedUnpack(
     {
         const Int rowShift = Shift_(k, rowAlign, rowStride);
         const Int localWidth = Length_(width, rowShift, rowStride);
-        EL_CHECK_CUDA(
+        H_CHECK_CUDA(
             cudaMemcpy2DAsync(B+rowShift*BLDim, rowStride*BLDim*sizeof(T),
                               APortions+k*portionSize, height*sizeof(T),
                               height*sizeof(T), localWidth,
@@ -309,7 +308,7 @@ void RowStridedUnpack(
     }
 }
 
-template <typename T, typename/*=EnableIf<IsDeviceValidType<T,Device::GPU>>*/>
+template <typename T, typename/*=EnableIf<IsStorageType<T,Device::GPU>>*/>
 void PartialRowStridedPack(
     Int height, Int width,
     Int rowAlign, Int rowStride,
@@ -325,7 +324,7 @@ void PartialRowStridedPack(
                                     rowAlign, rowStride);
         const Int rowOffset = (rowShift-rowShiftA) / rowStridePart;
         const Int localWidth = Length_(width, rowShift, rowStride);
-        EL_CHECK_CUDA(cudaMemcpy2DAsync(
+        H_CHECK_CUDA(cudaMemcpy2DAsync(
                           BPortions + k*portionSize, height*sizeof(T),
                           A + rowOffset*ALDim, rowStrideUnion*ALDim*sizeof(T),
                           height*sizeof(T), localWidth,
@@ -334,7 +333,7 @@ void PartialRowStridedPack(
     }
 }
 
-template <typename T, typename/*=EnableIf<IsDeviceValidType<T,Device::GPU>>*/>
+template <typename T, typename/*=EnableIf<IsStorageType<T,Device::GPU>>*/>
 void PartialRowStridedUnpack(
     Int height, Int width,
     Int rowAlign, Int rowStride,
@@ -350,7 +349,7 @@ void PartialRowStridedUnpack(
                                     rowAlign, rowStride);
         const Int rowOffset = (rowShift-rowShiftB) / rowStridePart;
         const Int localWidth = Length_(width, rowShift, rowStride);
-        EL_CHECK_CUDA(cudaMemcpy2DAsync(
+        H_CHECK_CUDA(cudaMemcpy2DAsync(
                           B + rowOffset*BLDim, rowStrideUnion*BLDim*sizeof(T),
                           APortions + k*portionSize, height*sizeof(T),
                           height*sizeof(T), localWidth,

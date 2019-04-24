@@ -63,12 +63,12 @@ Matrix<T, Device::CPU>::Matrix(Matrix<T, Device::GPU> const& A)
 {
     EL_DEBUG_CSE;
     auto stream = GPUManager::Stream();
-    EL_CHECK_CUDA(cudaMemcpy2DAsync(data_, this->LDim()*sizeof(T),
+    H_CHECK_CUDA(cudaMemcpy2DAsync(data_, this->LDim()*sizeof(T),
                                     A.LockedBuffer(), A.LDim()*sizeof(T),
                                     A.Height()*sizeof(T), A.Width(),
                                     cudaMemcpyDeviceToHost,
                                     stream));
-    EL_CHECK_CUDA(cudaStreamSynchronize(stream));
+    H_CHECK_CUDA(cudaStreamSynchronize(stream));
 }
 #endif
 

@@ -14,6 +14,30 @@
 
 namespace El {
 
+template <typename OutT>
+Base<OutT> BaseFromInt(int x)
+{
+    return Base<OutT>(x);
+}
+
+template <typename OutT>
+OutT FromInt(int x)
+{
+    return OutT(x);
+}
+
+template <>
+inline gpu_half_type BaseFromInt<gpu_half_type>(int x)
+{
+    return gpu_half_type(static_cast<float>(x));
+}
+
+template <>
+inline gpu_half_type FromInt<gpu_half_type>(int x)
+{
+    return gpu_half_type(static_cast<float>(x));
+}
+
 // While Elemental used to make use of typeid(T).name() for analogues of the
 // below strings, the 'name' property is not guaranteed to exist for all types,
 // such as __float128
@@ -40,6 +64,9 @@ template<> std::string TypeName<double>();
 #ifdef HYDROGEN_HAVE_HALF
 template<> std::string TypeName<cpu_half_type>();
 #endif
+#ifdef HYDROGEN_GPU_USE_FP16
+template <> std::string TypeName<gpu_half_type>();
+#endif
 #ifdef HYDROGEN_HAVE_QD
 template<> std::string TypeName<DoubleDouble>();
 template<> std::string TypeName<QuadDouble>();
@@ -60,48 +87,51 @@ std::string TypeName()
 // Types that Matrix, DistMatrix, etc. are instantiatable with
 // -----------------------------------------------------------
 template<typename T> struct IsBlasScalar
-{ static const bool value=false; };
+    : std::false_type {};
 template<> struct IsBlasScalar<float>
-{ static const bool value=true; };
+    : std::true_type {};
 template<> struct IsBlasScalar<double>
-{ static const bool value=true; };
+    : std::true_type {};
 template<> struct IsBlasScalar<Complex<float>>
-{ static const bool value=true; };
+    : std::true_type {};
 template<> struct IsBlasScalar<Complex<double>>
-{ static const bool value=true; };
+    : std::true_type {};
 
 template<typename T> struct IsPacked
-{ static const bool value=false; };
+    : std::false_type {};
 template<> struct IsPacked<byte>
-{ static const bool value=true; };
+    : std::true_type {};
 template<> struct IsPacked<unsigned>
-{ static const bool value=true; };
+    : std::true_type {};
 template<> struct IsPacked<unsigned long>
-{ static const bool value=true; };
+    : std::true_type {};
 template<> struct IsPacked<unsigned long long>
-{ static const bool value=true; };
+    : std::true_type {};
 template<> struct IsPacked<int>
-{ static const bool value=true; };
+    : std::true_type {};
 template<> struct IsPacked<long int>
-{ static const bool value=true; };
+    : std::true_type {};
 template<> struct IsPacked<long long int>
-{ static const bool value=true; };
+    : std::true_type {};
 template<> struct IsPacked<float>
-{ static const bool value=true; };
+    : std::true_type {};
 template<> struct IsPacked<double>
-{ static const bool value=true; };
+    : std::true_type {};
 #ifdef HYDROGEN_HAVE_HALF
 template <> struct IsPacked<cpu_half_type> : std::true_type {};
 #endif
+#ifdef HYDROGEN_GPU_USE_FP16
+template <> struct IsPacked<gpu_half_type> : std::true_type {};
+#endif
 #ifdef HYDROGEN_HAVE_QD
 template<> struct IsPacked<DoubleDouble>
-{ static const bool value=true; };
+    : std::true_type {};
 template<> struct IsPacked<QuadDouble>
-{ static const bool value=true; };
+    : std::true_type {};
 #endif
 #ifdef HYDROGEN_HAVE_QUADMATH
 template<> struct IsPacked<Quad>
-{ static const bool value=true; };
+    : std::true_type {};
 #endif
 template<typename T> struct IsPacked<Complex<T>>
 { static const bool value=IsPacked<T>::value; };
@@ -179,33 +209,35 @@ struct CanBidirectionalCast
 // (which is different than Int if 64-bit integers are enabled)
 // ------------------------------------------------------------
 // TODO(poulson): Reuse IsScalar
-template<typename T> struct IsData { static const bool value=false; };
-template<typename T> struct IsData<T*> { static const bool value=true; };
-template<typename T> struct IsData<const T*> { static const bool value=true; };
+template<typename T> struct IsData : std::false_type {};
+template<typename T> struct IsData<T*> : std::true_type {};
+template<typename T> struct IsData<const T*> : std::true_type {};
 #ifdef EL_USE_64BIT_INTS
-template<> struct IsData<int> { static const bool value=true; };
+template<> struct IsData<int> : std::true_type {};
 #endif
-template<> struct IsData<Unsigned> { static const bool value=true; };
-template<> struct IsData<Int> { static const bool value=true; };
-template<> struct IsData<float> { static const bool value=true; };
-template<> struct IsData<double> { static const bool value=true; };
+template<> struct IsData<Unsigned> : std::true_type {};
+template<> struct IsData<Int> : std::true_type {};
+template<> struct IsData<float> : std::true_type {};
+template<> struct IsData<double> : std::true_type {};
 template<> struct IsData<unsigned char> : std::true_type {};
 #ifdef HYDROGEN_HAVE_HALF
 template <> struct IsData<cpu_half_type> : std::true_type {};
 #endif
+#ifdef HYDROGEN_GPU_USE_FP16
+template <> struct IsData<gpu_half_type> : std::true_type {};
+#endif
 #ifdef HYDROGEN_HAVE_QD
-template<> struct IsData<DoubleDouble> { static const bool value=true; };
-template<> struct IsData<QuadDouble> { static const bool value=true; };
+template<> struct IsData<DoubleDouble> : std::true_type {};
+template<> struct IsData<QuadDouble> : std::true_type {};
 #endif
 #ifdef HYDROGEN_HAVE_QUADMATH
-template<> struct IsData<Quad> { static const bool value=true; };
+template<> struct IsData<Quad> : std::true_type {};
 #endif
 #ifdef HYDROGEN_HAVE_MPC
-template<> struct IsData<BigInt> { static const bool value=true; };
-template<> struct IsData<BigFloat> { static const bool value=true; };
+template<> struct IsData<BigInt> : std::true_type {};
+template<> struct IsData<BigFloat> : std::true_type {};
 #endif
-template<typename T> struct IsData<Complex<T>>
-{ static const bool value=IsData<T>::value; };
+template<typename T> struct IsData<Complex<T>> : IsData<T> {};
 
 // Basic element manipulation and I/O
 // ==================================
@@ -251,13 +283,15 @@ void ImagPart( const Complex<Real>& alpha, Real& alphaImag ) EL_NO_EXCEPT;
 
 template<typename S,typename T,
          typename=EnableIf<CanCast<S,T>>>
-struct Caster {
+struct Caster
+{
     static T Cast( const S& alpha )
     { return T(alpha); }
 };
 
 template<typename S,typename T>
-struct Caster<S,Complex<T>,void> {
+struct Caster<S,Complex<T>,void>
+{
     static Complex<T> Cast( const S& alpha )
     { return Complex<T>( T(RealPart(alpha)), T(ImagPart(alpha)) ); }
 };
@@ -383,7 +417,12 @@ BigInt Abs( const BigInt& alpha ) EL_NO_EXCEPT;
 BigFloat Abs( const BigFloat& alpha ) EL_NO_EXCEPT;
 BigFloat Abs( const Complex<BigFloat>& alpha ) EL_NO_EXCEPT;
 #endif
-
+#ifdef HYDROGEN_GPU_USE_FP16
+inline gpu_half_type Abs(gpu_half_type const& x) EL_NO_EXCEPT
+{
+    return Abs(float(x));
+}
+#endif // HYDROGEN_GPU_USE_FP16
 // Carefully avoid unnecessary overflow in an absolute value computation
 // ---------------------------------------------------------------------
 template<typename Real,
@@ -669,6 +708,12 @@ template<typename Real,
 Complex<Real> Sqrt( const Complex<Real>& alpha );
 
 template<> Int Sqrt( const Int& alpha );
+#ifdef HYDROGEN_GPU_USE_FP16
+inline gpu_half_type Sqrt(gpu_half_type const& x)
+{
+    return Sqrt(float(x));
+}
+#endif // HYDROGEN_GPU_USE_FP16
 #ifdef HYDROGEN_HAVE_QD
 DoubleDouble Sqrt( const DoubleDouble& alpha );
 QuadDouble Sqrt( const QuadDouble& alpha );
