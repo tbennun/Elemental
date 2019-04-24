@@ -72,7 +72,9 @@ ADD_ALUMINUM_TYPE(                   int, Al::NCCLBackend);
 ADD_ALUMINUM_TYPE(          unsigned int, Al::NCCLBackend);
 ADD_ALUMINUM_TYPE(         long long int, Al::NCCLBackend);
 ADD_ALUMINUM_TYPE(unsigned long long int, Al::NCCLBackend);
+#ifdef HYDROGEN_GPU_USE_FP16
 ADD_ALUMINUM_TYPE(         gpu_half_type, Al::NCCLBackend);
+#endif // HYDROGEN_GPU_USE_FP16
 ADD_ALUMINUM_TYPE(                 float, Al::NCCLBackend);
 ADD_ALUMINUM_TYPE(                double, Al::NCCLBackend);
 #endif // HYDROGEN_HAVE_NCCL2

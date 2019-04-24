@@ -15,7 +15,7 @@ void Reduce(T const* sbuf, T* rbuf, int count, Op op,
 
     using Backend = BestBackend<T,D,Collective::REDUCE>;
     Al::Reduce<Backend>(
-        sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
+        sbuf, rbuf, count, MPI_Op2ReductionOperator(AlNativeOp<T>(op)),
         root, comm.template GetComm<Backend>(syncInfo));
 }
 #endif // HYDROGEN_HAVE_ALUMINUM
@@ -158,7 +158,7 @@ void Reduce(T* buf, int count, Op op,
 
     using Backend = BestBackend<T,D,Collective::REDUCE>;
     Al::Reduce<Backend>(
-        buf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
+        buf, count, MPI_Op2ReductionOperator(AlNativeOp<T>(op)),
         root, comm.template GetComm<Backend>(syncInfo));
 }
 #endif // HYDROGEN_HAVE_ALUMINUM

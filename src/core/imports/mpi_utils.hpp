@@ -36,6 +36,24 @@ MPI_Op NativeOp( const El::mpi::Op& op )
     return opC;
 }
 
+template<typename T>
+MPI_Op AlNativeOp( const El::mpi::Op& op )
+{
+    MPI_Op opC;
+    if( op == El::mpi::SUM )
+        opC = MPI_SUM;
+    else if( op == El::mpi::PROD )
+        opC = MPI_PROD;
+    else if( op == El::mpi::MAX )
+        opC = MPI_MAX;
+    else if( op == El::mpi::MIN )
+        opC = MPI_MIN;
+    else
+        throw std::logic_error("IDK what op is!");
+
+    return opC;
+}
+
 }// namespace <anon>
 
 // This is for handling the host-blocking host-transfer stuff
