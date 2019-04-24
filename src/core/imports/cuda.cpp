@@ -1,7 +1,7 @@
-#include "El-lite.hpp"
-#include "El/core/imports/cuda.hpp"
+#include "hydrogen/device/gpu/CUDA.hpp"
+#include "hydrogen/device/gpu/cuda/cuBLAS.hpp"
 #ifdef HYDROGEN_HAVE_CUB
-#include "El/core/imports/cub.hpp"
+#include "hydrogen/device/gpu/cuda/CUB.hpp"
 #endif // HYDROGEN_HAVE_CUB
 
 #include <cuda.h>
@@ -10,8 +10,9 @@
 #include <nvml.h>
 
 #include <cstdlib>// getenv
+#include <stdexcept>
 
-namespace El
+namespace hydrogen
 {
 
 // Global static pointer used to ensure a single instance of the
@@ -25,11 +26,11 @@ void InitializeCUDA(int argc, char* argv[])
     int device = 0;
 
     nvmlReturn_t r = nvmlInit();
-    if (r != NVML_SUCCESS) { RuntimeError("NVML error"); }
+    if (r != NVML_SUCCESS) { throw std::runtime_error("NVML error"); }
     r = nvmlDeviceGetCount(&numDevices);
-    if (r != NVML_SUCCESS) { RuntimeError("NVML error"); }
+    if (r != NVML_SUCCESS) { throw std::runtime_error("NVML error"); }
     r = nvmlShutdown();
-    if (r != NVML_SUCCESS) { RuntimeError("NVML error"); }
+    if (r != NVML_SUCCESS) { throw std::runtime_error("NVML error"); }
     switch (numDevices)
     {
     case 0: return;
@@ -65,32 +66,34 @@ GPUManager::GPUManager(int device)
 {
     // Check if device is valid
     nvmlReturn_t r = nvmlInit();
-    if (r != NVML_SUCCESS) { RuntimeError("NVML error"); }
+    if (r != NVML_SUCCESS) { throw std::runtime_error("NVML error"); }
     r = nvmlDeviceGetCount(&numDevices_);
-    if (r != NVML_SUCCESS) { RuntimeError("NVML error"); }
+    if (r != NVML_SUCCESS) { throw std::runtime_error("NVML error"); }
     r = nvmlShutdown();
-    if (r != NVML_SUCCESS) { RuntimeError("NVML error"); }
+    if (r != NVML_SUCCESS) { throw std::runtime_error("NVML error"); }
     if (device_ < 0 || (unsigned int) device_ >= numDevices_)
     {
-        RuntimeError("Attempted to set invalid CUDA device ",
-                     "(requested device ",device_,", ",
-                     "but there are ",numDevices_," available devices)");
+        std::ostringstream oss;
+        oss << "Attempted to set invalid CUDA device. "
+            << "Requested device " << device_ << ", "
+            << "but there are " << numDevices_ << " available devices.";
+        throw std::runtime_error(oss.str());
     }
 
     // Initialize CUDA and cuBLAS objects
     // Can use the runtime API without creating unneeded contexts now.
     // This will fail with a CUDA error if device_ is in prohibited mode or
     // if it is in process-exclusive mode and another process already has it.
-    EL_FORCE_CHECK_CUDA_NOSYNC(cudaSetDevice(device_));
-    EL_FORCE_CHECK_CUDA(cudaStreamCreate(&stream_));
-    EL_FORCE_CHECK_CUDA(cudaEventCreate(&event_));
+    H_FORCE_CHECK_CUDA_NOSYNC(cudaSetDevice(device_));
+    H_FORCE_CHECK_CUDA(cudaStreamCreate(&stream_));
+    H_FORCE_CHECK_CUDA(cudaEventCreate(&event_));
 }
 
 void GPUManager::InitializeCUBLAS()
 {
-    EL_FORCE_CHECK_CUBLAS(cublasCreate(&Instance()->cublasHandle_));
-    EL_FORCE_CHECK_CUBLAS(cublasSetStream(cuBLASHandle(), Stream()));
-    EL_FORCE_CHECK_CUBLAS(cublasSetPointerMode(cuBLASHandle(),
+    H_FORCE_CHECK_CUBLAS(cublasCreate(&Instance()->cublasHandle_));
+    H_FORCE_CHECK_CUBLAS(cublasSetStream(cuBLASHandle(), Stream()));
+    H_FORCE_CHECK_CUBLAS(cublasSetPointerMode(cuBLASHandle(),
                                                CUBLAS_POINTER_MODE_HOST));
 }
 
@@ -104,13 +107,13 @@ GPUManager::~GPUManager()
             return;
 
         if (cublasHandle_ != nullptr)
-            EL_FORCE_CHECK_CUBLAS(cublasDestroy(cublasHandle_));
+            H_FORCE_CHECK_CUBLAS(cublasDestroy(cublasHandle_));
 
         if (stream_ != nullptr)
-            EL_FORCE_CHECK_CUDA(cudaStreamDestroy(stream_));
+            H_FORCE_CHECK_CUDA(cudaStreamDestroy(stream_));
 
         if (event_ != nullptr)
-            EL_FORCE_CHECK_CUDA(cudaEventDestroy(event_));
+            H_FORCE_CHECK_CUDA(cudaEventDestroy(event_));
     }
     catch (std::exception const& e)
     {
@@ -139,7 +142,7 @@ GPUManager* GPUManager::Instance()
     return instance_.get();
 }
 
-Unsigned GPUManager::NumDevices()
+unsigned int GPUManager::NumDevices()
 {
     return Instance()->numDevices_;
 }
@@ -169,25 +172,25 @@ cudaEvent_t GPUManager::Event()
 
 void GPUManager::SynchronizeStream()
 {
-    EL_CHECK_CUDA(
+    H_CHECK_CUDA(
         cudaSetDevice(Device()));
-    EL_CHECK_CUDA(
+    H_CHECK_CUDA(
         cudaStreamSynchronize(Stream()));
 }
 
-void GPUManager::SynchronizeDevice( bool checkError )
+void GPUManager::SynchronizeDevice(bool checkError)
 {
-    EL_CHECK_CUDA(
+    H_CHECK_CUDA(
         cudaSetDevice(Device()));
     if (checkError)
     {
         // Synchronize with error check
-        EL_CUDA_SYNC(true);
+        H_CUDA_SYNC(true);
     }
     else
     {
         // Synchronize with no error check in release build
-        EL_CHECK_CUDA(
+        H_CHECK_CUDA(
             cudaDeviceSynchronize());
     }
 }
@@ -197,4 +200,4 @@ cublasHandle_t GPUManager::cuBLASHandle()
     return Instance()->cublasHandle_;
 }
 
-} // namespace El
+} // namespace hydrogen
