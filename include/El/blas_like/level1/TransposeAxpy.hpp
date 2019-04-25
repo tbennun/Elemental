@@ -157,8 +157,11 @@ void TransposeAxpy(S alphaS,
             LogicError("Nonconformal TransposeAxpy");
 #endif // HYDROGEN_ENABLE_BOUNDS_CHECKING
 
-        LogicError("Fix this call.");
-        gpu_blas::Axpy(nX, mX, alpha, XBuf, ldX, YBuf, ldY, syncInfoB);
+        gpu_blas::Axpy(
+            (conjugate
+             ? TransposeMode::CONJ_TRANSPOSE
+             : TransposeMode::TRANSPOSE),
+            nX, mX, alpha, XBuf, ldX, YBuf, ldY, syncInfoB);
     }
 }
 

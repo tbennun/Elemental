@@ -2,6 +2,7 @@
 #define HYDROGEN_BLAS_GPU_AXPY_HPP_
 
 #include <hydrogen/Device.hpp>
+#include <hydrogen/blas/BLAS_Common.hpp>
 #include <hydrogen/meta/MetaUtilities.hpp>
 
 #include <cuda_runtime.h>
@@ -59,6 +60,36 @@ void Axpy_GPU_impl(
 {
     throw std::logic_error("Axpy: Type not valid on GPU.");
 }
+
+/** @brief Execute a 2-D AXPY operation on the GPU
+ *
+ *  Writes B = alpha*op(A) + B, taking into account leading dimension
+ *  information.
+ *
+ *  @tparam T (Inferred) The type of data. Must be the same for source
+ *      and destination matrices.
+ *  @tparam SizeT (Inferred) The type of size information.
+ *
+ *  @param[in] transpA The transpose mode of A.
+ *  @param[in] num_rows The number of rows in the matrix.
+ *  @param[in] num_cols The number of columns in the matrix.
+ *  @param[in] alpha The scaling factor.
+ *  @param[in] A The source matrix, in column-major ordering. Must not
+ *      overlap with the destination matrix.
+ *  @param[in] lda The leading dimension of A.
+ *  @param[in,out] B The destination matrix, in column-major
+ *      ordering. Must not overlap with the source matrix.
+ *  @param[in] ldb The leading dimension of B.
+ *  @param[in] stream The CUDA stream on which the kernel should be
+ *      launched.
+ */
+template <typename T, typename SizeT,
+          typename=EnableWhen<IsComputeType<T,Device::GPU>>>
+void Axpy_GPU_impl(
+    TransposeMode transpA,
+    SizeT num_rows, SizeT num_cols,
+    T alpha, T const* A, SizeT lda, T* B, SizeT ldb,
+    cudaStream_t stream);
 
 }// namespace hydrogen
 #endif // HYDROGEN_BLAS_GPU_AXPY_HPP_

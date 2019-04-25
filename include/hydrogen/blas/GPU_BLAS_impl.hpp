@@ -106,6 +106,32 @@ void Axpy2DImpl(SizeT nrows, SizeT ncols,
 }
 
 template <typename T, typename SizeT,
+          typename=EnableWhen<IsSupportedType<T,BLAS_Op::GEAM>>>
+void Axpy2DImplTranspose(
+    TransposeMode transpA,
+    SizeT nrows, SizeT ncols,
+    T const& alpha,
+    T const* A, SizeT lda,
+    T* B, SizeT ldb,
+    SyncInfo<Device::GPU> const& si)
+{
+    using NTP = MakePointer<NativeType<T>>;
+    using CNTP = MakePointerToConst<NativeType<T>>;
+
+    SyncManager mgr(GetLibraryHandle(), si);
+    gpu_blas_impl::Geam(
+        GetLibraryHandle(),
+        ToNativeTransposeMode(transpA),
+        ToNativeTransposeMode(TransposeMode::NORMAL),
+        nrows, ncols,
+        alpha,
+        reinterpret_cast<CNTP>(A), lda,
+        TypeTraits<T>::One(),
+        reinterpret_cast<CNTP>(B), ldb,
+        reinterpret_cast<NTP>(B), ldb);
+}
+
+template <typename T, typename SizeT,
           typename=EnableWhen<IsSupportedType<T,BLAS_Op::COPY>>>
 void CopyImpl(SizeT size,
               T const* X, SizeT incx,
@@ -316,6 +342,20 @@ void Axpy2DImpl(SizeT nrows, SizeT ncols,
 }
 
 template <typename T, typename SizeT,
+          typename=EnableUnless<IsSupportedType<T,BLAS_Op::GEAM>>,
+          typename=void>
+void Axpy2DImplTranspose(TransposeMode transpA,
+                         SizeT nrows, SizeT ncols,
+                         T const& alpha,
+                         T const* A, SizeT lda,
+                         T* B, SizeT ldb,
+                         SyncInfo<Device::GPU> const& si)
+{
+    Axpy_GPU_impl(
+        transpA, nrows, ncols, alpha, A, lda, B, ldb, si.stream_);
+}
+
+template <typename T, typename SizeT,
           typename=EnableUnless<IsSupportedType<T,BLAS_Op::COPY>>,
           typename=void>
 void CopyImpl(SizeT size,
@@ -479,6 +519,18 @@ void Axpy(SizeT num_rows, SizeT num_cols,
 {
     details::Axpy2DImpl(
         num_rows, num_cols, alpha, A, lda, B, ldb, si);
+}
+
+template <typename T, typename SizeT>
+void Axpy(TransposeMode transpA,
+          SizeT num_rows, SizeT num_cols,
+          T const& alpha,
+          T const* A, SizeT lda,
+          T* B, SizeT ldb,
+          SyncInfo<Device::GPU> const& si)
+{
+    details::Axpy2DImplTranspose(
+        transpA, num_rows, num_cols, alpha, A, lda, B, ldb, si);
 }
 
 template <typename T, typename SizeT>

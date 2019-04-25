@@ -97,6 +97,39 @@ void Axpy(SizeT num_rows, SizeT num_cols,
           T* B, SizeT ldb,
           SyncInfo<Device::GPU> const& syncinfo);
 
+/** @brief 2-D Axpy operation in GPU memory with optional transpose.
+ *
+ *  The 2-D Axpy operation is a scaled matrix add:
+ *
+ *  @f[ B = \alpha op(A) + B\qquad A,B\in\mathbb{F}^{\text{rows}\times\text{cols}}. @f]
+ *
+ *  The matrices @f$A@f$, @f$B@f$ may have different leading
+ *  dimensions but must have the same size.
+ *
+ *  @tparam T (Inferred) The type of data
+ *  @tparam SizeT (Inferred) The type used to express size information.
+ *
+ *  @param[in] transpA The transpose mode for A.
+ *  @param[in] num_rows The number of rows in B.
+ *  @param[in] num_cols The number of columns in B.
+ *  @param[in] alpha The scaling parameter on A.
+ *  @param[in] A The source matrix, in column-major storage.
+ *  @param[in] lda The stride between columns of A.
+ *  @param[in,out] B The target matrix, in column-major storage.
+ *  @param[in] ldb The stride between columns of B.
+ *  @param[in] syncinfo Synchronization information for this operation.
+ *
+ *  @ingroup device_blas
+ */
+template <typename T, typename SizeT>
+void Axpy(
+    TransposeMode transpA,
+    SizeT num_rows, SizeT num_cols,
+    T const& alpha,
+    T const* A, SizeT lda,
+    T* B, SizeT ldb,
+    SyncInfo<Device::GPU> const& syncinfo);
+
 /** @brief 2-D Axpy operation in GPU memory with 2 strides.
  *
  *  The 2-D Axpy operation is a scaled matrix add:

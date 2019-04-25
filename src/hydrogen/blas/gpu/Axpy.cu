@@ -1,8 +1,81 @@
 #include <hydrogen/blas/gpu/Axpy.hpp>
+
+#include <El/hydrogen_config.h>
 #include <hydrogen/device/gpu/CUDA.hpp>
+
+#include <cuda_runtime.h>
+#include <cooperative_groups.h>
+namespace cg = cooperative_groups;
 
 namespace
 {
+
+// NOTE: B has dimension m x n.
+template <int TILE_SIZE, int BLK_COLS, typename T, typename SizeT>
+__global__ void axpy_2d_transpose_tiled_kernel(
+    SizeT m, SizeT n, T alpha, T const* A, SizeT lda, T* B, SizeT ldb)
+{
+    cg::thread_block cta = cg::this_thread_block();
+    __shared__ T tile[TILE_SIZE][TILE_SIZE+1];
+    
+    auto const row_start_A = blockIdx.y * TILE_SIZE + threadIdx.x;
+    auto const col_start_A = blockIdx.x * TILE_SIZE + threadIdx.y;
+    
+    auto const idx_A = row_start_A + col_start_A * lda;
+    
+    auto const row_start_B = blockIdx.x * TILE_SIZE + threadIdx.x;
+    auto const col_start_B = blockIdx.y * TILE_SIZE + threadIdx.y;
+
+    auto idx_B = row_start_B + col_start_B * ldb;
+
+    // Starting point is inside the matrix
+    bool const do_anything = (row_start_B < m && col_start_B < n);
+
+    // Ending point is inside the matrix
+    bool const do_all = (do_anything) && (col_start_B + TILE_SIZE <= n);
+
+    if (!do_anything)
+        return;
+    
+    // Advance the matrices
+    A += idx_A;
+    B += idx_B;
+
+    if (do_all)
+    {
+        #pragma unroll
+        for (int ii = 0; ii < TILE_SIZE; ii += BLK_COLS)
+        {
+            tile[threadIdx.y+ii][threadIdx.x] = alpha * A[ii*lda];
+        }
+
+        cg::sync(cta);
+
+        #pragma unroll
+        for (int ii = 0; ii < TILE_SIZE; ii += BLK_COLS)
+        {
+            B[ii*ldb] = tile[threadIdx.x][threadIdx.y+ii];
+        }
+    }
+    else
+    {
+        //
+        // Some work doesn't get done. Be more careful
+        //
+
+        // Make sure we don't grab extra columns
+        for (int ii = 0; ii < TILE_SIZE && col_start_A + ii < m; ii += BLK_COLS)
+            tile[threadIdx.y+ii][threadIdx.x] = alpha * A[ii*lda];
+
+        // Same warp-sync stuff -- I assume this still needs to happen.
+        cg::sync(cta);
+
+        // Don't write rows of the new matrix that don't exist.
+        if (row_start_B < m)
+            for (int ii = 0; ii < TILE_SIZE; ii += BLK_COLS)
+                B[ii*ldb] += tile[threadIdx.x][threadIdx.y+ii];
+    }
+}
 
 template <int TILE_SIZE, int BLK_COLS, typename T, typename SizeT>
 __global__ void axpy_2d_tiled_kernel(
@@ -67,11 +140,50 @@ void Axpy_GPU_impl(
             blks, thds, args, 0, stream));
 }
 
+template <typename T, typename SizeT, typename>
+void Axpy_GPU_impl(
+    TransposeMode transpA,
+    SizeT height, SizeT width,
+    T alpha,
+    T const* A, SizeT lda,
+    T* B, SizeT ldb,
+    cudaStream_t stream)
+{
+    // Short-circuit
+    if (height <= 0 || width <= 0)
+        return;
+
+    if (transpA == TransposeMode::NORMAL)
+        return Axpy_GPU_impl(
+            height, width, alpha,
+            A, TypeTraits<SizeT>::One(), lda,
+            B, TypeTraits<SizeT>::One(), ldb, stream);
+    
+    constexpr int TILE_SIZE = 32;
+    constexpr int BLK_COLS = 8;
+
+    dim3 blks((height + TILE_SIZE - 1) / TILE_SIZE,
+              (width + TILE_SIZE - 1) / TILE_SIZE, 1);
+    dim3 thds(TILE_SIZE, BLK_COLS, 1);
+    void* args[] = {&height, &width, &alpha, &A, &lda, &B, &ldb};
+
+    H_CHECK_CUDA(
+        cudaLaunchKernel(
+            (void const*)&axpy_2d_transpose_tiled_kernel
+            <TILE_SIZE, BLK_COLS, T, SizeT>,
+            blks, thds, args, 0, stream));
+}
+
 #define ETI(ScalarT, SizeT)                             \
     template void Axpy_GPU_impl(                        \
         SizeT, SizeT, ScalarT,                          \
         ScalarT const*, SizeT, SizeT,                   \
-        ScalarT*, SizeT, SizeT, cudaStream_t)
+        ScalarT*, SizeT, SizeT, cudaStream_t);          \
+    template void Axpy_GPU_impl(                        \
+        TransposeMode, SizeT, SizeT, ScalarT,           \
+        ScalarT const*, SizeT,                          \
+        ScalarT*, SizeT, cudaStream_t)
+
 
 #ifdef HYDROGEN_GPU_USE_FP16
 ETI(gpu_half_type, int);
