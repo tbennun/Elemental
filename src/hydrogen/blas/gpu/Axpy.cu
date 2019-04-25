@@ -54,7 +54,7 @@ __global__ void axpy_2d_transpose_tiled_kernel(
         #pragma unroll
         for (int ii = 0; ii < TILE_SIZE; ii += BLK_COLS)
         {
-            B[ii*ldb] = tile[threadIdx.x][threadIdx.y+ii];
+            B[ii*ldb] += tile[threadIdx.x][threadIdx.y+ii];
         }
     }
     else
@@ -64,15 +64,16 @@ __global__ void axpy_2d_transpose_tiled_kernel(
         //
 
         // Make sure we don't grab extra columns
-        for (int ii = 0; ii < TILE_SIZE && col_start_A + ii < m; ii += BLK_COLS)
-            tile[threadIdx.y+ii][threadIdx.x] = alpha * A[ii*lda];
+        if (row_start_A < n)
+            for (int ii = 0; ii < TILE_SIZE && col_start_A + ii < m; ii += BLK_COLS)
+                tile[threadIdx.y+ii][threadIdx.x] = alpha * A[ii*lda];
 
         // Same warp-sync stuff -- I assume this still needs to happen.
         cg::sync(cta);
 
         // Don't write rows of the new matrix that don't exist.
         if (row_start_B < m)
-            for (int ii = 0; ii < TILE_SIZE; ii += BLK_COLS)
+            for (int ii = 0; ii < TILE_SIZE && col_start_B + ii < n; ii += BLK_COLS)
                 B[ii*ldb] += tile[threadIdx.x][threadIdx.y+ii];
     }
 }
