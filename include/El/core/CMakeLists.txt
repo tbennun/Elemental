@@ -10,6 +10,7 @@ set_full_path(THIS_DIR_HEADERS
   Grid.hpp
   Matrix.hpp
   Memory.hpp
+  MemoryPool.hpp
   NumericTypeConversion.hpp
   Permutation.hpp
   Profiling.hpp
