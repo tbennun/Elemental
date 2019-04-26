@@ -15,66 +15,55 @@ template <int TILE_SIZE, int BLK_COLS, typename T, typename SizeT>
 __global__ void axpy_2d_transpose_tiled_kernel(
     SizeT m, SizeT n, T alpha, T const* A, SizeT lda, T* B, SizeT ldb)
 {
+
+    // All the fun of a transpose meets the awesomeness of Axpy. :D
+    //
+    // remember: B is m x n, A is n x m
     cg::thread_block cta = cg::this_thread_block();
     __shared__ T tile[TILE_SIZE][TILE_SIZE+1];
-    
+
     auto const row_start_A = blockIdx.y * TILE_SIZE + threadIdx.x;
     auto const col_start_A = blockIdx.x * TILE_SIZE + threadIdx.y;
-    
-    auto const idx_A = row_start_A + col_start_A * lda;
-    
+
+    A += row_start_A + col_start_A * lda;
+
     auto const row_start_B = blockIdx.x * TILE_SIZE + threadIdx.x;
     auto const col_start_B = blockIdx.y * TILE_SIZE + threadIdx.y;
 
-    auto idx_B = row_start_B + col_start_B * ldb;
+    B += row_start_B + col_start_B * ldb;
 
-    // Starting point is inside the matrix
-    bool const do_anything = (row_start_B < m && col_start_B < n);
-
-    // Ending point is inside the matrix
-    bool const do_all = (do_anything) && (col_start_B + TILE_SIZE <= n);
-
-    if (!do_anything)
-        return;
-    
-    // Advance the matrices
-    A += idx_A;
-    B += idx_B;
-
-    if (do_all)
+    // If I am a valid row in A, I need to load things
+    if (row_start_A < n)
     {
-        #pragma unroll
-        for (int ii = 0; ii < TILE_SIZE; ii += BLK_COLS)
+        if (col_start_A + TILE_SIZE <= m)
         {
-            tile[threadIdx.y+ii][threadIdx.x] = alpha * A[ii*lda];
+            #pragma unroll
+            for (int ii = 0; ii < TILE_SIZE; ii += BLK_COLS)
+                tile[threadIdx.y+ii][threadIdx.x] = alpha * A[ii*lda];
         }
-
-        cg::sync(cta);
-
-        #pragma unroll
-        for (int ii = 0; ii < TILE_SIZE; ii += BLK_COLS)
+        else
         {
-            B[ii*ldb] += tile[threadIdx.x][threadIdx.y+ii];
-        }
-    }
-    else
-    {
-        //
-        // Some work doesn't get done. Be more careful
-        //
-
-        // Make sure we don't grab extra columns
-        if (row_start_A < n)
             for (int ii = 0; ii < TILE_SIZE && col_start_A + ii < m; ii += BLK_COLS)
                 tile[threadIdx.y+ii][threadIdx.x] = alpha * A[ii*lda];
+         }
+    }
 
-        // Same warp-sync stuff -- I assume this still needs to happen.
-        cg::sync(cta);
+    cg::sync(cta);
 
-        // Don't write rows of the new matrix that don't exist.
-        if (row_start_B < m)
+    // If I am a valid row in B, I need to store things
+    if (row_start_B < m)
+    {
+        if (col_start_B + TILE_SIZE <= n)
+        {
+            #pragma unroll
+            for (int ii = 0; ii < TILE_SIZE; ii += BLK_COLS)
+                B[ii*ldb] += tile[threadIdx.x][threadIdx.y+ii];
+        }
+        else
+        {
             for (int ii = 0; ii < TILE_SIZE && col_start_B + ii < n; ii += BLK_COLS)
                 B[ii*ldb] += tile[threadIdx.x][threadIdx.y+ii];
+        }
     }
 }
 
@@ -159,7 +148,7 @@ void Axpy_GPU_impl(
             height, width, alpha,
             A, TypeTraits<SizeT>::One(), lda,
             B, TypeTraits<SizeT>::One(), ldb, stream);
-    
+
     constexpr int TILE_SIZE = 32;
     constexpr int BLK_COLS = 8;
 
