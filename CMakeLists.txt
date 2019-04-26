@@ -415,7 +415,9 @@ if (Hydrogen_ENABLE_ALUMINUM)
     set(HYDROGEN_HAVE_NCCL2 FALSE)
     set(HYDROGEN_HAVE_AL_MPI_CUDA FALSE)
     set(Hydrogen_ENABLE_ALUMINUM FALSE)
-    message(WARNING "Aluminum support requested but not found. Disabling.")
+    message(FATAL_ERROR "Aluminum support requested but not found. "
+      "Please set Aluminum_DIR to point to the installation prefix "
+      "for Aluminum.")
   endif (Aluminum_FOUND)
 endif (Hydrogen_ENABLE_ALUMINUM)
 

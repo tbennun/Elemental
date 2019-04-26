@@ -216,7 +216,8 @@ AbstractMatrix<T>::AbstractMatrix(Int height, Int width, Int ldim)
 template <typename T>
 AbstractMatrix<T>::AbstractMatrix(
     El::ViewType view, Int height, Int width, Int ldim)
-    : height_{height}, width_{width}, leadingDimension_{Max(ldim,1)},
+    : height_{height}, width_{width},
+      leadingDimension_{Max(Max(height, ldim),1)},
       viewType_{view}
 {
     EL_DEBUG_CSE;

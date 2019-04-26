@@ -34,9 +34,17 @@ G* New(size_t size, unsigned int mode, SyncInfo<Device::CPU> const&)
 {
     G* ptr = nullptr;
     switch (mode) {
-    case 0: ptr = new G[size]; break;
+    case 0:
+        ptr = static_cast<G*>(HostMemoryPool().Allocate(size * sizeof(G)));
+        break;
 #ifdef HYDROGEN_HAVE_CUDA
     case 1:
+        ptr = static_cast<G*>(PinnedHostMemoryPool().Allocate(size * sizeof(G)));
+        break;
+#endif // HYDROGEN_HAVE_CUDA
+    case 2: ptr = new G[size]; break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case 3:
     {
         // Pinned memory
         auto error = cudaMallocHost(&ptr, size * sizeof(G));
@@ -57,9 +65,13 @@ template <typename G>
 void Delete( G*& ptr, unsigned int mode, SyncInfo<Device::CPU> const& )
 {
     switch (mode) {
-    case 0: delete[] ptr; break;
+    case 0: HostMemoryPool().Free(ptr); break;
 #ifdef HYDROGEN_HAVE_CUDA
-    case 1:
+    case 1: PinnedHostMemoryPool().Free(ptr); break;
+#endif  // HYDROGEN_HAVE_CUDA
+    case 2: delete[] ptr; break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case 3:
     {
         // Pinned memory
         auto error = cudaFreeHost(ptr);
