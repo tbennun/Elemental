@@ -17,9 +17,16 @@ namespace El
 template <typename T, typename=EnableIf<IsComputeType<T,Device::GPU>>>
 void Scale(T const& alpha, Matrix<T,Device::GPU>& A)
 {
-    gpu_blas::Scale(A.Height(), A.Width(), alpha,
-                    A.Buffer(), A.LDim(),
-                    SyncInfoFromMatrix(A));
+    if( alpha == TypeTraits<T>::Zero() )
+    {
+        Zero(A);
+    }
+    else
+    {
+        gpu_blas::Scale(A.Height(), A.Width(), alpha,
+                        A.Buffer(), A.LDim(),
+                        SyncInfoFromMatrix(A));
+    }
 }
 
 template <typename T,
