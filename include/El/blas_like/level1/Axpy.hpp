@@ -119,14 +119,6 @@ void Axpy(S alphaS, const Matrix<T,Device::GPU>& X, Matrix<T,Device::GPU>& Y)
     LogicError("Axpy: Invalid type-device combination.");
 }
 
-template <typename T>
-void DoGpuAxpy(Int const& mX, Int const& nX, T const& alpha,
-               T const* XBuf, Int const& ldX, T* YBuf, Int const& ldY,
-               SyncInfo<Device::GPU> const& si)
-{
-    gpu_blas::Axpy(mX, nX, alpha, XBuf, ldX, YBuf, ldY, si);
-}
-
 template<typename T,typename S,
          typename=EnableIf<IsDeviceValidType<T,Device::GPU>>>
 void Axpy(S alphaS, Matrix<T,Device::GPU> const& X, Matrix<T,Device::GPU>& Y)
