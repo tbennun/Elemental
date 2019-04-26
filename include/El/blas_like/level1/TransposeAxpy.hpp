@@ -130,8 +130,9 @@ void TransposeAxpy(S alphaS,
                   << "  However, the type should be real anyway." << std::endl;
 #endif // !EL_RELEASE
 
-    auto syncInfoA = SyncInfoFromMatrix(X), syncInfoB = SyncInfoFromMatrix(Y);
-    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+    auto syncInfoX = SyncInfoFromMatrix(X),
+        syncInfoY = SyncInfoFromMatrix(Y);
+    auto syncHelper = MakeMultiSync(syncInfoY, syncInfoX);
 
     // If X and Y are vectors, we can allow one to be a column and the other
     // to be a row. Otherwise we force X and Y to be the same dimension.
@@ -147,7 +148,7 @@ void TransposeAxpy(S alphaS,
             LogicError("Nonconformal TransposeAxpy");
 #endif // !EL_RELEASE
 
-        gpu_blas::Axpy(lengthX, alpha, XBuf, incX, YBuf, incY, syncInfoB);
+        gpu_blas::Axpy(lengthX, alpha, XBuf, incX, YBuf, incY, syncInfoY);
     }
     else
     {
@@ -161,7 +162,7 @@ void TransposeAxpy(S alphaS,
             (conjugate
              ? TransposeMode::CONJ_TRANSPOSE
              : TransposeMode::TRANSPOSE),
-            nX, mX, alpha, XBuf, ldX, YBuf, ldY, syncInfoB);
+            nX, mX, alpha, XBuf, ldX, YBuf, ldY, syncInfoY);
     }
 }
 

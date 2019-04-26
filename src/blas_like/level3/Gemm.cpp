@@ -100,23 +100,10 @@ static void Gemm_impl(
     auto SyncManager = MakeMultiSync(
         master_sync, SyncInfoFromMatrix(A), SyncInfoFromMatrix(B));
 
-    // Keep the old stream so we can restore it. I don't know if this
-    // is necessary, but it might be good to keep the cuBLAS handle
-    // "looking const" outside this function.
-    cudaStream_t old_stream;
-    H_CHECK_CUBLAS(
-        cublasGetStream(GPUManager::cuBLASHandle(), &old_stream));
-    H_CHECK_CUBLAS(
-        cublasSetStream(GPUManager::cuBLASHandle(), C.Stream()));
-
     gpu_blas::Gemm(transA, transB, m, n, k,
                    alpha, A.LockedBuffer(), A.LDim(),
                    B.LockedBuffer(), B.LDim(),
                    beta, C.Buffer(), C.LDim(), master_sync);
-
-    // Restore the "default" stream
-    H_CHECK_CUBLAS(
-        cublasSetStream(GPUManager::cuBLASHandle(), old_stream));
 }
 
 #endif // HYDROGEN_HAVE_CUDA

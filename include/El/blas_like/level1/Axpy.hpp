@@ -143,9 +143,9 @@ void Axpy(S alphaS, Matrix<T,Device::GPU> const& X, Matrix<T,Device::GPU>& Y)
     T* YBuf = Y.Buffer();
 
     SyncInfo<Device::GPU>
-        syncInfoA = SyncInfoFromMatrix(X),
-        syncInfoB = SyncInfoFromMatrix(Y);
-    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
+        syncInfoX = SyncInfoFromMatrix(X),
+        syncInfoY = SyncInfoFromMatrix(Y);
+    auto syncHelper = MakeMultiSync(syncInfoY, syncInfoX);
 
     // If X and Y are vectors, we can allow one to be a column and the other
     // to be a row. Otherwise we force X and Y to be the same dimension.
@@ -161,12 +161,12 @@ void Axpy(S alphaS, Matrix<T,Device::GPU> const& X, Matrix<T,Device::GPU>& Y)
             LogicError("Nonconformal Axpy");
 #endif // !EL_RELEASE
         gpu_blas::Axpy(
-            XLength, alpha, XBuf, XStride, YBuf, YStride, syncInfoB);
+            XLength, alpha, XBuf, XStride, YBuf, YStride, syncInfoY);
     }
     else
     {
         gpu_blas::Axpy(
-            mX, nX, alpha, XBuf, ldX, YBuf, ldY, syncInfoB);
+            mX, nX, alpha, XBuf, ldX, YBuf, ldY, syncInfoY);
     }
 }
 #endif // HYDROGEN_HAVE_CUDA
