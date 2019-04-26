@@ -135,7 +135,9 @@ void Zero( AbstractDistMatrix<T>& A )
   EL_EXTERN template void Zero( AbstractMatrix<T>& A ); \
   EL_EXTERN template void Zero( AbstractDistMatrix<T>& A );
 
+#ifdef HYDROGEN_GPU_USE_FP16
 PROTO(gpu_half_type)
+#endif
 
 #define EL_ENABLE_HALF
 #define EL_ENABLE_DOUBLEDOUBLE

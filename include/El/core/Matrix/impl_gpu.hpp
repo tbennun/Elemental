@@ -529,7 +529,9 @@ void Matrix<T, Device::GPU>::SetEvent(cudaEvent_t event) EL_NO_EXCEPT
 
 // Right now, we don't acknowledge a world in which NVIDIA GPUs
 // coexist on a platform with some other type of GPU (e.g., AMD)
+#ifdef HYDROGEN_GPU_USE_FP16
 PROTO(gpu_half_type)
+#endif // HYDROGEN_GPU_USE_FP16
 
 #include <El/macros/Instantiate.h>
 

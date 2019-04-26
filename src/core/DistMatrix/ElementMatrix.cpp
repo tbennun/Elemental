@@ -881,7 +881,9 @@ ElementalMatrix<T>::ShallowSwap(ElementalMatrix<T>& A)
 #define PROTO(T) template class ElementalMatrix<T>;
 #endif
 
+#ifdef HYDROGEN_GPU_USE_FP16
 PROTO(gpu_half_type)
+#endif
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

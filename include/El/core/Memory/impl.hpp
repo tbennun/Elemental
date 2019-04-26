@@ -17,7 +17,9 @@
 #endif // HYDROGEN_HAVE_CUDA
 
 #include <El/hydrogen_config.h>
+#ifdef HYDROGEN_HAVE_CUB
 #include <hydrogen/device/gpu/cuda/CUB.hpp>
+#endif
 #include <hydrogen/device/gpu/CUDA.hpp>
 #include "decl.hpp"
 

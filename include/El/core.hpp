@@ -59,7 +59,9 @@
 
 #ifdef HYDROGEN_HAVE_CUDA
 #include <hydrogen/device/gpu/CUDA.hpp>
+#ifdef HYDROGEN_HAVE_CUB
 #include <hydrogen/device/gpu/cuda/CUB.hpp>
+#endif // HYDROGEN_HAVE_CUB
 #include <hydrogen/device/gpu/cuda/cuBLAS.hpp>
 #endif // HYDROGEN_HAVE_CUDA
 
@@ -147,7 +149,9 @@ class BigFloat;
 template<typename Real>
 class Complex;
 
+#ifdef HYDROGEN_HAVE_HALF
 using hydrogen::cpu_half_type;
+#endif
 #ifdef HYDROGEN_GPU_USE_FP16
 using hydrogen::gpu_half_type;
 #endif // HYDROGEN_GPU_USE_FP16

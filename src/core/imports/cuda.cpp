@@ -10,6 +10,7 @@
 #include <nvml.h>
 
 #include <cstdlib>// getenv
+#include <iostream>
 #include <stdexcept>
 
 namespace hydrogen

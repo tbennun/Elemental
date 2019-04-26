@@ -103,7 +103,9 @@ template struct Types<long long int>; // Avoid conflict with Int
   template struct Types<ValueInt<T>>; \
   template struct Types<Entry<T>>;
 
+#ifdef HYDROGEN_GPU_USE_FP16
 PROTO(gpu_half_type)
+#endif
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

@@ -26,6 +26,7 @@ OutT FromInt(int x)
     return OutT(x);
 }
 
+#ifdef HYDROGEN_GPU_USE_FP16
 template <>
 inline gpu_half_type BaseFromInt<gpu_half_type>(int x)
 {
@@ -37,6 +38,7 @@ inline gpu_half_type FromInt<gpu_half_type>(int x)
 {
     return gpu_half_type(static_cast<float>(x));
 }
+#endif
 
 // While Elemental used to make use of typeid(T).name() for analogues of the
 // below strings, the 'name' property is not guaranteed to exist for all types,
