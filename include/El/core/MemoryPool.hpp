@@ -16,6 +16,17 @@
 
 namespace El
 {
+namespace details
+{
+template <typename... Args>
+void ThrowRuntimeError(Args&&... args)
+{
+    std::ostringstream oss;
+    int dummy[sizeof...(Args)] = { (oss << args, 0)... };
+    (void) dummy;
+    throw std::runtime_error(oss.str());
+}
+}
 
 /** Simple caching memory pool.
  *  This maintains a set of bins that contain allocations of a fixed size.
@@ -100,7 +111,7 @@ public:
         auto iter = alloc_to_bin_.find(ptr);
         if (iter == alloc_to_bin_.end())
         {
-            RuntimeError("Tried to free unknown ptr");
+            details::ThrowRuntimeError("Tried to free unknown ptr");
         }
         else
         {
@@ -171,8 +182,9 @@ inline void* MemoryPool<true>::do_allocation(size_t bytes)
     auto error = cudaMallocHost(&ptr, bytes);
     if (error != cudaSuccess)
     {
-        RuntimeError("Failed to allocate CUDA pinned memory with message: ",
-                     "\"", cudaGetErrorString(error), "\"");
+        details::ThrowRuntimeError(
+            "Failed to allocate CUDA pinned memory with message: ",
+            "\"", cudaGetErrorString(error), "\"");
     }
     return ptr;
 }
@@ -183,8 +195,9 @@ inline void MemoryPool<true>::do_free(void* ptr)
     auto error = cudaFreeHost(ptr);
     if (error != cudaSuccess)
     {
-        RuntimeError("Failed to free CUDA pinned memory with message: ",
-                     "\"", cudaGetErrorString(error), "\"");
+        details::ThrowRuntimeError(
+            "Failed to free CUDA pinned memory with message: ",
+            "\"", cudaGetErrorString(error), "\"");
     }
 }
 #endif  // HYDROGEN_HAVE_CUDA
@@ -194,7 +207,7 @@ inline void* MemoryPool<false>::do_allocation(size_t bytes) {
     void* ptr = std::malloc(bytes);
     if (ptr == nullptr)
     {
-        RuntimeError("Failed to allocate memory");
+        details::ThrowRuntimeError("Failed to allocate memory");
     }
     return ptr;
 }
