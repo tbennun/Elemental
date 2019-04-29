@@ -188,7 +188,6 @@ void Gemm (
     const Int m = (orientA==NORMAL ? A.Height() : A.Width());
     const Int n = (orientB==NORMAL ? B.Width() : B.Height());
     C.Resize(m, n);
-    Zero(C);
     Gemm(orientA, orientB, alpha, A, B, TypeTraits<T>::Zero(), C);
 }
 
@@ -200,8 +199,8 @@ void Gemm
   T beta,        AbstractDistMatrix<T>& C,
   GemmAlgorithm alg)
 {
-    EL_DEBUG_CSE
-    C *= beta;
+    EL_DEBUG_CSE;
+    Scale(beta, C);
     if(orientA == NORMAL && orientB == NORMAL)
     {
         if(alg == GEMM_CANNON)
@@ -359,7 +358,6 @@ void LocalGemm
     const Int m = (orientA==NORMAL ? A.Height() : A.Width());
     const Int n = (orientB==NORMAL ? B.Width() : B.Height());
     C.Resize(m, n);
-    Zero(C);
     LocalGemm(orientA, orientB, alpha, A, B, TypeTraits<T>::Zero(), C);
 }
 
