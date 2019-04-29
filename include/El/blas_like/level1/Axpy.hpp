@@ -38,21 +38,6 @@ void Axpy(S alphaS, AbstractMatrix<T> const& X, AbstractMatrix<T>& Y)
     }
 }
 
-#ifdef HYDROGEN_GPU_USE_FP16
-template <>
-inline void Axpy(
-    gpu_half_type alphaS,
-    AbstractMatrix<gpu_half_type> const& X, AbstractMatrix<gpu_half_type>& Y)
-{
-    if (X.GetDevice() != Device::GPU || X.GetDevice() != Y.GetDevice())
-        LogicError("Axpy<gpu_half_type,gpu_half_type>: Incompatible devices!");
-
-    Axpy(alphaS,
-         static_cast<Matrix<gpu_half_type,Device::GPU> const&>(X),
-         static_cast<Matrix<gpu_half_type,Device::GPU>&>(Y));
-}
-#endif // HYDROGEN_GPU_USE_FP16
-
 template<typename T,typename S>
 void Axpy(S alphaS, const Matrix<T,Device::CPU>& X, Matrix<T,Device::CPU>& Y)
 {
