@@ -98,7 +98,7 @@ struct CudaError : std::runtime_error
     }                                                           \
     while (0)
 
-#ifdef H_RELEASE
+#ifdef HYDROGEN_RELEASE_BUILD
 #define H_CHECK_CUDA( cuda_call ) H_FORCE_CHECK_CUDA_NOSYNC(cuda_call)
 #define H_CHECK_CUDA_KERNEL(kernel, Dg, Db, Ns, S, args) \
   H_LAUNCH_CUDA_KERNEL(kernel, Dg, Db, Ns, S, args)
@@ -106,7 +106,7 @@ struct CudaError : std::runtime_error
 #define H_CHECK_CUDA( cuda_call ) H_FORCE_CHECK_CUDA( cuda_call )
 #define H_CHECK_CUDA_KERNEL(kernel, Dg, Db, Ns, S, args) \
   H_FORCE_CHECK_CUDA_KERNEL(kernel, Dg, Db, Ns, S, args)
-#endif // #ifdef H_RELEASE
+#endif // HYDROGEN_RELEASE_BUILD
 
 // Function to determine if a pointer is GPU memory
 inline bool IsGPUMemory(const void* ptr)
