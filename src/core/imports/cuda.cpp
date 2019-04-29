@@ -1,4 +1,7 @@
 #include "hydrogen/device/gpu/CUDA.hpp"
+
+#include "El/core/MemoryPool.hpp"
+
 #include "hydrogen/device/gpu/cuda/cuBLAS.hpp"
 #ifdef HYDROGEN_HAVE_CUB
 #include "hydrogen/device/gpu/cuda/CUB.hpp"
@@ -59,7 +62,7 @@ void FinalizeCUDA()
 #ifdef HYDROGEN_HAVE_CUB
     cub::DestroyMemoryPool();
 #endif // HYDROGEN_HAVE_CUB
-    DestroyPinnedHostMemoryPool();
+    El::DestroyPinnedHostMemoryPool();
     GPUManager::Destroy();
 }
 
