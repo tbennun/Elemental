@@ -152,7 +152,7 @@ if (Hydrogen_ENABLE_CUDA)
 
   option(Hydrogen_ENABLE_CUBLAS_TENSOR_MATH
     "Use the cuBLAS tensor operation math."
-    ON)
+    OFF)
 
   option(Hydrogen_ENABLE_GPU_FP16
     "Enable FP16 arithmetic in GPU code."
