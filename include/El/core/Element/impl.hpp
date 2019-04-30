@@ -86,12 +86,6 @@ template<typename Real,
          typename/*=EnableIf<IsReal<Real>>*/>
 Real ImagPart( Real const& ) EL_NO_EXCEPT
 { return TypeTraits<Real>::Zero(); }
-#ifdef HYDROGEN_GPU_USE_FP16
-template <>
-inline gpu_half_type
-ImagPart<gpu_half_type,void>(gpu_half_type const&) EL_NO_EXCEPT
-{ return __half{0.f}; }
-#endif // HYDROGEN_HAVE_CUDA
 
 template<typename Real>
 Real ImagPart( const Complex<Real>& alpha ) EL_NO_EXCEPT
@@ -139,9 +133,7 @@ template <>
 inline void UpdateRealPart<gpu_half_type, void>(
     gpu_half_type& alpha, gpu_half_type const& beta) EL_NO_EXCEPT
 {
-    float a(alpha);
-    float b(beta);
-    alpha = a+b;
+    alpha = float(alpha)+float(beta);
 }
 #endif // HYDROGEN_HAVE_CUDA
 

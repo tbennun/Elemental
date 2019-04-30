@@ -58,32 +58,21 @@ void Gemv(Orientation orientA,
 namespace
 {
 
-template <Device D> struct BLASHelper;
-
-template <>
-struct BLASHelper<Device::CPU>
+template <typename... Ts>
+void DispatchGemv(SyncInfo<Device::CPU> const&, Ts&&... args)
 {
-    template <typename... Ts>
-    static void Gemv(SyncInfo<Device::CPU> const&, Ts&&... args)
-    {
-        blas::Gemv(std::forward<Ts>(args)...);
-    }
-};// struct BLASHelper<T,Device::CPU>
+    blas::Gemv(std::forward<Ts>(args)...);
+}
 
-#ifdef HYDROGEN_HAVE_CUDA
-template <>
-struct BLASHelper<Device::GPU>
+#ifdef HYDROGEN_HAVE_GPU
+template <typename... Ts>
+void DispatchGemv(SyncInfo<Device::GPU> const& si,
+                  char trans,
+                  Ts&&... args)
 {
-    template <typename... Ts>
-    static void Gemv(SyncInfo<Device::GPU> const& si, char trans,
-                     Ts&&... args)
-    {
-        // This is a hack until we have device-agnostic BLAS APIs.
-        gpu_blas::Gemv(CharToTransposeMode(trans),
-                       std::forward<Ts>(args)..., si);
-    }
-};// struct BLASHelper<T,Device::GPU>
-#endif // HYDROGEN_HAVE_CUDA
+    gpu_blas::Gemv(CharToTransposeMode(trans), std::forward<Ts>(args)..., si);
+}
+#endif // HYDROGEN_HAVE_GPU
 
 }// namespace <anon>
 
@@ -134,7 +123,7 @@ void Gemv
     {
         if (yDim != 0)
         {
-            BLASHelper<D>::Gemv(
+            DispatchGemv(
                 master_sync,
                 transChar, m, n,
                 alpha, A.LockedBuffer(), A.LDim(), x.LockedBuffer(), incx,

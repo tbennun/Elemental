@@ -385,6 +385,8 @@ void Copy2DImpl(SizeT nrows, SizeT ncols,
                       B, SizeT(1), ldb, si.stream_);
         break;
     case TransposeMode::TRANSPOSE:
+        // This kernel is a bit funny and takes the dimensions of A,
+        // so we must reverse nrows and ncols.
         Transpose_GPU_impl(ncols, nrows, A, lda, B, ldb, si.stream_);
         break;
     default:

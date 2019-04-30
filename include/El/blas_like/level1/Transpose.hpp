@@ -171,6 +171,7 @@ void Transpose(Matrix<T,Device::GPU> const& A,
     auto SyncManager = MakeMultiSync(
         master_sync, SyncInfoFromMatrix(A));
 
+    // Passing in the dims of B.
     gpu_blas::Copy(
         (conjugate ? TransposeMode::CONJ_TRANSPOSE : TransposeMode::TRANSPOSE),
         n, m,

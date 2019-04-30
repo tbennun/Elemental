@@ -69,6 +69,12 @@
 namespace El
 {
 using namespace hydrogen;
+#ifdef HYDROGEN_HAVE_HALF
+using hydrogen::cpu_half_type;
+#endif
+#ifdef HYDROGEN_GPU_USE_FP16
+using hydrogen::gpu_half_type;
+#endif // HYDROGEN_GPU_USE_FP16
 }
 
 #if __cplusplus >= 201402L
@@ -106,15 +112,14 @@ using namespace hydrogen;
 #endif
 
 #ifdef HYDROGEN_HAVE_HALF
-#include <half.hpp>
 template <>
-struct std::is_floating_point<half_float::half> : std::true_type {};
+struct std::is_floating_point<cpu_half_type> : std::true_type {};
 
 template <>
-struct std::is_integral<half_float::half> : std::false_type {};
+struct std::is_integral<cpu_half_type> : std::false_type {};
 
 template <>
-struct std::is_arithmetic<half_float::half> : std::true_type {};
+struct std::is_arithmetic<cpu_half_type> : std::true_type {};
 #endif
 
 namespace El
@@ -148,13 +153,6 @@ class BigFloat;
 #endif
 template<typename Real>
 class Complex;
-
-#ifdef HYDROGEN_HAVE_HALF
-using hydrogen::cpu_half_type;
-#endif
-#ifdef HYDROGEN_GPU_USE_FP16
-using hydrogen::gpu_half_type;
-#endif // HYDROGEN_GPU_USE_FP16
 
 template<typename S,typename T>
 using IsSame = std::is_same<S,T>;

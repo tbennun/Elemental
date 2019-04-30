@@ -31,7 +31,7 @@ struct CudaError : std::runtime_error
     {
         std::ostringstream oss;
         oss << ( async ? "Asynchronous CUDA error" : "CUDA error" )
-            << " (" << file << ":" << line << "): "
+            << " (error code=" << cuda_error << ") (" << file << ":" << line << "): "
             << cudaGetErrorString(cuda_error);
         return oss.str();
     }
