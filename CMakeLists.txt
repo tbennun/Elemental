@@ -125,6 +125,11 @@ option(CMAKE_POSITION_INDEPENDENT_CODE
 option(CMAKE_INTERPROCEDURAL_OPTIMIZATION
   "Build Hydrogen with interprocedural optimization enabled" OFF)
 
+option(Hydrogen_ENABLE_BOUNDS_CHECKING
+  "Do bounds checking in various routines."
+  OFF)
+set(HYDROGEN_DO_BOUNDS_CHECKING ${Hydrogen_ENABLE_BOUNDS_CHECKING})
+
 option(Hydrogen_ENABLE_TESTING "Build the test suite." ON)
 
 option(Hydrogen_ENABLE_QUADMATH
@@ -332,7 +337,7 @@ if (Hydrogen_ENABLE_CUDA)
     if (Hydrogen_ENABLE_GPU_FP16)
       set(HYDROGEN_GPU_USE_FP16 TRUE)
     endif ()
-    
+
     if (Hydrogen_ENABLE_CUB)
       find_package(CUB REQUIRED)
       set(HYDROGEN_HAVE_CUB TRUE)
