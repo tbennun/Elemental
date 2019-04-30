@@ -12,6 +12,8 @@
 #include "./Gemv/Normal.hpp"
 #include "./Gemv/Transpose.hpp"
 
+#include <El/hydrogen_config.h>
+
 namespace El {
 
 template <typename T>
@@ -94,7 +96,7 @@ void Gemv
   T beta,        Matrix<T,D>& y)
 {
     EL_DEBUG_CSE;
-#ifdef HYDROGEN_ENABLE_BOUNDS_CHECKING
+#ifdef HYDROGEN_DO_BOUNDS_CHECKING
     if ((x.Height() != 1 && x.Width() != 1) ||
         (y.Height() != 1 && y.Width() != 1))
         LogicError
@@ -115,7 +117,7 @@ void Gemv
                 ("Nonconformal: \n",DimsString(A,"A"),"\n",
                  DimsString(x,"x"),"\n",DimsString(y,"y"));
     }
-#endif // HYDROGEN_ENABLE_BOUNDS_CHECKING
+#endif // HYDROGEN_DO_BOUNDS_CHECKING
 
     auto master_sync = SyncInfoFromMatrix(y);
     auto SyncManager = MakeMultiSync(

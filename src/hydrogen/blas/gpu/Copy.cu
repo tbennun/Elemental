@@ -83,8 +83,8 @@ void Copy_GPU_impl(
 #ifdef HYDROGEN_DO_BOUNDS_CHECKING
     // The kernel parameters are __restrict__-ed. This helps ensure
     // that's not a lie.
-    T const* max_src = src + src_stride*num_entires;
-    T const* max_dest = dest + dest_stride*num_entries;
+    void const* max_src = src + src_stride*num_entries;
+    void const* max_dest = dest + dest_stride*num_entries;
     if ((dest < max_src) && (src < max_dest))
         throw std::logic_error(
             "Overlapping memory regions are not allowed.");
@@ -108,11 +108,14 @@ void Copy_GPU_impl(
     DestT* dest, SizeT dest_row_stride, SizeT dest_col_stride,
     cudaStream_t stream)
 {
+  if (num_rows == 0 || num_cols == 0)
+    return;
+
 #ifdef HYDROGEN_DO_BOUNDS_CHECKING
     // The kernel parameters are __restrict__-ed. This helps ensure
     // that's not a lie.
-    T const* max_src = src + src_col_stride*num_cols;
-    T const* max_dest = dest + dest_col_stride*num_cols;
+    void const* max_src = src + src_col_stride*num_cols;
+    void const* max_dest = dest + dest_col_stride*num_cols;
     if ((dest < max_src) && (src < max_dest))
         throw std::logic_error(
             "Overlapping memory regions are not allowed.");

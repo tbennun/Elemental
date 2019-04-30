@@ -64,12 +64,12 @@ void TransposeAxpy
         const Int lengthX = (nX==1 ? mX : nX);
         const Int incX = (nX==1 ? 1  : ldX);
         const Int incY = (nY==1 ? 1  : ldY);
-#ifdef HYDROGEN_ENABLE_BOUNDS_CHECKING
+#ifdef HYDROGEN_DO_BOUNDS_CHECKING
         const Int mY = Y.Height();
         const Int lengthY = (nY==1 ? mY : nY);
         if(lengthX != lengthY)
             LogicError("Nonconformal TransposeAxpy");
-#endif // HYDROGEN_ENABLE_BOUNDS_CHECKING
+#endif // HYDROGEN_DO_BOUNDS_CHECKING
         if(conjugate)
             for(Int j=0; j<lengthX; ++j)
                 YBuf[j*incY] += alpha*Conj(XBuf[j*incX]);
@@ -78,11 +78,11 @@ void TransposeAxpy
     }
     else
     {
-#ifdef HYDROGEN_ENABLE_BOUNDS_CHECKING
+#ifdef HYDROGEN_DO_BOUNDS_CHECKING
         const Int mY = Y.Height();
         if(mX != nY || nX != mY)
             LogicError("Nonconformal TransposeAxpy");
-#endif // HYDROGEN_ENABLE_BOUNDS_CHECKING
+#endif // HYDROGEN_DO_BOUNDS_CHECKING
         if(nX <= mX)
         {
             if(conjugate)
@@ -152,11 +152,11 @@ void TransposeAxpy(S alphaS,
     }
     else
     {
-#ifdef HYDROGEN_ENABLE_BOUNDS_CHECKING
+#ifdef HYDROGEN_DO_BOUNDS_CHECKING
         const Int mY = Y.Height();
         if(mX != nY || nX != mY)
             LogicError("Nonconformal TransposeAxpy");
-#endif // HYDROGEN_ENABLE_BOUNDS_CHECKING
+#endif // HYDROGEN_DO_BOUNDS_CHECKING
 
         gpu_blas::Axpy(
             (conjugate
