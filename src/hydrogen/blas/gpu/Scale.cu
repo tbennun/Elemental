@@ -61,6 +61,12 @@ void Scale_GPU_impl(
     T const& alpha, T* A, SizeT lda,
     cudaStream_t stream)
 {
+    if (num_rows == TypeTraits<SizeT>::Zero()
+        || num_cols == TypeTraits<SizeT>::Zero())
+    {
+        return;
+    }
+    
     constexpr int TILE_DIM = 32;
     constexpr int BLK_COLS = 8;
 

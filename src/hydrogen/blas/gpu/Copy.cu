@@ -80,6 +80,9 @@ void Copy_GPU_impl(
     DestT * dest, SizeT dest_stride,
     cudaStream_t stream)
 {
+    if (num_entries <= TypeTraits<SizeT>::Zero())
+        return;
+    
 #ifdef HYDROGEN_DO_BOUNDS_CHECKING
     // The kernel parameters are __restrict__-ed. This helps ensure
     // that's not a lie.

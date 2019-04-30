@@ -110,6 +110,12 @@ void Axpy_GPU_impl(
     T* Y, SizeT colStrideY, SizeT rowStrideY,
     cudaStream_t stream)
 {
+    if (height == TypeTraits<SizeT>::Zero()
+        || width == TypeTraits<SizeT>::Zero())
+    {
+        return;
+    }
+    
     constexpr int TILE_SIZE = 32;
     constexpr int BLK_COLS = 8;
 
@@ -140,8 +146,11 @@ void Axpy_GPU_impl(
     cudaStream_t stream)
 {
     // Short-circuit
-    if (height <= 0 || width <= 0)
+    if (height <= TypeTraits<SizeT>::Zero()
+        || width <= TypeTraits<SizeT>::Zero())
+    {
         return;
+    }
 
     if (transpA == TransposeMode::NORMAL)
         return Axpy_GPU_impl(

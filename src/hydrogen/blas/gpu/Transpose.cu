@@ -86,6 +86,9 @@ void Transpose_GPU_impl(
     SizeT m, SizeT n, T const* A, SizeT lda, T* B, SizeT ldb,
     cudaStream_t stream)
 {
+    if (m == TypeTraits<SizeT>::Zero() || n == TypeTraits<SizeT>::Zero())
+        return;
+
     constexpr int TILE_DIM = 32;
     constexpr int BLK_COLS = 8;
 
