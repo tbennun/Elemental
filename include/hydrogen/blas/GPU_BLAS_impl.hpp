@@ -338,7 +338,9 @@ void Axpy2DImpl(SizeT nrows, SizeT ncols,
                 T* B, SizeT ldb,
                 SyncInfo<Device::GPU> const& si)
 {
-    Axpy_GPU_impl(nrows, ncols, alpha, A, 1, lda, B, 1, ldb, si.stream_);
+    Axpy_GPU_impl(nrows, ncols,
+                  alpha, A, SizeT(1), lda,
+                  B, SizeT(1), ldb, si.stream_);
 }
 
 template <typename T, typename SizeT,
@@ -378,7 +380,9 @@ void Copy2DImpl(SizeT nrows, SizeT ncols,
     switch (transA)
     {
     case TransposeMode::NORMAL:
-        Copy_GPU_impl(nrows, ncols, A, 1, lda, B, 1, ldb, si.stream_);
+        Copy_GPU_impl(nrows, ncols,
+                      A, SizeT(1), lda,
+                      B, SizeT(1), ldb, si.stream_);
         break;
     case TransposeMode::TRANSPOSE:
         Transpose_GPU_impl(ncols, nrows, A, lda, B, ldb, si.stream_);

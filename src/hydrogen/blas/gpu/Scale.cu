@@ -90,17 +90,20 @@ void Scale_GPU_impl(
 
 ETI(float, int);
 ETI(float, long);
+ETI(float, long long);
 ETI(float, unsigned);
 ETI(float, size_t);
 
 ETI(double, int);
 ETI(double, long);
+ETI(double, long long);
 ETI(double, unsigned);
 ETI(double, size_t);
 
 #ifdef HYDROGEN_GPU_USE_FP16
 ETI(gpu_half_type, int);
 ETI(gpu_half_type, long);
+ETI(gpu_half_type, long long);
 ETI(gpu_half_type, unsigned);
 ETI(gpu_half_type, size_t);
 #endif

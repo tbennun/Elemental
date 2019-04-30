@@ -145,47 +145,56 @@ void Copy_GPU_impl(
 
 ETI(float, float, int);
 ETI(float, float, long);
+ETI(float, float, long long);
 ETI(float, float, unsigned);
 ETI(float, float, size_t);
 
 ETI(float, double, int);
 ETI(float, double, long);
+ETI(float, double, long long);
 ETI(float, double, unsigned);
 ETI(float, double, size_t);
 
 ETI(double, float, int);
 ETI(double, float, long);
+ETI(double, float, long long);
 ETI(double, float, unsigned);
 ETI(double, float, size_t);
 
 ETI(double, double, int);
 ETI(double, double, long);
+ETI(double, double, long long);
 ETI(double, double, unsigned);
 ETI(double, double, size_t);
 
 #ifdef HYDROGEN_GPU_USE_FP16
 ETI(gpu_half_type, gpu_half_type, int);
 ETI(gpu_half_type, gpu_half_type, long);
+ETI(gpu_half_type, gpu_half_type, long long);
 ETI(gpu_half_type, gpu_half_type, unsigned);
 ETI(gpu_half_type, gpu_half_type, size_t);
 
 ETI(gpu_half_type, float, int);
 ETI(gpu_half_type, float, long);
+ETI(gpu_half_type, float, long long);
 ETI(gpu_half_type, float, unsigned);
 ETI(gpu_half_type, float, size_t);
 
 ETI(float, gpu_half_type, int);
 ETI(float, gpu_half_type, long);
+ETI(float, gpu_half_type, long long);
 ETI(float, gpu_half_type, unsigned);
 ETI(float, gpu_half_type, size_t);
 
 ETI(gpu_half_type, double, int);
 ETI(gpu_half_type, double, long);
+ETI(gpu_half_type, double, long long);
 ETI(gpu_half_type, double, unsigned);
 ETI(gpu_half_type, double, size_t);
 
 ETI(double, gpu_half_type, int);
 ETI(double, gpu_half_type, long);
+ETI(double, gpu_half_type, long long);
 ETI(double, gpu_half_type, unsigned);
 ETI(double, gpu_half_type, size_t);
 #endif
