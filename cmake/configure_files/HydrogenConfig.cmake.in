@@ -190,6 +190,12 @@ endforeach (_DIR ${_TMP_LIBRARY_DIRS})
 
 if (NOT TARGET H::Hydrogen)
   include(${CMAKE_CURRENT_LIST_DIR}/HydrogenTargets.cmake)
+
+  add_library(H::Hydrogen IMPORTED INTERFACE)
+  target_link_libraries(H::Hydrogen INTERFACE H::Hydrogen_CXX)
+  if (TARGET H::Hydrogen_CUDA)
+    target_link_libraries(H::Hydrogen INTERFACE H::Hydrogen_CUDA)
+  endif ()
 endif (NOT TARGET H::Hydrogen)
 
 check_required_components(Hydrogen)
