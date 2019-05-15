@@ -21,7 +21,7 @@ void Scale(T const& alpha, Matrix<T,Device::GPU>& A)
     {
         Zero(A);
     }
-    else
+    else if( alpha != TypeTraits<T>::One() )
     {
         gpu_blas::Scale(A.Height(), A.Width(), alpha,
                         A.Buffer(), A.LDim(),
@@ -54,9 +54,9 @@ void Scale(S alphaS, Matrix<T,Device::CPU>& A)
     {
         Zero( A );
     }
-    else
+    else if ( alpha != TypeTraits<T>::One() )
     {
-        if( width == 1 || ALDim == height )
+        if( A.Contiguous() )
         {
             EL_PARALLEL_FOR
             for( Int i=0; i<height*width; ++i )
@@ -95,7 +95,7 @@ void Scale( S alphaS, AbstractMatrix<T>& A )
     {
         Zero(A);
     }
-    else
+    else if( alpha != TypeTraits<T>::One() )
     {
         switch (A.GetDevice())
         {
