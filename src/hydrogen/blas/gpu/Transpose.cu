@@ -55,23 +55,28 @@ __global__ void transpose_kernel(
             B[idx_out + ii*ldb] = tile[threadIdx.x][threadIdx.y+ii];
         }
     }
-    else
+    else if (do_anything)
     {
         //
         // Some work doesn't get done. Be more careful
         //
 
         // Make sure we don't grab extra columns
-        for (int ii = 0; ii < TILE_DIM && col_idx_A + ii < n; ii += BLK_COLS)
-            tile[threadIdx.y+ii][threadIdx.x] = A[idx_in + ii*lda];
+        if (row_idx_A < m)
+        {
+            for (int ii = 0; ii < TILE_DIM && col_idx_A + ii < n; ii += BLK_COLS)
+                tile[threadIdx.y+ii][threadIdx.x] = A[idx_in + ii*lda];
+        }
 
         // Same warp-sync stuff -- I assume this still needs to happen.
         cg::sync(cta);
 
         // Don't write rows of the new matrix that don't exist.
         if (row_idx < n)
-            for (int ii = 0; ii < TILE_DIM; ii += BLK_COLS)
+        {
+            for (int ii = 0; ii < TILE_DIM && col_idx + ii < m; ii += BLK_COLS)
                 B[idx_out + ii*ldb] = tile[threadIdx.x][threadIdx.y+ii];
+        }
     }
 }
 
