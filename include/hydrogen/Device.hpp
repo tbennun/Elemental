@@ -26,9 +26,6 @@ namespace hydrogen
  *  dispatch is valid and correct.
  */
 
-/** @brief Special typedef to help distinguish host/device memory. */
-template <typename T> using DevicePtr = T*;
-
 /** @brief An enumeration of every known device type. */
 enum class Device : unsigned char
 {

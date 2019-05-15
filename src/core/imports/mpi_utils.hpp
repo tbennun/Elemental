@@ -131,7 +131,7 @@ public:
 private:
     simple_buffer<T,Device::CPU> host_data_;
     SyncInfo<Device::GPU> syncInfo_;
-    DevicePtr<T> device_data_;
+    T* device_data_;
     size_t final_xfer_offset_;
     size_t final_xfer_size_;
 };// class ManagedHostMemoryWrapper<T,Device::GPU>

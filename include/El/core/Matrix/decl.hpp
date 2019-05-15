@@ -149,8 +149,8 @@ public:
 
     T* Buffer() EL_NO_RELEASE_EXCEPT override;
     T* Buffer(Int i, Int j) EL_NO_RELEASE_EXCEPT override;
-    const T* LockedBuffer() const EL_NO_EXCEPT override;
-    const T* LockedBuffer(Int i, Int j) const EL_NO_EXCEPT override;
+    T const* LockedBuffer() const EL_NO_EXCEPT override;
+    T const* LockedBuffer(Int i, Int j) const EL_NO_EXCEPT override;
 
     ///@}
     /** @name Advanced functions */
@@ -328,10 +328,10 @@ public:
     Device GetDevice() const EL_NO_EXCEPT override;
     constexpr Device MyDevice() const EL_NO_EXCEPT { return Device::GPU; }
 
-    DevicePtr<T> Buffer() EL_NO_RELEASE_EXCEPT override;
-    DevicePtr<T> Buffer(Int i, Int j) EL_NO_RELEASE_EXCEPT override;
-    DevicePtr<const T> LockedBuffer() const EL_NO_EXCEPT override;
-    DevicePtr<const T>
+    T* Buffer() EL_NO_RELEASE_EXCEPT override;
+    T* Buffer(Int i, Int j) EL_NO_RELEASE_EXCEPT override;
+    T const* LockedBuffer() const EL_NO_EXCEPT override;
+    T const*
     LockedBuffer(Int i, Int j) const EL_NO_EXCEPT override;
 
     ///@}
@@ -346,7 +346,7 @@ public:
     // Reconfigure around the given buffer, but do not assume ownership
     void Attach(Int height, Int width, T* buffer, Int leadingDimension);
     void LockedAttach(
-        Int height, Int width, const T* buffer, Int leadingDimension);
+        Int height, Int width, T const* buffer, Int leadingDimension);
 
     void Swap(Matrix<T,Device::GPU>& A) EL_NO_EXCEPT;
 
@@ -473,7 +473,7 @@ private:
 
     Memory<T,Device::GPU> memory_;
 
-    DevicePtr<T> data_=nullptr;
+    T* data_=nullptr;
 
     cudaStream_t stream_ = GPUManager::Stream();
     cudaEvent_t event_ = GPUManager::Event();

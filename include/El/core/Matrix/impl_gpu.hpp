@@ -90,7 +90,7 @@ Matrix<T, Device::GPU>::~Matrix() { }
 
 template <typename T>
 void Matrix<T, Device::GPU>::Attach
-(Int height, Int width, DevicePtr<T> buffer, Int leadingDimension)
+(Int height, Int width, T* buffer, Int leadingDimension)
 {
     EL_DEBUG_CSE;
 #ifndef EL_RELEASE
@@ -102,7 +102,7 @@ void Matrix<T, Device::GPU>::Attach
 
 template <typename T>
 void Matrix<T, Device::GPU>::LockedAttach
-(Int height, Int width, DevicePtr<const T> buffer, Int leadingDimension)
+(Int height, Int width, T const* buffer, Int leadingDimension)
 {
     EL_DEBUG_CSE;
 #ifndef EL_RELEASE
