@@ -528,7 +528,7 @@ const ElementalMatrix<T>&
 ElementalMatrix<T>::operator+=(const ElementalMatrix<T>& A)
 {
     EL_DEBUG_CSE;
-    Axpy(FromInt<T>(1), A, *this);
+    Axpy(TypeTraits<T>::One(), A, *this);
     return *this;
 }
 
@@ -537,7 +537,7 @@ const ElementalMatrix<T>&
 ElementalMatrix<T>::operator+=(const AbstractDistMatrix<T>& A)
 {
     EL_DEBUG_CSE;
-    Axpy(FromInt<T>(1), A, *this);
+    Axpy(TypeTraits<T>::One(), A, *this);
     return *this;
 }
 
@@ -546,7 +546,7 @@ const ElementalMatrix<T>&
 ElementalMatrix<T>::operator-=(const ElementalMatrix<T>& A)
 {
     EL_DEBUG_CSE;
-    Axpy(FromInt<T>(-1), A, *this);
+    Axpy(-TypeTraits<T>::One(), A, *this);
     return *this;
 }
 
@@ -555,7 +555,7 @@ const ElementalMatrix<T>&
 ElementalMatrix<T>::operator-=(const AbstractDistMatrix<T>& A)
 {
     EL_DEBUG_CSE;
-    Axpy(FromInt<T>(-1), A, *this);
+    Axpy(-TypeTraits<T>::One(), A, *this);
     return *this;
 }
 
