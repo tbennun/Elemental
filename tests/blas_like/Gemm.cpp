@@ -276,6 +276,7 @@ main(int argc, char* argv[])
 #ifdef HYDROGEN_HAVE_CUDA
         if (testGPU)
         {
+#ifdef HYDROGEN_GPU_USE_FP16
             TestGemm<gpu_half_type,Device::GPU>
                 (orientA, orientB,
                  m, n, k,
@@ -285,6 +286,7 @@ main(int argc, char* argv[])
                  colAlignA, rowAlignA,
                  colAlignB, rowAlignB,
                  colAlignC, rowAlignC);
+#endif // HYDROGEN_GPU_USE_FP16
             TestGemm<float,Device::GPU>
                 (orientA, orientB,
                  m, n, k,
