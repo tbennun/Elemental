@@ -55,7 +55,7 @@ __global__ void transpose_kernel(
             B[idx_out + ii*ldb] = tile[threadIdx.x][threadIdx.y+ii];
         }
     }
-    else if (do_anything)
+    else
     {
         //
         // Some work doesn't get done. Be more careful
