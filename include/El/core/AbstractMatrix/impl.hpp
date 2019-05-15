@@ -232,7 +232,7 @@ void AbstractMatrix<T>::AssertValidEntry(index_type i, index_type j) const
     if ((i > this->Height())
         || (j > this->Width()))
         RuntimeError("Bad entry (",i,", ",j,"). Matrix is ",
-                     this->Height(),"x",this->Width());
+                     this->Height(),"x",this->Width(),".");
 }
 
 // Single-entry manipulation
