@@ -170,8 +170,7 @@ void Axpy(SizeT num_rows, SizeT num_cols,
  *  @f[ Y = X\qquad X,Y\in\mathbb{F}^{\text{size}}. @f]
  *
  *  The vectors @f$X@f$, @f$Y@f$ may be stored with different stride
- *  but must have the same size. This is equivalent to an Axpy with
- *  @f$\alpha=1@f$ but may be implemented more efficiently.
+ *  but must have the same size.
  *
  *  @tparam T (Inferred) The type of data.
  *  @tparam SizeT (Inferred) The type used to express size information.
@@ -179,7 +178,7 @@ void Axpy(SizeT num_rows, SizeT num_cols,
  *  @param[in] size The number of entries in X and Y.
  *  @param[in] X The source vector.
  *  @param[in] incx The stride between entries of X.
- *  @param[in,out] Y The target vector.
+ *  @param[out] Y The target vector.
  *  @param[in] incy The stride between entries of Y.
  *  @param[in] syncinfo Synchronization information for this
  *                      operation.
@@ -199,8 +198,7 @@ void Copy(SizeT size,
  *  @f[ B = op(A) @f]
  *
  *  The matrices @f$A@f$, @f$B@f$ may have different leading
- *  dimensions but must have the same size. This is equivalent to an
- *  Axpy with @f$\alpha=1@f$ but may be implemented more efficiently.
+ *  dimensions but must have the same size.
  *
  *  @tparam T (Inferred) The type of data
  *  @tparam SizeT (Inferred) The type used to express size information.
@@ -211,7 +209,7 @@ void Copy(SizeT size,
  *  @param[in] num_cols The number of columns in op(A) and B.
  *  @param[in] A The source matrix, in column-major storage.
  *  @param[in] lda The stride between columns of A.
- *  @param[in,out] B The target matrix, in column-major storage.
+ *  @param[out] B The target matrix, in column-major storage.
  *  @param[in] ldb The stride between columns of B.
  *  @param[in] syncinfo Synchronization information for this
  *                      operation.
@@ -234,9 +232,7 @@ void Copy(TransposeMode transpA,
  *  @f[ B = A\qquad A,B\in\mathbb{F}^{\text{rows}\times\text{cols}}. @f]
  *
  *  The matrices @f$A@f$, @f$B@f$ may have different row strides and
- *  leading dimensions but must have the same size. This is equivalent
- *  to an Axpy with @f$\alpha=1@f$ but may be implemented more
- *  efficiently.
+ *  leading dimensions but must have the same size.
  *
  *  @tparam T (Inferred) The type of data
  *  @tparam SizeT (Inferred) The type used to express size information.
@@ -246,7 +242,7 @@ void Copy(TransposeMode transpA,
  *  @param[in] A The source matrix, in column-major storage.
  *  @param[in] row_stride_A The stride between rows of A.
  *  @param[in] lda The stride between columns of A.
- *  @param[in,out] B The target matrix, in column-major storage.
+ *  @param[out] B The target matrix, in column-major storage.
  *  @param[in] row_stride_B The stride between rows of B.
  *  @param[in] ldb The stride between columns of B.
  *  @param[in] syncinfo Synchronization information for this
