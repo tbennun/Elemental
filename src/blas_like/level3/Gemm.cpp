@@ -233,7 +233,6 @@ void Gemm
     const Int m = (orientA==NORMAL ? A.Height() : A.Width());
     const Int n = (orientB==NORMAL ? B.Width() : B.Height());
     C.Resize(m, n);
-    Zero(C);
     Gemm(orientA, orientB, alpha, A, B, TypeTraits<T>::Zero(), C, alg);
 }
 
