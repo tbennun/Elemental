@@ -104,7 +104,7 @@ void Zero( AbstractMatrix<T>& A )
 #ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
         hydrogen::Fill_GPU_impl(
-            height, width, FromInt<T>(0), ABuf, ALDim,
+            height, width, TypeTraits<T>::Zero(), ABuf, ALDim,
             SyncInfoFromMatrix(
                 static_cast<Matrix<T,Device::GPU>&>(A)).stream_);
         break;
