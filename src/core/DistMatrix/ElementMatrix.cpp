@@ -43,12 +43,18 @@ ElementalMatrix<T>::Resize(Int height, Int width)
     EL_DEBUG_CSE;
 #ifndef EL_RELEASE
     this->AssertNotLocked();
-    if (this->Viewing()
-       && (height > this->height_ || width > this->width_))
-        LogicError("Tried to increase the size of a view");
 #endif // !EL_RELEASE
+    if (this->Viewing())
+    {
+        if (height == this->height_ && width == this->width_)
+            return;
+        else
+            LogicError("Tried to change the size of a view");
+    }
+
     this->height_ = height;
     this->width_ = width;
+
     if (this->Participating())
         this->Matrix().Resize_(
             Length(height,this->ColShift(),this->ColStride()),
