@@ -130,7 +130,11 @@ option(Hydrogen_ENABLE_BOUNDS_CHECKING
   OFF)
 set(HYDROGEN_DO_BOUNDS_CHECKING ${Hydrogen_ENABLE_BOUNDS_CHECKING})
 
-option(Hydrogen_ENABLE_TESTING "Build the test suite." ON)
+option(Hydrogen_ENABLE_TESTING
+  "Build the test suite in the tests directory." ON)
+
+option(Hydrogen_ENABLE_UNIT_TESTS
+  "Build the Catch2-based unit tests." ON)
 
 option(Hydrogen_ENABLE_QUADMATH
   "Search for quadmath library and enable related features if found." OFF)
@@ -455,6 +459,20 @@ include(FindAndVerifyMPI)
 include(FindAndVerifyLAPACK)
 include(FindAndVerifyExtendedPrecision)
 
+# Catch2
+if (Hydrogen_ENABLE_UNIT_TESTS)
+  find_package(Catch2 2.0.0 CONFIG QUIET
+    HINTS ${CATCH2_DIR} $ENV{CATCH2_DIR} ${CATCH_DIR} $ENV{CATCH_DIR}
+    PATH_SUFFIXES lib64/cmake/Catch2 lib/cmake/Catch2
+    NO_DEFAULT_PATH)
+  if (NOT Catch2_FOUND)
+    find_package(Catch2 2.0.0 CONFIG QUIET REQUIRED)
+  endif ()
+  message(STATUS "Found Catch2: ${Catch2_DIR}")
+
+  include(Catch)
+endif ()
+
 # Macro for setting up full paths
 macro(set_full_path VAR)
   unset(__tmp_names)
@@ -525,9 +543,16 @@ if (HYDROGEN_HAVE_CUDA)
 endif ()
 
 # Setup the tests
+if (Hydrogen_ENABLE_TESTING OR Hydrogen_ENABLE_UNIT_TESTS)
+  include(CTest)
+endif ()
+
 if (Hydrogen_ENABLE_TESTING)
-  enable_testing()
   add_subdirectory(tests)
+endif ()
+
+if (Hydrogen_ENABLE_UNIT_TESTS)
+  add_subdirectory(unit_test)
 endif ()
 
 # Setup the library install
