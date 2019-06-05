@@ -107,8 +107,7 @@ inline void AbstractMatrix<T>::Empty(bool freeMemory)
 template <typename T>
 void AbstractMatrix<T>::Resize(size_type height, size_type width)
 {
-    // Try to resize without changing the ldim
-    Resize(height, width, leadingDimension_);
+    Resize(height, width, height);
 }
 
 template <typename T>
@@ -116,10 +115,8 @@ inline void AbstractMatrix<T>::Resize(
     size_type height, size_type width, size_type leadingDimension)
 {
     EL_DEBUG_CSE;
-    leadingDimension = Max(Max(leadingDimension, height), size_type{1});
-#ifdef HYDROGEN_DO_BOUNDS_CHECKING
     AssertValidDimensions(height, width, leadingDimension);
-#endif // HYDROGEN_DO_BOUNDS_CHECKING
+//    leadingDimension = Max(Max(leadingDimension, height), size_type{1});
 
     // This function is used in generic code and should be a valid
     // no-op for fixed-size matrices.
