@@ -122,7 +122,7 @@ struct BackendsForDeviceT;
 template <>
 struct BackendsForDeviceT<Device::CPU>
 {
-    using type = TypeList<Al::MPIBackend>;
+    using type = hydrogen::TypeList<Al::MPIBackend>;
 };// struct BackendsForDeviceT<Device::CPU>
 
 // Prefer the NCCL2 backend
@@ -130,7 +130,7 @@ struct BackendsForDeviceT<Device::CPU>
 template <>
 struct BackendsForDeviceT<Device::GPU>
 {
-    using type = TypeList<
+    using type = hydrogen::TypeList<
 #ifdef HYDROGEN_HAVE_NCCL2
         Al::NCCLBackend
 #ifdef HYDROGEN_HAVE_AL_MPI_CUDA
@@ -203,7 +203,7 @@ struct IsBackendSupportedByAny
 {};
 
 template <typename T, Collective C>
-struct IsBackendSupportedByAny<T,C,TypeList<>>
+struct IsBackendSupportedByAny<T,C,hydrogen::TypeList<>>
     : std::false_type
 {};
 

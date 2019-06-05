@@ -31,7 +31,7 @@ template <typename T>
 struct SharedPtrCommTupleT;
 
 template <typename... BackendTs>
-struct SharedPtrCommTupleT<TypeList<BackendTs...>>
+struct SharedPtrCommTupleT<hydrogen::TypeList<BackendTs...>>
 {
 private:
     template <typename T>
