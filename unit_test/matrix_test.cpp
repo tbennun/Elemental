@@ -138,4 +138,18 @@ TEMPLATE_TEST_CASE(
             }
         }
     }
+
+    GIVEN ("A column vector as a matrix")
+    {
+        auto mat = matrix_type{13,1};
+        REQUIRE(mat.Contiguous());
+        WHEN ("The matrix is resized with nontrivial leading dimension")
+        {
+            REQUIRE_NOTHROW(mat.Resize(13,1,17));
+            THEN ("The matrix is still contiguous.")
+            {
+                REQUIRE(mat.Contiguous());
+            }
+        }
+    }
 }

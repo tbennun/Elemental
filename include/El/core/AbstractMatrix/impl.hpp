@@ -107,7 +107,7 @@ inline void AbstractMatrix<T>::Empty(bool freeMemory)
 template <typename T>
 void AbstractMatrix<T>::Resize(size_type height, size_type width)
 {
-    Resize(height, width, (Viewing() ? this->LDim() : height));
+    Resize(height, width, (this->Viewing() ? this->LDim() : height));
 }
 
 template <typename T>
