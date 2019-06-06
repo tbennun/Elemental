@@ -29,6 +29,7 @@ TEMPLATE_TEST_CASE(
             CHECK(mat.LDim() > zero_size);
             CHECK(mat.MemorySize() == zero_size);
             CHECK(mat.Contiguous());
+            CHECK(mat.IsEmpty());
         }
 
         WHEN ("The matrix is resized")
@@ -40,8 +41,9 @@ TEMPLATE_TEST_CASE(
                 CHECK(mat.Height() == size_type{7});
                 CHECK(mat.Width() == size_type{11});
                 CHECK(mat.LDim() == size_type{7});
-                CHECK(mat.MemorySize() == mat.LDim()*mat.Width());
+                CHECK(mat.MemorySize() == size_type{77});
                 CHECK(mat.Contiguous());
+                CHECK_FALSE(mat.IsEmpty());
             }
             AND_WHEN ("The matrix is shrunk")
             {
@@ -52,8 +54,9 @@ TEMPLATE_TEST_CASE(
                     CHECK(mat.Height() == size_type{5});
                     CHECK(mat.Width() == size_type{12});
                     CHECK(mat.LDim() == size_type{5});
-                    CHECK(mat.MemorySize() == 77);
+                    CHECK(mat.MemorySize() == size_type{77});
                     CHECK(mat.Contiguous());
+                    CHECK_FALSE(mat.IsEmpty());
                 }
             }
             AND_WHEN ("The matrix is expanded")
@@ -64,8 +67,9 @@ TEMPLATE_TEST_CASE(
                     CHECK(mat.Height() == size_type{11});
                     CHECK(mat.Width() == size_type{13});
                     CHECK(mat.LDim() == size_type{11});
-                    CHECK(mat.MemorySize() == 11*13);
+                    CHECK(mat.MemorySize() == size_type{11*13});
                     CHECK(mat.Contiguous());
+                    CHECK_FALSE(mat.IsEmpty());
                 }
             }
             AND_WHEN ("The matrix is resized with a large leading dimension")
@@ -76,21 +80,42 @@ TEMPLATE_TEST_CASE(
                     CHECK(mat.Height() == size_type{7});
                     CHECK(mat.Width() == size_type{13});
                     CHECK(mat.LDim() == size_type{11});
-                    CHECK(mat.MemorySize() == 11*13);
+                    CHECK(mat.MemorySize() == size_type{11*13});
                     CHECK_FALSE(mat.Contiguous());
+                    CHECK_FALSE(mat.IsEmpty());
                 }
             }
-            AND_WHEN ("The matrix is resized with an invalid leading dimension")
+        }
+        WHEN ("The matrix is resized with an invalid leading dimension")
+        {
+            THEN ("The resize throws and metadata is unchanged.")
             {
-                THEN ("The resize throws and metadata is unchanged.")
-                {
-                    CHECK_THROWS(mat.Resize(17,19,2));
-                    CHECK(mat.Height() == size_type{7});
-                    CHECK(mat.Width() == size_type{11});
-                    CHECK(mat.LDim() == size_type{7});
-                    CHECK(mat.MemorySize() == 7*11);
-                    CHECK(mat.Contiguous());
-                }
+                CHECK_THROWS(mat.Resize(7,11,2));
+                CHECK(mat.Height() == zero_size);
+                CHECK(mat.Width() == zero_size);
+                CHECK(mat.LDim() == size_type{1});
+                CHECK(mat.MemorySize() == zero_size);
+                CHECK(mat.Contiguous());
+                CHECK(mat.IsEmpty());
+            }
+        }
+    }
+
+    GIVEN ("A nontrivial matrix")
+    {
+        auto mat = matrix_type{7,11};
+        WHEN ("A submatrix is viewed")
+        {
+            auto view = El::View(mat, El::IR(0,2), El::IR(0,3));
+            THEN ("It can be resized with the same dimensions")
+            {
+                REQUIRE_NOTHROW(view.Resize(view.Height(), view.Width()));
+                CHECK(view.Viewing());
+                CHECK(view.FixedSize());
+                CHECK(view.Height() == 2);
+                CHECK(view.Width() == 3);
+                // This borders on checking the View function, but eh
+                CHECK(view.LDim() == mat.LDim());
             }
         }
     }
