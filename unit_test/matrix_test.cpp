@@ -104,6 +104,8 @@ TEMPLATE_TEST_CASE(
     GIVEN ("A nontrivial matrix")
     {
         auto mat = matrix_type{7,11};
+        mat(0,0) = value_type(0.0);
+
         WHEN ("A submatrix is viewed")
         {
             auto view = El::View(mat, El::IR(0,2), El::IR(0,3));
@@ -116,6 +118,23 @@ TEMPLATE_TEST_CASE(
                 CHECK(view.Width() == 3);
                 // This borders on checking the View function, but eh
                 CHECK(view.LDim() == mat.LDim());
+                CHECK(view.MemorySize() == zero_size);
+            }
+            AND_WHEN ("A value is updated in the matrix")
+            {
+                mat(0,0) = value_type(1.23);
+                THEN ("The update is reflected in the view.")
+                {
+                    CHECK(view(0,0) == value_type(1.23));
+                }
+            }
+            AND_WHEN ("A value is updated in the view")
+            {
+                view(0,0) = value_type(3.21);
+                THEN ("The update is reflected in the original.")
+                {
+                    CHECK(mat(0,0) == value_type(3.21));
+                }
             }
         }
     }
