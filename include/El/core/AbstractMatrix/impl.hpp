@@ -115,6 +115,7 @@ inline void AbstractMatrix<T>::Resize(
     size_type height, size_type width, size_type leadingDimension)
 {
     EL_DEBUG_CSE;
+    leadingDimension = Max(leadingDimension, size_type{1});
     AssertValidDimensions(height, width, leadingDimension);
 //    leadingDimension = Max(Max(leadingDimension, height), size_type{1});
 

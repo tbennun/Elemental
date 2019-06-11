@@ -151,5 +151,18 @@ TEMPLATE_TEST_CASE(
                 REQUIRE(mat.Contiguous());
             }
         }
+
+        WHEN ("The matrix is resized to 0x0")
+        {
+            REQUIRE_NOTHROW(mat.Resize(0,0));
+            THEN ("The metadata is reasonable.")
+            {
+                CHECK(mat.Height() == zero_size);
+                CHECK(mat.Width() == zero_size);
+                CHECK(mat.LDim() > zero_size);
+                CHECK(mat.Contiguous());
+                CHECK(mat.IsEmpty());
+            }
+        }
     }
 }
