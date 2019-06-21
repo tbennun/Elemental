@@ -83,6 +83,22 @@ Matrix<T, Device::CPU>::Matrix(Matrix<T, Device::CPU>&& A) EL_NO_EXCEPT
 template <typename T>
 Matrix<T, Device::CPU>::~Matrix() { }
 
+template <typename T>
+std::unique_ptr<AbstractMatrix<T>>
+Matrix<T, Device::CPU>::DeepCopy() const
+{
+    return std::unique_ptr<AbstractMatrix<T>>{
+        new Matrix<T,Device::CPU>(*this)};
+}
+
+template <typename T>
+std::unique_ptr<AbstractMatrix<T>>
+Matrix<T, Device::CPU>::Construct() const
+{
+    return std::unique_ptr<AbstractMatrix<T>>{
+        new Matrix<T,Device::CPU>{}};
+}
+
 // Assignment and reconfiguration
 // ==============================
 

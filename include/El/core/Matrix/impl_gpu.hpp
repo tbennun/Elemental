@@ -89,6 +89,22 @@ template <typename T>
 Matrix<T, Device::GPU>::~Matrix() { }
 
 template <typename T>
+std::unique_ptr<AbstractMatrix<T>>
+Matrix<T, Device::GPU>::DeepCopy() const
+{
+    return std::unique_ptr<AbstractMatrix<T>>{
+        new Matrix<T,Device::GPU>(*this)};
+}
+
+template <typename T>
+std::unique_ptr<AbstractMatrix<T>>
+Matrix<T, Device::GPU>::Construct() const
+{
+    return std::unique_ptr<AbstractMatrix<T>>{
+        new Matrix<T,Device::GPU>{}};
+}
+
+template <typename T>
 void Matrix<T, Device::GPU>::Attach
 (Int height, Int width, T* buffer, Int leadingDimension)
 {
