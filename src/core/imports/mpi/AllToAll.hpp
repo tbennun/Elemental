@@ -108,74 +108,77 @@ void AllToAll(T const*, int, T*, int, Comm const&, SyncInfo<D> const&)
 }
 
 #define MPI_ALLTOALL_PROTO_DEV(T,D) \
-    template void AllToAll(T const*, int, T*, int, Comm const&, SyncInfo<D> const&);
+    template void AllToAll(T const*, int, T*, int, Comm const&, SyncInfo<D> const&)
 
 #ifndef HYDROGEN_HAVE_CUDA
 #define MPI_ALLTOALL_PROTO(T)             \
     MPI_ALLTOALL_PROTO_DEV(T,Device::CPU)
 #else
 #define MPI_ALLTOALL_PROTO(T)             \
-    MPI_ALLTOALL_PROTO_DEV(T,Device::CPU) \
+    MPI_ALLTOALL_PROTO_DEV(T,Device::CPU);      \
     MPI_ALLTOALL_PROTO_DEV(T,Device::GPU)
 #endif // HYDROGEN_HAVE_CUDA
 
-MPI_ALLTOALL_PROTO(byte)
-MPI_ALLTOALL_PROTO(int)
-MPI_ALLTOALL_PROTO(unsigned)
-MPI_ALLTOALL_PROTO(long int)
-MPI_ALLTOALL_PROTO(unsigned long)
-MPI_ALLTOALL_PROTO(float)
-MPI_ALLTOALL_PROTO(double)
-MPI_ALLTOALL_PROTO(long long int)
-MPI_ALLTOALL_PROTO(unsigned long long)
-MPI_ALLTOALL_PROTO(ValueInt<Int>)
-MPI_ALLTOALL_PROTO(Entry<Int>)
-MPI_ALLTOALL_PROTO(Complex<float>)
-MPI_ALLTOALL_PROTO(ValueInt<float>)
-MPI_ALLTOALL_PROTO(ValueInt<Complex<float>>)
-MPI_ALLTOALL_PROTO(Entry<float>)
-MPI_ALLTOALL_PROTO(Entry<Complex<float>>)
-MPI_ALLTOALL_PROTO(Complex<double>)
-MPI_ALLTOALL_PROTO(ValueInt<double>)
-MPI_ALLTOALL_PROTO(ValueInt<Complex<double>>)
-MPI_ALLTOALL_PROTO(Entry<double>)
-MPI_ALLTOALL_PROTO(Entry<Complex<double>>)
+MPI_ALLTOALL_PROTO(byte);
+MPI_ALLTOALL_PROTO(int);
+MPI_ALLTOALL_PROTO(unsigned);
+MPI_ALLTOALL_PROTO(long int);
+MPI_ALLTOALL_PROTO(unsigned long);
+MPI_ALLTOALL_PROTO(float);
+MPI_ALLTOALL_PROTO(double);
+MPI_ALLTOALL_PROTO(long long int);
+MPI_ALLTOALL_PROTO(unsigned long long);
+MPI_ALLTOALL_PROTO(ValueInt<Int>);
+MPI_ALLTOALL_PROTO(Entry<Int>);
+MPI_ALLTOALL_PROTO(Complex<float>);
+MPI_ALLTOALL_PROTO(ValueInt<float>);
+MPI_ALLTOALL_PROTO(ValueInt<Complex<float>>);
+MPI_ALLTOALL_PROTO(Entry<float>);
+MPI_ALLTOALL_PROTO(Entry<Complex<float>>);
+MPI_ALLTOALL_PROTO(Complex<double>);
+MPI_ALLTOALL_PROTO(ValueInt<double>);
+MPI_ALLTOALL_PROTO(ValueInt<Complex<double>>);
+MPI_ALLTOALL_PROTO(Entry<double>);
+MPI_ALLTOALL_PROTO(Entry<Complex<double>>);
 #ifdef HYDROGEN_HAVE_HALF
-MPI_ALLTOALL_PROTO(cpu_half_type)
-MPI_ALLTOALL_PROTO(Entry<cpu_half_type>)
+MPI_ALLTOALL_PROTO(cpu_half_type);
+MPI_ALLTOALL_PROTO(Entry<cpu_half_type>);
+#endif
+#ifdef HYDROGEN_GPU_USE_FP16
+MPI_ALLTOALL_PROTO(gpu_half_type);
 #endif
 #ifdef HYDROGEN_HAVE_QD
-MPI_ALLTOALL_PROTO(DoubleDouble)
-MPI_ALLTOALL_PROTO(QuadDouble)
-MPI_ALLTOALL_PROTO(Complex<DoubleDouble>)
-MPI_ALLTOALL_PROTO(Complex<QuadDouble>)
-MPI_ALLTOALL_PROTO(ValueInt<DoubleDouble>)
-MPI_ALLTOALL_PROTO(ValueInt<QuadDouble>)
-MPI_ALLTOALL_PROTO(ValueInt<Complex<DoubleDouble>>)
-MPI_ALLTOALL_PROTO(ValueInt<Complex<QuadDouble>>)
-MPI_ALLTOALL_PROTO(Entry<DoubleDouble>)
-MPI_ALLTOALL_PROTO(Entry<QuadDouble>)
-MPI_ALLTOALL_PROTO(Entry<Complex<DoubleDouble>>)
-MPI_ALLTOALL_PROTO(Entry<Complex<QuadDouble>>)
+MPI_ALLTOALL_PROTO(DoubleDouble);
+MPI_ALLTOALL_PROTO(QuadDouble);
+MPI_ALLTOALL_PROTO(Complex<DoubleDouble>);
+MPI_ALLTOALL_PROTO(Complex<QuadDouble>);
+MPI_ALLTOALL_PROTO(ValueInt<DoubleDouble>);
+MPI_ALLTOALL_PROTO(ValueInt<QuadDouble>);
+MPI_ALLTOALL_PROTO(ValueInt<Complex<DoubleDouble>>);
+MPI_ALLTOALL_PROTO(ValueInt<Complex<QuadDouble>>);
+MPI_ALLTOALL_PROTO(Entry<DoubleDouble>);
+MPI_ALLTOALL_PROTO(Entry<QuadDouble>);
+MPI_ALLTOALL_PROTO(Entry<Complex<DoubleDouble>>);
+MPI_ALLTOALL_PROTO(Entry<Complex<QuadDouble>>);
 #endif
 #ifdef HYDROGEN_HAVE_QUADMATH
-MPI_ALLTOALL_PROTO(Quad)
-MPI_ALLTOALL_PROTO(Complex<Quad>)
-MPI_ALLTOALL_PROTO(ValueInt<Quad>)
-MPI_ALLTOALL_PROTO(ValueInt<Complex<Quad>>)
-MPI_ALLTOALL_PROTO(Entry<Quad>)
-MPI_ALLTOALL_PROTO(Entry<Complex<Quad>>)
+MPI_ALLTOALL_PROTO(Quad);
+MPI_ALLTOALL_PROTO(Complex<Quad>);
+MPI_ALLTOALL_PROTO(ValueInt<Quad>);
+MPI_ALLTOALL_PROTO(ValueInt<Complex<Quad>>);
+MPI_ALLTOALL_PROTO(Entry<Quad>);
+MPI_ALLTOALL_PROTO(Entry<Complex<Quad>>);
 #endif
 #ifdef HYDROGEN_HAVE_MPC
-MPI_ALLTOALL_PROTO(BigInt)
-MPI_ALLTOALL_PROTO(BigFloat)
-MPI_ALLTOALL_PROTO(Complex<BigFloat>)
-MPI_ALLTOALL_PROTO(ValueInt<BigInt>)
-MPI_ALLTOALL_PROTO(ValueInt<BigFloat>)
-MPI_ALLTOALL_PROTO(ValueInt<Complex<BigFloat>>)
-MPI_ALLTOALL_PROTO(Entry<BigInt>)
-MPI_ALLTOALL_PROTO(Entry<BigFloat>)
-MPI_ALLTOALL_PROTO(Entry<Complex<BigFloat>>)
+MPI_ALLTOALL_PROTO(BigInt);
+MPI_ALLTOALL_PROTO(BigFloat);
+MPI_ALLTOALL_PROTO(Complex<BigFloat>);
+MPI_ALLTOALL_PROTO(ValueInt<BigInt>);
+MPI_ALLTOALL_PROTO(ValueInt<BigFloat>);
+MPI_ALLTOALL_PROTO(ValueInt<Complex<BigFloat>>);
+MPI_ALLTOALL_PROTO(Entry<BigInt>);
+MPI_ALLTOALL_PROTO(Entry<BigFloat>);
+MPI_ALLTOALL_PROTO(Entry<Complex<BigFloat>>);
 #endif
 
 } // namespace mpi

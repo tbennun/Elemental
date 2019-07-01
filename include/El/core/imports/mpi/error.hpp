@@ -73,6 +73,8 @@ public:
             mpi_error_code, function, file, line)},
           mpi_error_code_{mpi_error_code}
     {}
+
+    int GetMpiErrorCode() const noexcept { return mpi_error_code_; }
 private:
 
     std::string build_string_(

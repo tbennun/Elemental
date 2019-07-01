@@ -11,7 +11,6 @@ set_full_path(THIS_DIR_HEADERS
   Matrix.hpp
   Memory.hpp
   MemoryPool.hpp
-  NumericTypeConversion.hpp
   Permutation.hpp
   Profiling.hpp
   Proxy.hpp

@@ -126,7 +126,7 @@ void Copy(const Matrix<T,Device::GPU>& A, Matrix<T,Device::GPU>& B)
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 
     // Launch the copy
-    EL_CHECK_CUDA(
+    H_CHECK_CUDA(
         cudaMemcpy2DAsync(BBuf, ldB*sizeof(T),
                           ABuf, ldA*sizeof(T),
                           height*sizeof(T), width,
@@ -551,6 +551,20 @@ void CopyFromNonRoot
 
 
 #ifdef HYDROGEN_HAVE_CUDA
+#ifdef HYDROGEN_GPU_USE_FP16
+EL_EXTERN template void Copy(
+    const AbstractMatrix<gpu_half_type>& A, AbstractMatrix<gpu_half_type>& B );
+EL_EXTERN template void Copy
+( const Matrix<gpu_half_type,Device::GPU>& A, Matrix<gpu_half_type,Device::GPU>& B );
+EL_EXTERN template void Copy
+( const Matrix<gpu_half_type,Device::GPU>& A, Matrix<gpu_half_type,Device::CPU>& B );
+EL_EXTERN template void Copy
+( const Matrix<gpu_half_type,Device::CPU>& A, Matrix<gpu_half_type,Device::GPU>& B );
+EL_EXTERN template void CopyAsync
+( const Matrix<gpu_half_type,Device::GPU>& A, Matrix<gpu_half_type,Device::CPU>& B );
+EL_EXTERN template void CopyAsync
+( const Matrix<gpu_half_type,Device::CPU>& A, Matrix<gpu_half_type,Device::GPU>& B );
+#endif
 EL_EXTERN template void Copy
 ( const Matrix<float,Device::GPU>& A, Matrix<float,Device::GPU>& B );
 EL_EXTERN template void Copy

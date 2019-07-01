@@ -290,6 +290,10 @@ int BDM::PartialUnionRowRank() const EL_NO_EXCEPT
   OTHER(T,VC,  STAR); \
   BOTH( T,VR,  STAR);
 
+#ifdef HYDROGEN_GPU_USE_FP16
+PROTO(gpu_half_type)
+#endif // HYDROGEN_GPU_USE_FP16
+
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE
 #define EL_ENABLE_QUAD

@@ -9,7 +9,7 @@
 #ifndef EL_MATRICES_HPP
 #define EL_MATRICES_HPP
 
-#include "El/core/NumericTypeConversion.hpp"
+#include "hydrogen/utils/NumericTypeConversion.hpp"
 
 namespace El {
 

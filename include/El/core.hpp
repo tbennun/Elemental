@@ -31,6 +31,52 @@
 #include <type_traits> // std::enable_if
 #include <vector>
 
+#include <El/hydrogen_config.h>
+#include <El/config.h>
+
+// Hydrogen-namespaced things
+#include <hydrogen/meta/IndexSequence.hpp>
+#include <hydrogen/meta/MetaUtilities.hpp>
+#include <hydrogen/meta/TypeList.hpp>
+#include <hydrogen/meta/TypeTraits.hpp>
+
+#include <hydrogen/Device.hpp>
+#include <hydrogen/SyncInfo.hpp>
+
+#include <hydrogen/utils/HalfPrecision.hpp>
+#include <hydrogen/utils/NumericTypeConversion.hpp>
+#include <hydrogen/utils/SimpleBuffer.hpp>
+
+//
+// Device BLAS
+//
+
+#include <hydrogen/blas/BLAS_Common.hpp>
+
+#ifdef HYDROGEN_HAVE_GPU
+#include <hydrogen/blas/GPU_BLAS.hpp>
+#endif // HYDROGEN_HAVE_GPU
+
+#ifdef HYDROGEN_HAVE_CUDA
+#include <hydrogen/device/gpu/CUDA.hpp>
+#ifdef HYDROGEN_HAVE_CUB
+#include <hydrogen/device/gpu/cuda/CUB.hpp>
+#endif // HYDROGEN_HAVE_CUB
+#include <hydrogen/device/gpu/cuda/cuBLAS.hpp>
+#endif // HYDROGEN_HAVE_CUDA
+
+// Inject Hydrogen-specific symbols into El
+namespace El
+{
+using namespace hydrogen;
+#ifdef HYDROGEN_HAVE_HALF
+using hydrogen::cpu_half_type;
+#endif
+#ifdef HYDROGEN_GPU_USE_FP16
+using hydrogen::gpu_half_type;
+#endif // HYDROGEN_GPU_USE_FP16
+}
+
 #if __cplusplus >= 201402L
 #define H_DEPRECATED(msg) [[deprecated(msg)]]
 #elif defined(__GNUC__)
@@ -66,29 +112,20 @@
 #endif
 
 #ifdef HYDROGEN_HAVE_HALF
-#include <half.hpp>
-template<>
-struct std::is_floating_point< half_float::half > {
-  static const bool value = true;
-};
-template<>
-struct std::is_integral< half_float::half > {
-  static const bool value = false;
-};
-template<>
-struct std::is_arithmetic< half_float::half > : std::integral_constant<bool,
-                                                                       std::is_integral<half_float::half>::value ||
-                                                                       std::is_floating_point<half_float::half>::value> {};
+template <>
+struct std::is_floating_point<hydrogen::cpu_half_type> : std::true_type {};
+
+template <>
+struct std::is_integral<hydrogen::cpu_half_type> : std::false_type {};
+
+template <>
+struct std::is_arithmetic<hydrogen::cpu_half_type> : std::true_type {};
 #endif
 
-namespace El {
+namespace El
+{
 
 typedef unsigned char byte;
-
-// 16-bit floating-point types
-#ifdef HYDROGEN_HAVE_HALF
-using cpu_half_type = half_float::half;
-#endif
 
 // If these are changes, you must make sure that they have
 // existing MPI datatypes. This is only sometimes true for 'long long'
@@ -134,135 +171,97 @@ struct IsIntegral<BigInt> { static const bool value = true; };
 
 // For querying whether an element's type is a scalar
 // --------------------------------------------------
-template<typename T> struct IsScalar
-{ static const bool value=false; };
-template<> struct IsScalar<unsigned>
-{ static const bool value=true; };
-template<> struct IsScalar<int>
-{ static const bool value=true; };
-template<> struct IsScalar<unsigned long>
-{ static const bool value=true; };
-template<> struct IsScalar<long int>
-{ static const bool value=true; };
-template<> struct IsScalar<unsigned long long>
-{ static const bool value=true; };
-template<> struct IsScalar<long long int>
-{ static const bool value=true; };
-template<> struct IsScalar<unsigned char>
-{ static const bool value=true; };
-template<> struct IsScalar<float>
-{ static const bool value=true; };
-template<> struct IsScalar<double>
-{ static const bool value=true; };
-template<> struct IsScalar<long double>
-{ static const bool value=true; };
+template<typename T> struct IsScalar : std::false_type {};
+template<> struct IsScalar<unsigned> : std::true_type {};
+template<> struct IsScalar<int> : std::true_type {};
+template<> struct IsScalar<unsigned long> : std::true_type {};
+template<> struct IsScalar<long int> : std::true_type {};
+template<> struct IsScalar<unsigned long long> : std::true_type {};
+template<> struct IsScalar<long long int> : std::true_type {};
+template<> struct IsScalar<unsigned char> : std::true_type {};
+template<> struct IsScalar<float> : std::true_type {};
+template<> struct IsScalar<double> : std::true_type {};
+template<> struct IsScalar<long double> : std::true_type {};
 #ifdef HYDROGEN_HAVE_HALF
 template <> struct IsScalar<cpu_half_type> : std::true_type {};
 #endif
+#ifdef HYDROGEN_GPU_USE_FP16
+template <> struct IsScalar<gpu_half_type> : std::true_type {};
+#endif
 #ifdef HYDROGEN_HAVE_QD
-template<> struct IsScalar<DoubleDouble>
-{ static const bool value=true; };
-template<> struct IsScalar<QuadDouble>
-{ static const bool value=true; };
+template<> struct IsScalar<DoubleDouble> : std::true_type {};
+template<> struct IsScalar<QuadDouble> : std::true_type {};
 #endif
 #ifdef HYDROGEN_HAVE_QUADMATH
-template<> struct IsScalar<Quad>
-{ static const bool value=true; };
+template<> struct IsScalar<Quad> : std::true_type {};
 #endif
 #ifdef HYDROGEN_HAVE_MPC
-template<> struct IsScalar<BigInt>
-{ static const bool value=true; };
-template<> struct IsScalar<BigFloat>
-{ static const bool value=true; };
+template<> struct IsScalar<BigInt> : std::true_type {};
+template<> struct IsScalar<BigFloat> : std::true_type {};
 #endif
-template<typename T> struct IsScalar<Complex<T>>
-{ static const bool value=IsScalar<T>::value; };
+template<typename T> struct IsScalar<Complex<T>> : IsScalar<T> {};
 
 // For querying whether an element's type is a field
 // -------------------------------------------------
-template<typename T> struct IsField
-{ static const bool value=false; };
-template<> struct IsField<float>
-{ static const bool value=true; };
-template<> struct IsField<double>
-{ static const bool value=true; };
-template<> struct IsField<long double>
-{ static const bool value=true; };
+template<typename T> struct IsField : std::false_type {};
+template<> struct IsField<float> : std::true_type {};
+template<> struct IsField<double> : std::true_type {};
+template<> struct IsField<long double> : std::true_type {};
 template<> struct IsField<unsigned char> : std::true_type {};
 #ifdef HYDROGEN_HAVE_HALF
 template <> struct IsField<cpu_half_type> : std::true_type {};
 #endif
+#ifdef HYDROGEN_GPU_USE_FP16
+template <> struct IsField<gpu_half_type> : std::true_type {};
+#endif
 #ifdef HYDROGEN_HAVE_QD
-template<> struct IsField<DoubleDouble>
-{ static const bool value=true; };
-template<> struct IsField<QuadDouble>
-{ static const bool value=true; };
+template<> struct IsField<DoubleDouble> : std::true_type {};
+template<> struct IsField<QuadDouble> : std::true_type {};
 #endif
 #ifdef HYDROGEN_HAVE_QUADMATH
-template<> struct IsField<Quad>
-{ static const bool value=true; };
+template<> struct IsField<Quad> : std::true_type {};
 #endif
 #ifdef HYDROGEN_HAVE_MPC
-template<> struct IsField<BigFloat>
-{ static const bool value=true; };
+template<> struct IsField<BigFloat> : std::true_type {};
 #endif
-template<typename T> struct IsField<Complex<T>>
-{ static const bool value=IsField<T>::value; };
+template<typename T> struct IsField<Complex<T>> : IsField<T> {};
 
 // For querying whether an element's type is supported by the STL's math
 // ---------------------------------------------------------------------
-template<typename T> struct IsStdScalar
-{ static const bool value=false; };
-template<> struct IsStdScalar<unsigned>
-{ static const bool value=true; };
-template<> struct IsStdScalar<int>
-{ static const bool value=true; };
-template<> struct IsStdScalar<unsigned long>
-{ static const bool value=true; };
-template<> struct IsStdScalar<long int>
-{ static const bool value=true; };
-template<> struct IsStdScalar<unsigned long long>
-{ static const bool value=true; };
-template<> struct IsStdScalar<long long int>
-{ static const bool value=true; };
-template<> struct IsStdScalar<float>
-{ static const bool value=true; };
-template<> struct IsStdScalar<double>
-{ static const bool value=true; };
-template<> struct IsStdScalar<long double>
-{ static const bool value=true; };
+template<typename T> struct IsStdScalar : std::false_type {};
+template<> struct IsStdScalar<unsigned> : std::true_type {};
+template<> struct IsStdScalar<int> : std::true_type {};
+template<> struct IsStdScalar<unsigned long> : std::true_type {};
+template<> struct IsStdScalar<long int> : std::true_type {};
+template<> struct IsStdScalar<unsigned long long> : std::true_type {};
+template<> struct IsStdScalar<long long int> : std::true_type {};
+template<> struct IsStdScalar<float> : std::true_type {};
+template<> struct IsStdScalar<double> : std::true_type {};
+template<> struct IsStdScalar<long double> : std::true_type {};
 template<> struct IsStdScalar<unsigned char> : std::true_type {};
 #ifdef HYDROGEN_HAVE_HALF
 // This should work via ADL
 template <> struct IsStdScalar<cpu_half_type> : std::true_type {};
 #endif
 #ifdef HYDROGEN_HAVE_QUADMATH
-template<> struct IsStdScalar<Quad>
-{ static const bool value=true; };
+template<> struct IsStdScalar<Quad> : std::true_type {};
 #endif
-template<typename T> struct IsStdScalar<Complex<T>>
-{ static const bool value=IsStdScalar<T>::value; };
+template<typename T> struct IsStdScalar<Complex<T>> : IsStdScalar<T> {};
 
 // For querying whether an element's type is a field supported by STL
 // ------------------------------------------------------------------
-template<typename T> struct IsStdField
-{ static const bool value=false; };
-template<> struct IsStdField<float>
-{ static const bool value=true; };
-template<> struct IsStdField<double>
-{ static const bool value=true; };
-template<> struct IsStdField<long double>
-{ static const bool value=true; };
+template<typename T> struct IsStdField : std::false_type {};
+template<> struct IsStdField<float> : std::true_type {};
+template<> struct IsStdField<double> : std::true_type {};
+template<> struct IsStdField<long double> : std::true_type {};
 template<> struct IsStdField<unsigned char> : std::true_type {};
 #ifdef HYDROGEN_HAVE_HALF
 template <> struct IsStdField<cpu_half_type> : std::true_type {};
 #endif
 #ifdef HYDROGEN_HAVE_QUADMATH
-template<> struct IsStdField<Quad>
-{ static const bool value=true; };
+template<> struct IsStdField<Quad> : std::true_type {};
 #endif
-template<typename T> struct IsStdField<Complex<T>>
-{ static const bool value=IsStdField<T>::value; };
+template<typename T> struct IsStdField<Complex<T>> : IsStdField<T> {};
 
 } // namespace El
 
@@ -277,16 +276,6 @@ template<typename T> struct IsStdField<Complex<T>>
 #include <El/core/Serialize.hpp>
 
 #include <El/core/imports/blas.hpp>
-#ifdef HYDROGEN_HAVE_CUDA
-#include <El/core/imports/cuda.hpp>
-#include <El/core/imports/cublas.hpp>
-#endif // HYDROGEN_HAVE_CUDA
-#ifdef HYDROGEN_HAVE_CUB
-#include <El/core/imports/cub.hpp>
-#endif // HYDROGEN_HAVE_CUB
-
-#include <El/core/Device.hpp>
-#include <El/core/SyncInfo.hpp>
 
 #include <El/core/imports/mpi.hpp>
 #include <El/core/imports/choice.hpp>
@@ -322,7 +311,6 @@ class DistMatrix;
 
 #include <El/core/MemoryPool.hpp>
 #include <El/core/Memory.hpp>
-#include <El/core/SimpleBuffer.hpp>
 #include <El/core/AbstractMatrix.hpp>
 #include <El/core/Matrix/decl.hpp>
 #include <El/core/DistMap/decl.hpp>

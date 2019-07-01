@@ -66,22 +66,31 @@ void Uniform( AbstractDistMatrix<T>& A, Int m, Int n, T center, Base<T> radius )
     MakeUniform( A, center, radius );
 }
 
+#define ABSTRACT_PROTO(T)                                               \
+    template void MakeUniform(                                          \
+        AbstractMatrix<T>& A, T center, Base<T> radius );               \
+    template void MakeUniform(                                          \
+        AbstractDistMatrix<T>& A, T center, Base<T> radius );           \
+    template void Uniform(                                              \
+        AbstractMatrix<T>& A, Int m, Int n, T center, Base<T> radius ); \
+    template void Uniform(                                              \
+        AbstractDistMatrix<T>& A,                                       \
+        Int m, Int n, T center, Base<T> radius )
 
-#define PROTO(T) \
-  template void MakeUniform \
-  ( AbstractMatrix<T>& A, T center, Base<T> radius ); \
-  template void MakeUniform \
-  ( Matrix<T,Device::CPU>& A, T center, Base<T> radius );  \
-  template void MakeUniform \
-  ( AbstractDistMatrix<T>& A, T center, Base<T> radius ); \
-  template void Uniform \
-  ( AbstractMatrix<T>& A, Int m, Int n, T center, Base<T> radius ); \
-  template void Uniform \
-  ( AbstractDistMatrix<T>& A, Int m, Int n, T center, Base<T> radius );
+#define PROTO(T)                                                \
+    ABSTRACT_PROTO(T);                                          \
+    template void MakeUniform(                                  \
+        Matrix<T,Device::CPU>& A, T center, Base<T> radius );
 
 #ifdef HYDROGEN_HAVE_CUDA
 template void MakeUniform(Matrix<float,Device::GPU>&, float, Base<float>);
 template void MakeUniform(Matrix<double,Device::GPU>&, double, Base<double>);
+
+#ifdef HYDROGEN_GPU_USE_FP16
+ABSTRACT_PROTO(gpu_half_type);
+template void MakeUniform(Matrix<gpu_half_type,Device::GPU>&,
+                          gpu_half_type, Base<gpu_half_type>);
+#endif
 #endif // HYDROGEN_HAVE_CUDA
 
 #define EL_ENABLE_DOUBLEDOUBLE

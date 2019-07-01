@@ -126,18 +126,18 @@ void Gather(const T*, int, T*, int, int, Comm const&, SyncInfo<D> const&)
     template void Gather(const Complex<T>* sbuf, int sc, Complex<T>* rbuf, \
                          int rc, int root, Comm const& comm, SyncInfo<D> const&);
 
-#ifdef HYDROGEN_HAVE_CUDA
+#ifndef HYDROGEN_HAVE_CUDA
+#define MPI_COLLECTIVE_PROTO(T) \
+    MPI_COLLECTIVE_PROTO_DEV(T,Device::CPU)
+#define MPI_COLLECTIVE_COMPLEX_PROTO(T) \
+    MPI_COLLECTIVE_COMPLEX_PROTO_DEV(T,Device::CPU)
+#else
 #define MPI_COLLECTIVE_PROTO(T) \
     MPI_COLLECTIVE_PROTO_DEV(T,Device::CPU) \
     MPI_COLLECTIVE_PROTO_DEV(T,Device::GPU)
 #define MPI_COLLECTIVE_COMPLEX_PROTO(T) \
     MPI_COLLECTIVE_COMPLEX_PROTO_DEV(T,Device::CPU) \
     MPI_COLLECTIVE_COMPLEX_PROTO_DEV(T,Device::GPU)
-#else
-#define MPI_COLLECTIVE_PROTO(T) \
-    MPI_COLLECTIVE_PROTO_DEV(T,Device::CPU)
-#define MPI_COLLECTIVE_COMPLEX_PROTO(T) \
-    MPI_COLLECTIVE_COMPLEX_PROTO_DEV(T,Device::CPU)
 #endif
 
 MPI_COLLECTIVE_PROTO(byte)
@@ -165,6 +165,9 @@ MPI_COLLECTIVE_PROTO(Entry<Complex<double>>)
 MPI_COLLECTIVE_PROTO(cpu_half_type)
 MPI_COLLECTIVE_PROTO(Entry<cpu_half_type>)
 #endif
+#ifdef HYDROGEN_GPU_USE_FP16
+MPI_COLLECTIVE_PROTO(gpu_half_type)
+#endif // HYDROGEN_GPU_USE_FP16
 #ifdef HYDROGEN_HAVE_QD
 MPI_COLLECTIVE_PROTO(DoubleDouble)
 MPI_COLLECTIVE_PROTO(QuadDouble)

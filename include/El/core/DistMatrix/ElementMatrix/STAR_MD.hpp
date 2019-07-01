@@ -54,15 +54,15 @@ public:
 
     // Copy from a different device
     template <Device Dev2,typename=EnableIf<And<Not<SameDevice<Dev,Dev2>>,
-                                                IsDeviceValidType<Ring,Dev>,
-                                                IsDeviceValidType<Ring,Dev2>>>>
+                                                IsStorageType<Ring,Dev>,
+                                                IsStorageType<Ring,Dev2>>>>
     DistMatrix(DistMatrix<Ring,STAR,MD,ELEMENT,Dev2> const& A);
 
     template <Dist colDist, Dist rowDist, Device Dev2,
               typename=EnableIf<And<Not<SameDevice<Dev,Dev2>>,
                                     Not<And<SameDist<STAR,colDist>,
                                             SameDist<MD,rowDist>>>,
-                                    IsDeviceValidType<Ring,Dev2>>>>
+                                    IsStorageType<Ring,Dev2>>>>
     DistMatrix(DistMatrix<Ring,colDist,rowDist,ELEMENT,Dev2> const& A);
 
     // Move Constructor
@@ -116,15 +116,15 @@ public:
     type& operator=(const DistMatrix<Ring,colDist,rowDist,BLOCK,Dev>& A);
 
     template <Device Dev2,typename=EnableIf<And<Not<SameDevice<Dev,Dev2>>,
-                                                IsDeviceValidType<Ring,Dev>,
-                                                IsDeviceValidType<Ring,Dev2>>>>
+                                                IsStorageType<Ring,Dev>,
+                                                IsStorageType<Ring,Dev2>>>>
     type& operator=(DistMatrix<Ring,STAR,MD,ELEMENT,Dev2> const& A);
 
     template <Dist colDist, Dist rowDist, Device Dev2,
               typename=EnableIf<And<Not<SameDevice<Dev,Dev2>>,
                                     Not<And<SameDist<STAR,colDist>,
                                             SameDist<MD,rowDist>>>,
-                                    IsDeviceValidType<Ring,Dev2>>>>
+                                    IsStorageType<Ring,Dev2>>>>
     type& operator=(DistMatrix<Ring,colDist,rowDist,ELEMENT,Dev2> const& A);
 
     // Move Assignment
@@ -281,11 +281,11 @@ public:
 
 private:
 
-    template <Device D2, typename=EnableIf<IsDeviceValidType<Ring,D2>>>
+    template <Device D2, typename=EnableIf<IsStorageType<Ring,D2>>>
     std::unique_ptr<absType> ConstructWithNewDevice_impl_() const;
 
     template <Device D2,
-              typename=DisableIf<IsDeviceValidType<Ring,D2>>,
+              typename=DisableIf<IsStorageType<Ring,D2>>,
               typename=void>
     std::unique_ptr<absType> ConstructWithNewDevice_impl_() const;
 

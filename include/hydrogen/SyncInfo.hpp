@@ -1,9 +1,14 @@
 #ifndef EL_CORE_SYNCINFO_HPP_
 #define EL_CORE_SYNCINFO_HPP_
 
-#include "IndexSequence.hpp"
+#include <hydrogen/Device.hpp>
+#include <hydrogen/meta/IndexSequence.hpp>
 
-namespace El
+#ifdef HYDROGEN_HAVE_CUDA
+#include <hydrogen/device/gpu/CUDA.hpp>
+#endif // HYDROGEN_HAVE_CUDA
+
+namespace hydrogen
 {
 
 /** \class SyncInfo
@@ -31,12 +36,9 @@ template <Device D> struct SyncInfo
     SyncInfo() {}
 };// struct SyncInfo<D>
 
-template <Device D>
-void AddSynchronizationPoint(SyncInfo<D> syncInfo)
-{}
-
-template <Device D>
-void AddSynchronizationPoint(SyncInfo<D> A, SyncInfo<D> B)
+// Adding synchronization points is generally a no-op
+template <Device... Ds>
+void AddSynchronizationPoint(SyncInfo<Ds>... As)
 {}
 
 template <Device D>
@@ -60,7 +62,7 @@ struct SyncInfo<Device::GPU>
 
 inline void AddSynchronizationPoint(SyncInfo<Device::GPU> const& syncInfo)
 {
-    EL_CHECK_CUDA(cudaEventRecord(syncInfo.event_, syncInfo.stream_));
+    H_CHECK_CUDA(cudaEventRecord(syncInfo.event_, syncInfo.stream_));
 }
 
 inline void AddSynchronizationPoint(
@@ -82,7 +84,7 @@ inline void AddSynchronizationPoint(
     if (A.stream_ != B.stream_)
     {
         AddSynchronizationPoint(A);
-        EL_CHECK_CUDA(cudaStreamWaitEvent(B.stream_, A.event_, 0));
+        H_CHECK_CUDA(cudaStreamWaitEvent(B.stream_, A.event_, 0));
     }
 }
 
@@ -98,15 +100,15 @@ inline void AddSynchronizationPoint(
         AddSynchronizationPoint(A);
 
     if (ABdiff)
-        EL_CHECK_CUDA(cudaStreamWaitEvent(B.stream_, A.event_, 0));
+        H_CHECK_CUDA(cudaStreamWaitEvent(B.stream_, A.event_, 0));
 
     if (ACdiff)
-        EL_CHECK_CUDA(cudaStreamWaitEvent(C.stream_, A.event_, 0));
+        H_CHECK_CUDA(cudaStreamWaitEvent(C.stream_, A.event_, 0));
 }
 
 inline void Synchronize(SyncInfo<Device::GPU> const& syncInfo)
 {
-    EL_CHECK_CUDA(cudaStreamSynchronize(syncInfo.stream_));
+    H_CHECK_CUDA(cudaStreamSynchronize(syncInfo.stream_));
 }
 
 #endif // HYDROGEN_HAVE_CUDA
@@ -186,5 +188,5 @@ auto MakeMultiSync(SyncInfo<Ds> const&... syncInfos) -> MultiSync<Ds...>
     return MultiSync<Ds...>(syncInfos...);
 }
 
-}// namespace El
+}// namespace hydrogen
 #endif // EL_CORE_SYNCINFO_HPP_

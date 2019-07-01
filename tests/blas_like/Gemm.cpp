@@ -27,14 +27,16 @@ void TestAssociativity
     const Int n = COrig.Width();
     const Grid& g = A.Grid();
     DistMatrix<T,MC,MR,ELEMENT,D> X(g), Y(g), Z(g);
-    Uniform(X, n, numRHS);
-    Gemm(orientB, NORMAL, T(1), B, X, Z);
+    Uniform(X, n, numRHS, TypeTraits<T>::Zero(), TypeTraits<Base<T>>::One());
+    Gemm(orientB, NORMAL, TypeTraits<T>::One(), B, X, Z);
     Gemm(orientA, NORMAL, alpha, A, Z, Y);
-    Gemm(NORMAL, NORMAL, beta, COrig, X, T(1), Y);
+    Gemm(NORMAL, NORMAL, beta, COrig, X, TypeTraits<T>::One(), Y);
     const Base<T> YFrobNorm = FrobeniusNorm(Y);
     if (print)
         Print(Y, "Y := alpha op(A) op(B) + beta C");
-    Gemm(NORMAL, NORMAL, T(-1), CFinal, X, T(1), Y);
+    T one = TypeTraits<T>::One();
+    T neg_one = -one;
+    Gemm(NORMAL, NORMAL, neg_one, CFinal, X, one, Y);
     const Base<T> EFrobNorm = FrobeniusNorm(Y);
     if (print)
         Print(Y, "E");
@@ -95,14 +97,14 @@ void TestGemm
     C.Align(colAlignC, rowAlignC);
 
     if (orientA == NORMAL)
-        Uniform(A, m, k);
+        Uniform(A, m, k, TypeTraits<T>::Zero(), TypeTraits<Base<T>>::One());
     else
-        Uniform(A, k, m);
+        Uniform(A, k, m, TypeTraits<T>::Zero(), TypeTraits<Base<T>>::One());
     if (orientB == NORMAL)
-        Uniform(B, k, n);
+        Uniform(B, k, n, TypeTraits<T>::Zero(), TypeTraits<Base<T>>::One());
     else
-        Uniform(B, n, k);
-    Uniform(COrig, m, n);
+        Uniform(B, n, k, TypeTraits<T>::Zero(), TypeTraits<Base<T>>::One());
+    Uniform(COrig, m, n, TypeTraits<T>::Zero(), TypeTraits<Base<T>>::One());
     if (print)
     {
         Print(A, "A");
@@ -274,6 +276,17 @@ main(int argc, char* argv[])
 #ifdef HYDROGEN_HAVE_CUDA
         if (testGPU)
         {
+#ifdef HYDROGEN_GPU_USE_FP16
+            TestGemm<gpu_half_type,Device::GPU>
+                (orientA, orientB,
+                 m, n, k,
+                 gpu_half_type(3.f), gpu_half_type(4.f),
+                 g,
+                 print, correctness,
+                 colAlignA, rowAlignA,
+                 colAlignB, rowAlignB,
+                 colAlignC, rowAlignC);
+#endif // HYDROGEN_GPU_USE_FP16
             TestGemm<float,Device::GPU>
                 (orientA, orientB,
                  m, n, k,

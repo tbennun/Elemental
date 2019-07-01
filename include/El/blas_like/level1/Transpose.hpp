@@ -167,25 +167,17 @@ void Transpose(Matrix<T,Device::GPU> const& A,
     B.Resize(n,m);
 
     // Syncronize here.
+    auto master_sync = SyncInfoFromMatrix(B);
     auto SyncManager = MakeMultiSync(
-        SyncInfoFromMatrix(B), SyncInfoFromMatrix(A));
+        master_sync, SyncInfoFromMatrix(A));
 
-    // Reset cuBLAS stream to be B's stream (Recall: Prefer to use
-    // non-const stream for non-const work!)
-    cudaStream_t old_stream;
-    EL_CHECK_CUBLAS(
-        cublasGetStream(GPUManager::cuBLASHandle(), &old_stream));
-    EL_CHECK_CUBLAS(
-        cublasSetStream(GPUManager::cuBLASHandle(), B.Stream()));
-
-    cublas::Geam(conjugate ? 'C' : 'T', 'N', n, m,
-                 T(1), A.LockedBuffer(), A.LDim(),
-                 T(0), B.LockedBuffer(), B.LDim(),
-                 B.Buffer(), B.LDim());
-
-    // Restore the "default" stream
-    EL_CHECK_CUBLAS(
-        cublasSetStream(GPUManager::cuBLASHandle(), old_stream));
+    // Passing in the dims of B.
+    gpu_blas::Copy(
+        (conjugate ? TransposeMode::CONJ_TRANSPOSE : TransposeMode::TRANSPOSE),
+        n, m,
+        A.LockedBuffer(), A.LDim(),
+        B.Buffer(), B.LDim(),
+        master_sync);
 }
 
 template <typename T, typename, typename>
@@ -399,35 +391,46 @@ void Adjoint
 # define EL_EXTERN extern
 #endif
 
-#define PROTO(T) \
-  EL_EXTERN template void Transpose \
-  ( const AbstractMatrix<T>& A, AbstractMatrix<T>& B, bool conjugate ); \
-  EL_EXTERN template void Transpose \
-  ( const Matrix<T>& A, Matrix<T>& B, bool conjugate ); \
-  EL_EXTERN template void Transpose \
-  ( const ElementalMatrix<T>& A, ElementalMatrix<T>& B, bool conjugate ); \
-  EL_EXTERN template void Transpose \
-  ( const BlockMatrix<T>& A, BlockMatrix<T>& B, bool conjugate ); \
-  EL_EXTERN template void Transpose \
-  ( const AbstractDistMatrix<T>& A, \
-          AbstractDistMatrix<T>& B, bool conjugate ); \
-  EL_EXTERN template void Adjoint \
-  ( const Matrix<T>& A, Matrix<T>& B ); \
-  EL_EXTERN template void Adjoint \
-  ( const ElementalMatrix<T>& A, ElementalMatrix<T>& B ); \
-  EL_EXTERN template void Adjoint \
-  ( const BlockMatrix<T>& A, BlockMatrix<T>& B ); \
-  EL_EXTERN template void Adjoint \
-  ( const AbstractDistMatrix<T>& A, \
-          AbstractDistMatrix<T>& B );
+#define ABSTRACT_PROTO(T)                                               \
+    EL_EXTERN template void Transpose(                                  \
+        AbstractMatrix<T> const&, AbstractMatrix<T>&, bool );           \
+    EL_EXTERN template void Transpose(                                  \
+        ElementalMatrix<T> const&, ElementalMatrix<T>&, bool );         \
+    EL_EXTERN template void Transpose(                                  \
+        BlockMatrix<T> const&, BlockMatrix<T>&, bool );                 \
+    EL_EXTERN template void Transpose(                                  \
+        AbstractDistMatrix<T> const&,                                   \
+        AbstractDistMatrix<T>&, bool );                                 \
+    EL_EXTERN template void Adjoint(                                    \
+        Matrix<T> const&, Matrix<T>& );                                 \
+    EL_EXTERN template void Adjoint(                                    \
+        ElementalMatrix<T> const&, ElementalMatrix<T>& );               \
+    EL_EXTERN template void Adjoint(                                    \
+        BlockMatrix<T> const&, BlockMatrix<T>& );                       \
+    EL_EXTERN template void Adjoint(                                    \
+        AbstractDistMatrix<T> const&,                                   \
+        AbstractDistMatrix<T>& )
+
+#define PROTO(T)                                                \
+    ABSTRACT_PROTO(T);                                          \
+    EL_EXTERN template void Transpose(                          \
+        Matrix<T> const& A, Matrix<T>& B, bool conjugate);
 
 #ifdef HYDROGEN_HAVE_CUDA
-template void Transpose(
+EL_EXTERN template void Transpose(
     Matrix<float,Device::GPU> const& A, Matrix<float,Device::GPU>& B,
     bool conjugate);
-template void Transpose(
+EL_EXTERN template void Transpose(
     Matrix<double,Device::GPU> const& A, Matrix<double,Device::GPU>& B,
     bool conjugate);
+
+#ifdef HYDROGEN_GPU_USE_FP16
+ABSTRACT_PROTO(gpu_half_type);
+EL_EXTERN template void Transpose(
+    Matrix<gpu_half_type,Device::GPU> const& A,
+    Matrix<gpu_half_type,Device::GPU>& B,
+    bool conjugate);
+#endif // HYDROGEN_GPU_USE_FP16
 #endif // HYDROGEN_HAVE_CUDA
 
 #define EL_ENABLE_DOUBLEDOUBLE
@@ -437,8 +440,8 @@ template void Transpose(
 #define EL_ENABLE_BIGFLOAT
 #include <El/macros/Instantiate.h>
 
+#undef ABSTRACT_PROTO
 #undef EL_EXTERN
-
 } // namespace El
 
 #include <El/blas_like/level1/Transpose/ColAllGather.hpp>

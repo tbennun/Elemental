@@ -583,6 +583,10 @@ AbstractDistMatrix<T>::ShallowSwap(AbstractDistMatrix<T>& A)
 
 #define PROTO(T) template class AbstractDistMatrix<T>;
 
+#ifdef HYDROGEN_GPU_USE_FP16
+PROTO(gpu_half_type)
+#endif
+
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE
 #define EL_ENABLE_QUAD

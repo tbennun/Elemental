@@ -1,25 +1,29 @@
-#ifndef EL_CORE_INDEXSEQUENCE_HPP_
-#define EL_CORE_INDEXSEQUENCE_HPP_
+#ifndef HYDROGEN_META_INDEXSEQUENCE_HPP_
+#define HYDROGEN_META_INDEXSEQUENCE_HPP_
 
-// This is a wrapper file providing a streamlined interface to the
-// STL's index_sequence class (technically, typedef). Since I only
-// need the index_sequence capability and not integer_sequence, I
-// haven't bothered to expose the latter. If the need arises, we can.
+/** @file
+ *
+ *  This is a wrapper file providing a streamlined interface to the
+ *  STL's index_sequence class (technically, typedef). Since we only
+ *  need the index_sequence capability and not integer_sequence, I
+ *  haven't bothered to expose the latter. If the need arises, we can.
+ */
 
 #ifdef USE_STL_INDEXSEQUENCE
 #include <utility>
 
-namespace El
+namespace hydrogen
 {
 template <size_t... Is>
 using IndexSequence = std::index_sequence<Is...>;
 
 template <size_t N>
 using MakeIndexSequence = std::make_index_sequence<N>;
-}// namespace El
+}// namespace hydrogen
+
 #else
 
-namespace El
+namespace hydrogen
 {
 template <typename IntT, IntT... Is>
 struct IntegerSequence {};
@@ -50,7 +54,7 @@ struct GenerateIndexSequence<1>
 
 template <size_t N>
 using MakeIndexSequence = typename GenerateIndexSequence<N>::type;
-}// namespace El
-#endif // USE_STL_INDEXSEQUENCE
+}// namespace hydrogen
 
-#endif // EL_CORE_INDEXSEQUENCE_HPP_
+#endif // USE_STL_INDEXSEQUENCE
+#endif // HYDROGEN_META_INDEXSEQUENCE_HPP_

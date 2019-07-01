@@ -121,6 +121,49 @@ void Initialize()
     Initialize( argc, argv );
 }
 
+#ifdef HYDROGEN_GPU_USE_FP16
+namespace
+{
+// FIXME (trb): move this somewhere better
+
+void GPUHalfSumFunc(void * a, void * b, int * len, MPI_Datatype *) EL_NO_EXCEPT
+{
+    auto in = static_cast<gpu_half_type const*>(a);
+    auto out = static_cast<gpu_half_type*>(b);
+    auto const size = *len;
+    for (auto ii = decltype(size){0}; ii < size; ++ii)
+        out[ii] = float(in[ii]) + float(out[ii]);
+}
+void GPUHalfProductFunc(
+    void * a, void * b, int * len, MPI_Datatype *) EL_NO_EXCEPT
+{
+    auto in = static_cast<gpu_half_type const*>(a);
+    auto out = static_cast<gpu_half_type*>(b);
+    auto const size = *len;
+    for (auto ii = decltype(size){0}; ii < size; ++ii)
+        out[ii] = float(in[ii]) * float(out[ii]);
+}
+void GPUHalfMaxFunc(void * a, void * b, int * len, MPI_Datatype *) EL_NO_EXCEPT
+{
+    auto in = static_cast<gpu_half_type const*>(a);
+    auto out = static_cast<gpu_half_type*>(b);
+    auto const size = *len;
+    for (auto ii = decltype(size){0}; ii < size; ++ii)
+        if (float(in[ii]) > float(out[ii]))
+            out[ii] = in[ii];
+}
+void GPUHalfMinFunc(void * a, void * b, int * len, MPI_Datatype *) EL_NO_EXCEPT
+{
+    auto in = static_cast<gpu_half_type const*>(a);
+    auto out = static_cast<gpu_half_type*>(b);
+    auto const size = *len;
+    for (auto ii = decltype(size){0}; ii < size; ++ii)
+        if (float(in[ii]) < float(out[ii]))
+            out[ii] = in[ii];
+}
+}// namespace <anon>
+#endif // HYDROGEN_GPU_USE_FP16
+
 #ifdef HYDROGEN_HAVE_HALF
 namespace
 {
@@ -207,13 +250,32 @@ void Initialize( int& argc, char**& argv )
         }
     }
 
+#ifdef HYDROGEN_GPU_USE_FP16
+    {
+        mpi::Types<gpu_half_type>::type = MPI_SHORT;
+        mpi::Types<gpu_half_type>::createdType = false;
+
+        bool const commutes = true;
+        MPI_Op_create((mpi::UserFunction*)GPUHalfSumFunc, commutes,
+                      &mpi::Types<gpu_half_type>::sumOp.op);
+        mpi::Types<gpu_half_type>::createdSumOp = true;
+        MPI_Op_create((mpi::UserFunction*)GPUHalfProductFunc, commutes,
+                      &mpi::Types<gpu_half_type>::prodOp.op);
+        mpi::Types<gpu_half_type>::createdProdOp = true;
+        MPI_Op_create((mpi::UserFunction*)GPUHalfMaxFunc, commutes,
+                      &mpi::Types<gpu_half_type>::maxOp.op);
+        mpi::Types<gpu_half_type>::createdMaxOp = true;
+        MPI_Op_create((mpi::UserFunction*)GPUHalfMinFunc, commutes,
+                      &mpi::Types<gpu_half_type>::minOp.op);
+        mpi::Types<gpu_half_type>::createdMinOp = true;
+    }
+#endif // HYDROGEN_GPU_USE_FP16
+
 #ifdef HYDROGEN_HAVE_HALF
     // FIXME (trb): move this somewhere better
     {
-        MPI_Type_contiguous(sizeof(cpu_half_type), MPI_BYTE,
-                            &mpi::Types<cpu_half_type>::type);
-        MPI_Type_commit(&mpi::Types<cpu_half_type>::type);
-        mpi::Types<cpu_half_type>::createdType = true;
+        mpi::Types<cpu_half_type>::type = MPI_SHORT;
+        mpi::Types<cpu_half_type>::createdType = false;
 
         bool const commutes = true;
         MPI_Op_create((mpi::UserFunction*)HalfSumFunc, commutes,
@@ -232,7 +294,7 @@ void Initialize( int& argc, char**& argv )
 #endif
 
 #ifdef HYDROGEN_HAVE_CUDA
-    InitializeCUBLAS();
+    cublas::Initialize();
 #endif
 
 #ifdef EL_HAVE_QT5

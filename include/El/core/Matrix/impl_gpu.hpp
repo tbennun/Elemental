@@ -60,12 +60,12 @@ Matrix<T, Device::GPU>::Matrix(Matrix<T, Device::CPU> const& A)
 {
     EL_DEBUG_CSE;
     auto stream = this->Stream();
-    EL_CHECK_CUDA(cudaMemcpy2DAsync(data_, this->LDim()*sizeof(T),
+    H_CHECK_CUDA(cudaMemcpy2DAsync(data_, this->LDim()*sizeof(T),
                                     A.LockedBuffer(), A.LDim()*sizeof(T),
                                     A.Height()*sizeof(T), A.Width(),
                                     cudaMemcpyHostToDevice,
                                     stream));
-    EL_CHECK_CUDA(cudaStreamSynchronize(stream));
+    H_CHECK_CUDA(cudaStreamSynchronize(stream));
 }
 
 template <typename T>
@@ -90,7 +90,7 @@ Matrix<T, Device::GPU>::~Matrix() { }
 
 template <typename T>
 void Matrix<T, Device::GPU>::Attach
-(Int height, Int width, DevicePtr<T> buffer, Int leadingDimension)
+(Int height, Int width, T* buffer, Int leadingDimension)
 {
     EL_DEBUG_CSE;
 #ifndef EL_RELEASE
@@ -102,7 +102,7 @@ void Matrix<T, Device::GPU>::Attach
 
 template <typename T>
 void Matrix<T, Device::GPU>::LockedAttach
-(Int height, Int width, DevicePtr<const T> buffer, Int leadingDimension)
+(Int height, Int width, T const* buffer, Int leadingDimension)
 {
     EL_DEBUG_CSE;
 #ifndef EL_RELEASE
@@ -266,11 +266,11 @@ T Matrix<T, Device::GPU>::Get(Int i, Int j) const
     if (i == END) i = this->Height() - 1;
     if (j == END) j = this->Width() - 1;
     auto stream = this->Stream();
-    T val = T(0);
-    EL_CHECK_CUDA(cudaMemcpyAsync( &val, &data_[i+j*this->LDim()],
+    T val;
+    H_CHECK_CUDA(cudaMemcpyAsync( &val, &data_[i+j*this->LDim()],
                                    sizeof(T), cudaMemcpyDeviceToHost,
                                    stream ));
-    EL_CHECK_CUDA(cudaStreamSynchronize(stream));
+    H_CHECK_CUDA(cudaStreamSynchronize(stream));
     return val;
 }
 
@@ -282,23 +282,19 @@ T Matrix<T, Device::GPU>::do_get_(
 }
 
 template <typename T>
-Base<T> Matrix<T, Device::GPU>::GetRealPart(Int i, Int j) const
+Base<T> Matrix<T, Device::GPU>::GetRealPart(Int, Int) const
 {
     EL_DEBUG_CSE;
-#ifdef HYDROGEN_DO_BOUNDS_CHECKING
-    this->AssertValidEntry(i, j);
-#endif
-    return El::RealPart(Get(i, j));
+    LogicError("GetRealPart no longer supported on GPU.");
+    return Base<T>{};
 }
 
 template <typename T>
-Base<T> Matrix<T, Device::GPU>::GetImagPart(Int i, Int j) const
+Base<T> Matrix<T, Device::GPU>::GetImagPart(Int, Int) const
 {
     EL_DEBUG_CSE;
-#ifdef HYDROGEN_DO_BOUNDS_CHECKING
-    this->AssertValidEntry(i, j);
-#endif
-    return El::ImagPart(Get(i, j));
+    LogicError("GetImagPart no longer supported on GPU.");
+    return Base<T>{};
 }
 
 template <typename T>
@@ -314,10 +310,10 @@ void Matrix<T, Device::GPU>::Set(Int i, Int j, T const& alpha)
 #endif
     if (i == END) i = this->Height() - 1;
     if (j == END) j = this->Width() - 1;
-    EL_CHECK_CUDA(cudaMemcpyAsync(&data_[i+j*this->LDim()], &alpha,
+    H_CHECK_CUDA(cudaMemcpyAsync(&data_[i+j*this->LDim()], &alpha,
                                   sizeof(T), cudaMemcpyHostToDevice,
                                   stream_ ));
-    EL_CHECK_CUDA(cudaStreamSynchronize(stream_));
+    H_CHECK_CUDA(cudaStreamSynchronize(stream_));
 }
 
 template <typename T>
@@ -334,19 +330,10 @@ void Matrix<T, Device::GPU>::Set(Entry<T> const& entry)
 template <typename T>
 void
 Matrix<T, Device::GPU>::SetRealPart(
-    Int i, Int j, Base<T> const& alpha)
+    Int, Int, Base<T> const&)
 {
     EL_DEBUG_CSE;
-#ifdef HYDROGEN_DO_BOUNDS_CHECKING
-    this->AssertValidEntry(i, j);
-#endif
-#ifndef EL_RELEASE
-    if (this->Locked())
-        LogicError("Cannot modify data of locked matrices");
-#endif
-    T val = Get(i, j);
-    El::SetRealPart(val, alpha);
-    Set(i, j, val);
+    LogicError("SetRealPart no longer supported on GPU.");
 }
 
 template <typename T>
@@ -355,19 +342,10 @@ void Matrix<T, Device::GPU>::SetRealPart(Entry<Base<T>> const& entry)
 
 template <typename T>
 void
-Matrix<T, Device::GPU>::SetImagPart(Int i, Int j, Base<T> const& alpha)
+Matrix<T, Device::GPU>::SetImagPart(Int, Int, Base<T> const&)
 {
     EL_DEBUG_CSE;
-#ifdef HYDROGEN_DO_BOUNDS_CHECKING
-    this->AssertValidEntry(i, j);
-#endif
-#ifndef EL_RELEASE
-    if (this->Locked())
-        LogicError("Cannot modify data of locked matrices");
-#endif
-    T val = Get(i, j);
-    El::SetImagPart(val, alpha);
-    Set(i, j, val);
+    LogicError("SetImagPart no longer supported on GPU.");
 }
 
 template <typename T>
@@ -375,21 +353,12 @@ void Matrix<T, Device::GPU>::SetImagPart(Entry<Base<T>> const& entry)
 {
     SetImagPart(entry.i, entry.j, entry.value);
 }
-
 template <typename T>
-void Matrix<T, Device::GPU>::Update(Int i, Int j, T const& alpha)
+void Matrix<T, Device::GPU>::Update(Int, Int, T const&)
 {
     EL_DEBUG_CSE;
-#ifdef HYDROGEN_DO_BOUNDS_CHECKING
-    this->AssertValidEntry(i, j);
-#endif
-#ifndef EL_RELEASE
-    if (this->Locked())
-        LogicError("Cannot modify data of locked matrices");
-#endif
-    T val = Get(i, j);
-    val += alpha;
-    Set(i, j, val);
+    LogicError("SetImagPart no longer supported on GPU.");
+
 }
 
 template <typename T>
@@ -401,16 +370,7 @@ void
 Matrix<T, Device::GPU>::UpdateRealPart(Int i, Int j, Base<T> const& alpha)
 {
     EL_DEBUG_CSE;
-#ifdef HYDROGEN_DO_BOUNDS_CHECKING
-    this->AssertValidEntry(i, j);
-#endif
-#ifndef EL_RELEASE
-    if (this->Locked())
-        LogicError("Cannot modify data of locked matrices");
-#endif
-    T val = Get(i, j);
-    El::UpdateRealPart(val, alpha);
-    Set(i, j, val);
+    LogicError("UpdateRealPart no longer supported on GPU.");
 }
 
 template <typename T>
@@ -421,19 +381,10 @@ void Matrix<T, Device::GPU>::UpdateRealPart(Entry<Base<T>> const& entry)
 
 template <typename T>
 void
-Matrix<T, Device::GPU>::UpdateImagPart(Int i, Int j, Base<T> const& alpha)
+Matrix<T, Device::GPU>::UpdateImagPart(Int, Int, Base<T> const&)
 {
     EL_DEBUG_CSE;
-#ifdef HYDROGEN_DO_BOUNDS_CHECKING
-    this->AssertValidEntry(i, j);
-#endif
-#ifndef EL_RELEASE
-    if (this->Locked())
-        LogicError("Cannot modify data of locked matrices");
-#endif
-    T val = Get(i, j);
-    El::UpdateImagPart(val, alpha);
-    Set(i, j, val);
+    LogicError("UpdateImagPart no longer supported on GPU.");
 }
 
 template <typename T>
@@ -441,31 +392,17 @@ void Matrix<T, Device::GPU>::UpdateImagPart(Entry<Base<T>> const& entry)
 { UpdateImagPart(entry.i, entry.j, entry.value); }
 
 template <typename T>
-void Matrix<T, Device::GPU>::MakeReal(Int i, Int j)
+void Matrix<T, Device::GPU>::MakeReal(Int, Int)
 {
     EL_DEBUG_CSE;
-#ifdef HYDROGEN_DO_BOUNDS_CHECKING
-    this->AssertValidEntry(i, j);
-#endif
-#ifndef EL_RELEASE
-    if (this->Locked())
-        LogicError("Cannot modify data of locked matrices");
-#endif
-    Set(i, j, GetRealPart(i,j));
+    LogicError("MakeReal no longer supported on GPU.");
 }
 
 template <typename T>
-void Matrix<T, Device::GPU>::Conjugate(Int i, Int j)
+void Matrix<T, Device::GPU>::Conjugate(Int, Int)
 {
     EL_DEBUG_CSE;
-#ifdef HYDROGEN_DO_BOUNDS_CHECKING
-    this->AssertValidEntry(i, j);
-#endif
-#ifndef EL_RELEASE
-    if (this->Locked())
-        LogicError("Cannot modify data of locked matrices");
-#endif
-    Set(i, j, El::Conj(Get(i,j)));
+    LogicError("Conjugate no longer supported on GPU.");
 }
 
 // Exchange metadata with another matrix
@@ -589,6 +526,13 @@ void Matrix<T, Device::GPU>::SetEvent(cudaEvent_t event) EL_NO_EXCEPT
 #define EL_ENABLE_QUAD
 #define EL_ENABLE_BIGINT
 #define EL_ENABLE_BIGFLOAT
+
+// Right now, we don't acknowledge a world in which NVIDIA GPUs
+// coexist on a platform with some other type of GPU (e.g., AMD)
+#ifdef HYDROGEN_GPU_USE_FP16
+PROTO(gpu_half_type)
+#endif // HYDROGEN_GPU_USE_FP16
+
 #include <El/macros/Instantiate.h>
 
 #undef EL_EXTERN

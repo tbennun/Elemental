@@ -1,7 +1,7 @@
 #ifndef HYDROGEN_IMPORTS_ALUMINUM_HPP_
 #define HYDROGEN_IMPORTS_ALUMINUM_HPP_
 
-#include <El/core/Device.hpp>
+#include <hydrogen/Device.hpp>
 
 #ifdef HYDROGEN_HAVE_ALUMINUM
 #include <Al.hpp>
@@ -72,6 +72,9 @@ ADD_ALUMINUM_TYPE(                   int, Al::NCCLBackend);
 ADD_ALUMINUM_TYPE(          unsigned int, Al::NCCLBackend);
 ADD_ALUMINUM_TYPE(         long long int, Al::NCCLBackend);
 ADD_ALUMINUM_TYPE(unsigned long long int, Al::NCCLBackend);
+#ifdef HYDROGEN_GPU_USE_FP16
+ADD_ALUMINUM_TYPE(         gpu_half_type, Al::NCCLBackend);
+#endif // HYDROGEN_GPU_USE_FP16
 ADD_ALUMINUM_TYPE(                 float, Al::NCCLBackend);
 ADD_ALUMINUM_TYPE(                double, Al::NCCLBackend);
 #endif // HYDROGEN_HAVE_NCCL2
@@ -119,7 +122,7 @@ struct BackendsForDeviceT;
 template <>
 struct BackendsForDeviceT<Device::CPU>
 {
-    using type = TypeList<Al::MPIBackend>;
+    using type = hydrogen::TypeList<Al::MPIBackend>;
 };// struct BackendsForDeviceT<Device::CPU>
 
 // Prefer the NCCL2 backend
@@ -127,7 +130,7 @@ struct BackendsForDeviceT<Device::CPU>
 template <>
 struct BackendsForDeviceT<Device::GPU>
 {
-    using type = TypeList<
+    using type = hydrogen::TypeList<
 #ifdef HYDROGEN_HAVE_NCCL2
         Al::NCCLBackend
 #ifdef HYDROGEN_HAVE_AL_MPI_CUDA
@@ -200,7 +203,7 @@ struct IsBackendSupportedByAny
 {};
 
 template <typename T, Collective C>
-struct IsBackendSupportedByAny<T,C,TypeList<>>
+struct IsBackendSupportedByAny<T,C,hydrogen::TypeList<>>
     : std::false_type
 {};
 

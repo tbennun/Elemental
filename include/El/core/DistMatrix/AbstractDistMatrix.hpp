@@ -14,8 +14,22 @@ namespace El
 
 struct DistData;
 
+/** @class BaseDistMatrix
+ *  @brief A basic description of a distributed matrix
+ */
+class BaseDistMatrix
+{
+public:
+    /** @brief The dimension of the range space */
+    virtual Int Height() const noexcept = 0;
+    /** @brief The dimension of the domain space */
+    virtual Int Width() const noexcept = 0;
+    /** @brief A description of the distribution information */
+    virtual El::DistData DistData() const noexcept = 0;
+};// class BaseDistMatrix
+
 template<typename Ring>
-class AbstractDistMatrix
+class AbstractDistMatrix : public BaseDistMatrix
 {
 public:
     // Typedefs
@@ -54,8 +68,8 @@ public:
 
     // Global matrix information
     // -------------------------
-    Int Height() const EL_NO_EXCEPT;
-    Int Width() const EL_NO_EXCEPT;
+    Int Height() const EL_NO_EXCEPT override;
+    Int Width() const EL_NO_EXCEPT override;
     Int DiagonalLength(Int offset=0) const EL_NO_EXCEPT;
     bool Viewing() const EL_NO_EXCEPT;
     bool Locked() const EL_NO_EXCEPT;
@@ -102,7 +116,7 @@ public:
     bool IsLocalCol(Int j) const EL_NO_RELEASE_EXCEPT;
     bool IsLocal(Int i, Int j) const EL_NO_RELEASE_EXCEPT;
 
-    El::DistData DistData() const EL_NO_EXCEPT;
+    El::DistData DistData() const EL_NO_EXCEPT override;
 
     // Single-entry manipulation
     // =========================

@@ -117,6 +117,10 @@ void Print( const vector<T>& x, string title, ostream& os )
   template void Print \
   ( const AbstractDistMatrix<T>& A, string title, ostream& os );
 
+#ifdef HYDROGEN_GPU_USE_FP16
+PROTO(gpu_half_type)
+#endif
+
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE
 #define EL_ENABLE_QUAD

@@ -534,7 +534,7 @@ const ElementalMatrix<T>&
 ElementalMatrix<T>::operator+=(const ElementalMatrix<T>& A)
 {
     EL_DEBUG_CSE;
-    Axpy(T(1), A, *this);
+    Axpy(TypeTraits<T>::One(), A, *this);
     return *this;
 }
 
@@ -543,7 +543,7 @@ const ElementalMatrix<T>&
 ElementalMatrix<T>::operator+=(const AbstractDistMatrix<T>& A)
 {
     EL_DEBUG_CSE;
-    Axpy(T(1), A, *this);
+    Axpy(TypeTraits<T>::One(), A, *this);
     return *this;
 }
 
@@ -552,7 +552,7 @@ const ElementalMatrix<T>&
 ElementalMatrix<T>::operator-=(const ElementalMatrix<T>& A)
 {
     EL_DEBUG_CSE;
-    Axpy(T(-1), A, *this);
+    Axpy(-TypeTraits<T>::One(), A, *this);
     return *this;
 }
 
@@ -561,7 +561,7 @@ const ElementalMatrix<T>&
 ElementalMatrix<T>::operator-=(const AbstractDistMatrix<T>& A)
 {
     EL_DEBUG_CSE;
-    Axpy(T(-1), A, *this);
+    Axpy(-TypeTraits<T>::One(), A, *this);
     return *this;
 }
 
@@ -885,6 +885,10 @@ ElementalMatrix<T>::ShallowSwap(ElementalMatrix<T>& A)
       const ElementalMatrix<T>& ABR);
 #else
 #define PROTO(T) template class ElementalMatrix<T>;
+#endif
+
+#ifdef HYDROGEN_GPU_USE_FP16
+PROTO(gpu_half_type)
 #endif
 
 #define EL_ENABLE_DOUBLEDOUBLE
