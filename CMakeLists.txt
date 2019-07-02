@@ -134,7 +134,7 @@ option(Hydrogen_ENABLE_TESTING
   "Build the test suite in the tests directory." ON)
 
 option(Hydrogen_ENABLE_UNIT_TESTS
-  "Build the Catch2-based unit tests." ON)
+  "Build the Catch2-based unit tests." OFF)
 
 option(Hydrogen_ENABLE_QUADMATH
   "Search for quadmath library and enable related features if found." OFF)
