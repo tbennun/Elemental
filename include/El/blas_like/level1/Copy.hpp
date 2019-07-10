@@ -552,6 +552,8 @@ void CopyFromNonRoot
 
 #ifdef HYDROGEN_HAVE_CUDA
 #ifdef HYDROGEN_GPU_USE_FP16
+  EL_EXTERN template void Copy \
+  ( const AbstractDistMatrix<gpu_half_type>& A, AbstractDistMatrix<gpu_half_type>& B ); \
 EL_EXTERN template void Copy(
     const AbstractMatrix<gpu_half_type>& A, AbstractMatrix<gpu_half_type>& B );
 EL_EXTERN template void Copy
