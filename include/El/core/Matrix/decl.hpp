@@ -111,7 +111,7 @@ public:
      *
      *  @return A new deep-copy of this matrix.
      */
-    std::unique_ptr<AbstractMatrix<T>> DeepCopy() const override;
+    std::unique_ptr<AbstractMatrix<T>> Copy() const override;
 
     /** @brief Get a new matrix with this device allocation.
      *
@@ -344,7 +344,7 @@ public:
      *
      *  @return A new deep-copy of this matrix.
      */
-    std::unique_ptr<AbstractMatrix<T>> DeepCopy() const override;
+    std::unique_ptr<AbstractMatrix<T>> Copy() const override;
 
     /** @brief Get a new matrix with this device allocation.
      *

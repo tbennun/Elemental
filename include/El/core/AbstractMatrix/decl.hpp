@@ -58,7 +58,7 @@ public:
      *          matrix with the same device type.
      *  @warning This could dynamically allocate memory.
      */
-    virtual std::unique_ptr<AbstractMatrix<T>> DeepCopy() const = 0;
+    virtual std::unique_ptr<AbstractMatrix<T>> Copy() const = 0;
 
     /** @brief Construct an empty matrix with the same type and device.
      *

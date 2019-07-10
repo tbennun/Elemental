@@ -47,7 +47,7 @@ TEMPLATE_TEST_CASE(
 
                 AND_WHEN ("The matrix is copied")
                 {
-                    auto new_mat = mat.DeepCopy();
+                    auto new_mat = mat.Copy();
                     THEN ("The new matrix has the same size as the original.")
                     {
                         CHECK_FALSE(new_mat->IsEmpty());
@@ -79,7 +79,7 @@ TEMPLATE_TEST_CASE(
                 }
                 AND_WHEN ("The matrix is copied")
                 {
-                    auto new_mat = mat.DeepCopy();
+                    auto new_mat = mat.Copy();
                     THEN ("The new matrix has the same size as the original.")
                     {
                         CHECK_FALSE(new_mat->IsEmpty());
@@ -110,7 +110,7 @@ TEMPLATE_TEST_CASE(
                 }
                 AND_WHEN ("The matrix is copied")
                 {
-                    auto new_mat = mat.DeepCopy();
+                    auto new_mat = mat.Copy();
                     THEN ("The new matrix has the same size as the original.")
                     {
                         CHECK_FALSE(new_mat->IsEmpty());
@@ -141,7 +141,7 @@ TEMPLATE_TEST_CASE(
                 }
                 AND_WHEN ("The matrix is copied")
                 {
-                    auto new_mat = mat.DeepCopy();
+                    auto new_mat = mat.Copy();
                     THEN ("The new matrix has the same size as the original.")
                     {
                         CHECK_FALSE(new_mat->IsEmpty());
