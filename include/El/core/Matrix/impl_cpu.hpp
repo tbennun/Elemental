@@ -93,10 +93,6 @@ void Matrix<T, Device::CPU>::Attach(
     size_type leadingDimension)
 {
     EL_DEBUG_CSE;
-#ifndef EL_RELEASE
-    if (this->FixedSize())
-        LogicError("Cannot attach a new buffer to a view with fixed size");
-#endif
     Attach_(height, width, buffer, leadingDimension);
 }
 
@@ -106,10 +102,6 @@ void Matrix<T, Device::CPU>::LockedAttach(
     size_type leadingDimension)
 {
     EL_DEBUG_CSE;
-#ifndef EL_RELEASE
-    if (this->FixedSize())
-        LogicError("Cannot attach a new buffer to a view with fixed size");
-#endif
     LockedAttach_(height, width, buffer, leadingDimension);
 }
 

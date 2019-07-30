@@ -93,10 +93,6 @@ void Matrix<T, Device::GPU>::Attach
 (Int height, Int width, T* buffer, Int leadingDimension)
 {
     EL_DEBUG_CSE;
-#ifndef EL_RELEASE
-    if (this->FixedSize())
-        LogicError("Cannot attach a new buffer to a view with fixed size");
-#endif // !EL_RELEASE
     Attach_(height, width, buffer, leadingDimension);
 }
 
@@ -105,11 +101,6 @@ void Matrix<T, Device::GPU>::LockedAttach
 (Int height, Int width, T const* buffer, Int leadingDimension)
 {
     EL_DEBUG_CSE;
-#ifndef EL_RELEASE
-    if (this->FixedSize())
-        LogicError("Cannot attach a new buffer to a view with fixed size");
-#endif // !EL_RELEASE
-
     LockedAttach_(height, width, buffer, leadingDimension);
 }
 
