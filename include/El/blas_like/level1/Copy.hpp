@@ -554,6 +554,9 @@ void CopyFromNonRoot
 #ifdef HYDROGEN_GPU_USE_FP16
 EL_EXTERN template void Copy(
     const AbstractMatrix<gpu_half_type>& A, AbstractMatrix<gpu_half_type>& B );
+EL_EXTERN template void Copy(
+    const AbstractDistMatrix<gpu_half_type>& A,
+    AbstractDistMatrix<gpu_half_type>& B );
 EL_EXTERN template void Copy
 ( const Matrix<gpu_half_type,Device::GPU>& A, Matrix<gpu_half_type,Device::GPU>& B );
 EL_EXTERN template void Copy
@@ -590,6 +593,9 @@ EL_EXTERN template void CopyAsync
 #ifdef HYDROGEN_HAVE_HALF
 EL_EXTERN template void Copy(
     const AbstractMatrix<cpu_half_type>& A, AbstractMatrix<cpu_half_type>& B );
+EL_EXTERN template void Copy(
+    const AbstractDistMatrix<cpu_half_type>& A,
+    AbstractDistMatrix<cpu_half_type>& B );
 EL_EXTERN template void Copy(
     const Matrix<cpu_half_type>& A, Matrix<cpu_half_type>& B );
 #endif // HYDROGEN_HAVE_HALF
