@@ -9,6 +9,8 @@
 #ifndef EL_MATRIX_IMPL_CPU_HPP_
 #define EL_MATRIX_IMPL_CPU_HPP_
 
+#include <El/blas_like/level1/decl.hpp>
+
 namespace El
 {
 
@@ -53,7 +55,7 @@ Matrix<T, Device::CPU>::Matrix(Matrix<T, Device::CPU> const& A)
     : Matrix{A.Height(), A.Width(), A.Height()}
 {
     EL_DEBUG_CSE;
-    Copy(A, *this);
+    ::El::Copy(A, *this);
 }
 
 #ifdef HYDROGEN_HAVE_CUDA
@@ -82,6 +84,22 @@ Matrix<T, Device::CPU>::Matrix(Matrix<T, Device::CPU>&& A) EL_NO_EXCEPT
 
 template <typename T>
 Matrix<T, Device::CPU>::~Matrix() { }
+
+template <typename T>
+std::unique_ptr<AbstractMatrix<T>>
+Matrix<T, Device::CPU>::Copy() const
+{
+    return std::unique_ptr<AbstractMatrix<T>>{
+        new Matrix<T,Device::CPU>(*this)};
+}
+
+template <typename T>
+std::unique_ptr<AbstractMatrix<T>>
+Matrix<T, Device::CPU>::Construct() const
+{
+    return std::unique_ptr<AbstractMatrix<T>>{
+        new Matrix<T,Device::CPU>{}};
+}
 
 // Assignment and reconfiguration
 // ==============================

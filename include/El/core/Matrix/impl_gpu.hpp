@@ -9,6 +9,8 @@
 #ifndef EL_MATRIX_IMPL_GPU_HPP_
 #define EL_MATRIX_IMPL_GPU_HPP_
 
+#include <El/blas_like/level1/decl.hpp>
+
 namespace El
 {
 //
@@ -51,7 +53,7 @@ Matrix<T, Device::GPU>::Matrix(Matrix<T, Device::GPU> const& A)
     : Matrix{A.Height(), A.Width(), A.Height()}
 {
     EL_DEBUG_CSE;
-    Copy(A, *this);
+    ::El::Copy(A, *this);
 }
 
 template <typename T>
@@ -87,6 +89,22 @@ Matrix<T, Device::GPU>::Matrix(Matrix<T, Device::GPU>&& A) EL_NO_EXCEPT
 
 template <typename T>
 Matrix<T, Device::GPU>::~Matrix() { }
+
+template <typename T>
+std::unique_ptr<AbstractMatrix<T>>
+Matrix<T, Device::GPU>::Copy() const
+{
+    return std::unique_ptr<AbstractMatrix<T>>{
+        new Matrix<T,Device::GPU>(*this)};
+}
+
+template <typename T>
+std::unique_ptr<AbstractMatrix<T>>
+Matrix<T, Device::GPU>::Construct() const
+{
+    return std::unique_ptr<AbstractMatrix<T>>{
+        new Matrix<T,Device::GPU>{}};
+}
 
 template <typename T>
 void Matrix<T, Device::GPU>::Attach
