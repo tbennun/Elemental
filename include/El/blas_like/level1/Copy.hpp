@@ -530,81 +530,109 @@ void CopyFromNonRoot
 # define EL_EXTERN extern
 #endif
 
-#define PROTO(T) \
-  EL_EXTERN template void Copy \
-  ( const AbstractMatrix<T>& A, AbstractMatrix<T>& B ); \
-  EL_EXTERN template void Copy \
-  ( const Matrix<T>& A, Matrix<T>& B ); \
-  EL_EXTERN template void Copy \
-  ( const AbstractDistMatrix<T>& A, AbstractDistMatrix<T>& B ); \
-  EL_EXTERN template void CopyFromRoot \
-  ( const Matrix<T>& A, DistMatrix<T,CIRC,CIRC>& B, bool includingViewers ); \
-  EL_EXTERN template void CopyFromNonRoot \
-  ( DistMatrix<T,CIRC,CIRC>& B, bool includingViewers ); \
-  EL_EXTERN template void CopyFromRoot \
-  ( const Matrix<T>& A, DistMatrix<T,CIRC,CIRC,BLOCK>& B, \
-    bool includingViewers ); \
-  EL_EXTERN template void CopyFromNonRoot \
-  ( DistMatrix<T,CIRC,CIRC,BLOCK>& B, bool includingViewers ); \
-  EL_EXTERN template void CopyAsync \
-  ( const AbstractDistMatrix<T>& A, AbstractDistMatrix<T>& B ); \
+#define PROTO(T)                                                        \
+    EL_EXTERN template void Copy(                                       \
+        AbstractMatrix<T> const& A,                                     \
+        AbstractMatrix<T>& B);                                          \
+    EL_EXTERN template void Copy(                                       \
+        Matrix<T> const& A,                                             \
+        Matrix<T>& B);                                                  \
+    EL_EXTERN template void Copy(                                       \
+        AbstractDistMatrix<T> const& A,                                 \
+        AbstractDistMatrix<T>& B);                                      \
+    EL_EXTERN template void CopyFromRoot(                               \
+        Matrix<T> const& A,                                             \
+        DistMatrix<T,CIRC,CIRC>& B,                                     \
+        bool includingViewers);                                         \
+    EL_EXTERN template void CopyFromNonRoot(                            \
+        DistMatrix<T,CIRC,CIRC>& B,                                     \
+        bool includingViewers);                                         \
+    EL_EXTERN template void CopyFromRoot(                               \
+        Matrix<T> const& A,                                             \
+        DistMatrix<T,CIRC,CIRC,BLOCK>& B,                               \
+        bool includingViewers);                                         \
+    EL_EXTERN template void CopyFromNonRoot(                            \
+        DistMatrix<T,CIRC,CIRC,BLOCK>& B,                               \
+        bool includingViewers);                                         \
+    EL_EXTERN template void CopyAsync(                                  \
+        AbstractDistMatrix<T> const& A,                                 \
+        AbstractDistMatrix<T>& B);
 
 
 #ifdef HYDROGEN_HAVE_CUDA
 #ifdef HYDROGEN_GPU_USE_FP16
-  EL_EXTERN template void Copy \
-  ( const AbstractDistMatrix<gpu_half_type>& A, AbstractDistMatrix<gpu_half_type>& B ); \
 EL_EXTERN template void Copy(
-    const AbstractMatrix<gpu_half_type>& A, AbstractMatrix<gpu_half_type>& B );
+    const AbstractMatrix<gpu_half_type>& A,
+    AbstractMatrix<gpu_half_type>& B);
 EL_EXTERN template void Copy(
     const AbstractDistMatrix<gpu_half_type>& A,
-    AbstractDistMatrix<gpu_half_type>& B );
-EL_EXTERN template void Copy
-( const Matrix<gpu_half_type,Device::GPU>& A, Matrix<gpu_half_type,Device::GPU>& B );
-EL_EXTERN template void Copy
-( const Matrix<gpu_half_type,Device::GPU>& A, Matrix<gpu_half_type,Device::CPU>& B );
-EL_EXTERN template void Copy
-( const Matrix<gpu_half_type,Device::CPU>& A, Matrix<gpu_half_type,Device::GPU>& B );
-EL_EXTERN template void CopyAsync
-( const Matrix<gpu_half_type,Device::GPU>& A, Matrix<gpu_half_type,Device::CPU>& B );
-EL_EXTERN template void CopyAsync
-( const Matrix<gpu_half_type,Device::CPU>& A, Matrix<gpu_half_type,Device::GPU>& B );
+    AbstractDistMatrix<gpu_half_type>& B);
+EL_EXTERN template void Copy(
+    const Matrix<gpu_half_type,Device::GPU>& A,
+    Matrix<gpu_half_type,Device::GPU>& B);
+EL_EXTERN template void Copy(
+    const Matrix<gpu_half_type,Device::GPU>& A,
+    Matrix<gpu_half_type,Device::CPU>& B);
+EL_EXTERN template void Copy(
+    const Matrix<gpu_half_type,Device::CPU>& A,
+    Matrix<gpu_half_type,Device::GPU>& B);
+EL_EXTERN template void CopyAsync(
+    const Matrix<gpu_half_type,Device::GPU>& A,
+    Matrix<gpu_half_type,Device::CPU>& B);
+EL_EXTERN template void CopyAsync(
+    const Matrix<gpu_half_type,Device::CPU>& A,
+    Matrix<gpu_half_type,Device::GPU>& B);
 #endif
-EL_EXTERN template void Copy
-( const Matrix<float,Device::GPU>& A, Matrix<float,Device::GPU>& B );
-EL_EXTERN template void Copy
-( const Matrix<float,Device::GPU>& A, Matrix<float,Device::CPU>& B );
-EL_EXTERN template void Copy
-( const Matrix<float,Device::CPU>& A, Matrix<float,Device::GPU>& B );
-EL_EXTERN template void CopyAsync
-( const Matrix<float,Device::GPU>& A, Matrix<float,Device::CPU>& B );
-EL_EXTERN template void CopyAsync
-( const Matrix<float,Device::CPU>& A, Matrix<float,Device::GPU>& B );
-EL_EXTERN template void Copy
-( const Matrix<double,Device::GPU>& A, Matrix<double,Device::GPU>& B );
-EL_EXTERN template void Copy
-( const Matrix<double,Device::GPU>& A, Matrix<double,Device::CPU>& B );
-EL_EXTERN template void Copy
-( const Matrix<double,Device::CPU>& A, Matrix<double,Device::GPU>& B );
-EL_EXTERN template void CopyAsync
-( const Matrix<double,Device::GPU>& A, Matrix<double,Device::CPU>& B );
-EL_EXTERN template void CopyAsync
-( const Matrix<double,Device::CPU>& A, Matrix<double,Device::GPU>& B );
+EL_EXTERN template void Copy(
+    Matrix<float,Device::GPU> const& A,
+    Matrix<float,Device::GPU>& B);
+EL_EXTERN template void Copy(
+    Matrix<float,Device::GPU> const& A,
+    Matrix<float,Device::CPU>& B);
+EL_EXTERN template void Copy(
+    Matrix<float,Device::CPU> const& A,
+    Matrix<float,Device::GPU>& B);
+EL_EXTERN template void CopyAsync(
+    Matrix<float,Device::GPU> const& A,
+    Matrix<float,Device::CPU>& B);
+EL_EXTERN template void CopyAsync(
+    Matrix<float,Device::CPU> const& A,
+    Matrix<float,Device::GPU>& B);
+EL_EXTERN template void Copy(
+    Matrix<double,Device::GPU> const& A,
+    Matrix<double,Device::GPU>& B);
+EL_EXTERN template void Copy(
+    Matrix<double,Device::GPU> const& A,
+    Matrix<double,Device::CPU>& B);
+EL_EXTERN template void Copy(
+    Matrix<double,Device::CPU> const& A,
+    Matrix<double,Device::GPU>& B);
+EL_EXTERN template void CopyAsync(
+    Matrix<double,Device::GPU> const& A,
+    Matrix<double,Device::CPU>& B );
+EL_EXTERN template void CopyAsync(
+    Matrix<double,Device::CPU> const& A,
+    Matrix<double,Device::GPU>& B );
 #endif // HYDROGEN_HAVE_CUDA
 
 #ifdef HYDROGEN_HAVE_HALF
 EL_EXTERN template void Copy(
-    const AbstractMatrix<cpu_half_type>& A, AbstractMatrix<cpu_half_type>& B );
+    AbstractMatrix<cpu_half_type> const& A,
+    AbstractMatrix<cpu_half_type>& B );
 EL_EXTERN template void Copy(
-    const AbstractDistMatrix<cpu_half_type>& A,
+    AbstractDistMatrix<cpu_half_type> const& A,
     AbstractDistMatrix<cpu_half_type>& B );
 EL_EXTERN template void Copy(
-    const Matrix<cpu_half_type>& A, Matrix<cpu_half_type>& B );
+    Matrix<cpu_half_type> const& A,
+    Matrix<cpu_half_type>& B );
 #endif // HYDROGEN_HAVE_HALF
+
 EL_EXTERN template void Copy(
-    const AbstractMatrix<uint8_t>& A, AbstractMatrix<uint8_t>& B );
+    AbstractMatrix<uint8_t> const& A,
+    AbstractMatrix<uint8_t>& B );
 EL_EXTERN template void Copy(
-    const Matrix<uint8_t>& A, Matrix<uint8_t>& B );
+    Matrix<uint8_t> const& A,
+    Matrix<uint8_t>& B );
 
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE
