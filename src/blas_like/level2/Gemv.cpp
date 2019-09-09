@@ -353,11 +353,6 @@ template void Gemv(Orientation orientA,
   (Orientation orientation, \
     T alpha, const DistMatrix<T,MC,MR,BLOCK>& A, \
              const DistMatrix<T,MC,MR,BLOCK>& x, \
-    T beta,        DistMatrix<T,MC,MR,BLOCK>& y); \
-  template void Gemv \
-  (Orientation orientation, \
-    T alpha, const DistMatrix<T,MC,MR,BLOCK>& A, \
-             const DistMatrix<T,MC,MR,BLOCK>& x, \
                    DistMatrix<T,MC,MR,BLOCK>& y); \
   template void LocalGemv \
   (Orientation orientation, \
@@ -371,6 +366,19 @@ template void Gemv(Orientation orientA,
 #define EL_ENABLE_BIGINT
 #define EL_ENABLE_BIGFLOAT
 #define EL_ENABLE_HALF
+#include <El/macros/Instantiate.h>
+
+// Fix "explicit instantiation after explicit specialization" warnings
+#undef PROTO
+#define PROTO(T)                                        \
+    template void Gemv                                  \
+    (Orientation orientation,                           \
+     T alpha, const DistMatrix<T,MC,MR,BLOCK>& A,       \
+     const DistMatrix<T,MC,MR,BLOCK>& x,                \
+     T beta,        DistMatrix<T,MC,MR,BLOCK>& y);
+
+#define EL_NO_INT_PROTO
+#undef EL_ENABLE_QUAD
 #include <El/macros/Instantiate.h>
 
 } // namespace El
