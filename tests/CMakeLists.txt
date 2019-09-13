@@ -9,7 +9,7 @@ foreach (src_file ${SOURCES})
 
   # Create the executable
   add_executable("${__test_name}" ${src_file})
-  target_link_libraries("${__test_name}" PRIVATE Hydrogen)
+  target_link_libraries("${__test_name}" PRIVATE ${HYDROGEN_LIBRARIES})
 
   # Create test
   add_test(NAME "${__test_name}.test"

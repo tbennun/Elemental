@@ -147,6 +147,10 @@ void Broadcast( AbstractDistMatrix<T>& A, mpi::Comm const& comm, int rank )
   EL_EXTERN template void Broadcast \
   ( AbstractDistMatrix<T>& A, mpi::Comm const& comm, int rank );
 
+#ifdef HYDROGEN_GPU_USE_FP16
+PROTO(gpu_half_type)
+#endif
+
 #define EL_ENABLE_HALF
 #define EL_ENABLE_DOUBLEDOUBLE
 #define EL_ENABLE_QUADDOUBLE

@@ -12,11 +12,17 @@
 #include <iostream>
 #include <sstream>
 
+#include <El/hydrogen_config.h>
+
 #ifdef HYDROGEN_HAVE_CUDA
 #include <cuda_runtime.h>
+#include <hydrogen/device/gpu/CUDA.hpp>
 #endif // HYDROGEN_HAVE_CUDA
 
-#include "El/hydrogen_config.h"
+#ifdef HYDROGEN_HAVE_CUB
+#include <hydrogen/device/gpu/cuda/CUB.hpp>
+#endif
+
 #include "decl.hpp"
 
 namespace El
@@ -30,9 +36,17 @@ G* New(size_t size, unsigned int mode, SyncInfo<Device::CPU> const&)
 {
     G* ptr = nullptr;
     switch (mode) {
-    case 0: ptr = new G[size]; break;
+    case 0:
+        ptr = static_cast<G*>(HostMemoryPool().Allocate(size * sizeof(G)));
+        break;
 #ifdef HYDROGEN_HAVE_CUDA
     case 1:
+        ptr = static_cast<G*>(PinnedHostMemoryPool().Allocate(size * sizeof(G)));
+        break;
+#endif // HYDROGEN_HAVE_CUDA
+    case 2: ptr = new G[size]; break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case 3:
     {
         // Pinned memory
         auto error = cudaMallocHost(&ptr, size * sizeof(G));
@@ -53,9 +67,13 @@ template <typename G>
 void Delete( G*& ptr, unsigned int mode, SyncInfo<Device::CPU> const& )
 {
     switch (mode) {
-    case 0: delete[] ptr; break;
+    case 0: HostMemoryPool().Free(ptr); break;
 #ifdef HYDROGEN_HAVE_CUDA
-    case 1:
+    case 1: PinnedHostMemoryPool().Free(ptr); break;
+#endif  // HYDROGEN_HAVE_CUDA
+    case 2: delete[] ptr; break;
+#ifdef HYDROGEN_HAVE_CUDA
+    case 3:
     {
         // Pinned memory
         auto error = cudaFreeHost(ptr);
@@ -91,7 +109,7 @@ G* New( size_t size, unsigned int mode, SyncInfo<Device::GPU> const& syncInfo_ )
     case 0: status = cudaMalloc(&ptr, size * sizeof(G)); break;
 #ifdef HYDROGEN_HAVE_CUB
     case 1:
-        status = cub::MemoryPool().DeviceAllocate(
+        status = hydrogen::cub::MemoryPool().DeviceAllocate(
             reinterpret_cast<void**>(&ptr),
             size * sizeof(G),
             syncInfo_.stream_);
@@ -120,11 +138,11 @@ template <typename G>
 void Delete( G*& ptr, unsigned int mode, SyncInfo<Device::GPU> const& )
 {
     switch (mode) {
-    case 0: EL_CHECK_CUDA(cudaFree(ptr)); break;
+    case 0: H_CHECK_CUDA(cudaFree(ptr)); break;
 #ifdef HYDROGEN_HAVE_CUB
     case 1:
-        EL_CHECK_CUDA(
-            cub::MemoryPool().DeviceFree(reinterpret_cast<void*>(ptr)));
+        H_CHECK_CUDA(
+            hydrogen::cub::MemoryPool().DeviceFree(ptr));
         break;
 #endif // HYDROGEN_HAVE_CUB
     default: RuntimeError("Invalid GPU memory deallocation mode");
@@ -136,7 +154,7 @@ template <typename G>
 void MemZero( G* buffer, size_t numEntries, unsigned int mode,
                      SyncInfo<Device::GPU> const& syncInfo_ )
 {
-    EL_CHECK_CUDA(
+    H_CHECK_CUDA(
         cudaMemsetAsync(buffer, 0x0, numEntries * sizeof(G),
                         syncInfo_.stream_));
 }
@@ -171,7 +189,7 @@ Memory<G,D>& Memory<G,D>::operator=(Memory<G,D>&& mem)
 { ShallowSwap(mem); return *this; }
 
 template<typename G, Device D>
-void Memory<G,D>::ShallowSwap(Memory<G,D>& mem)
+void Memory<G,D>::ShallowSwap(Memory<G,D>& mem) EL_NO_EXCEPT
 {
     std::swap(size_, mem.size_);
     std::swap(rawBuffer_, mem.rawBuffer_);

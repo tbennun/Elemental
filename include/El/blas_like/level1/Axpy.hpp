@@ -119,17 +119,10 @@ void Axpy(S alphaS, Matrix<T,Device::GPU> const& X, Matrix<T,Device::GPU>& Y)
     T const* XBuf = X.LockedBuffer();
     T* YBuf = Y.Buffer();
 
-    SyncInfo<Device::GPU> syncInfoA = SyncInfoFromMatrix(X), syncInfoB = SyncInfoFromMatrix(Y);
-    auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
-
-    // Keep the old stream so we can restore it. I don't know if this
-    // is necessary, but it might be good to keep the cuBLAS handle
-    // "looking const" outside this function.
-    cudaStream_t old_stream;
-    EL_CHECK_CUBLAS(
-        cublasGetStream(GPUManager::cuBLASHandle(), &old_stream));
-    EL_CHECK_CUBLAS(
-        cublasSetStream(GPUManager::cuBLASHandle(), syncInfoB.stream_));
+    SyncInfo<Device::GPU>
+        syncInfoX = SyncInfoFromMatrix(X),
+        syncInfoY = SyncInfoFromMatrix(Y);
+    auto syncHelper = MakeMultiSync(syncInfoY, syncInfoX);
 
     // If X and Y are vectors, we can allow one to be a column and the other
     // to be a row. Otherwise we force X and Y to be the same dimension.
@@ -144,17 +137,14 @@ void Axpy(S alphaS, Matrix<T,Device::GPU> const& X, Matrix<T,Device::GPU>& Y)
         if (XLength != YLength)
             LogicError("Nonconformal Axpy");
 #endif // !EL_RELEASE
-        cublas::Axpy(XLength, alpha, XBuf, XStride, YBuf, YStride);
+        gpu_blas::Axpy(
+            XLength, alpha, XBuf, XStride, YBuf, YStride, syncInfoY);
     }
     else
     {
-        cublas::Geam('N', 'N', mX, nX,
-                     alpha, XBuf, ldX,
-                     T(1), YBuf, ldY, YBuf, ldY);
+        gpu_blas::Axpy(
+            mX, nX, alpha, XBuf, ldX, YBuf, ldY, syncInfoY);
     }
-    // Restore the "default" stream
-    EL_CHECK_CUBLAS(
-        cublasSetStream(GPUManager::cuBLASHandle(), old_stream));
 }
 #endif // HYDROGEN_HAVE_CUDA
 

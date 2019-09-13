@@ -13,7 +13,8 @@
 
 #include "El/blas_like/level1/Copy/internal_impl.hpp"
 
-namespace El {
+namespace El
+{
 
 #define DM DistMatrix<T,COLDIST,ROWDIST,ELEMENT,D>
 #define EM ElementalMatrix<T>
@@ -384,32 +385,32 @@ const DM& DM::operator*=(T alpha)
 template <typename T, Device D>
 const DM& DM::operator+=(const EM& A)
 {
-    EL_DEBUG_CSE
-    Axpy(T(1), A, *this);
+    EL_DEBUG_CSE;
+    Axpy(TypeTraits<T>::One(), A, *this);
     return *this;
 }
 
 template <typename T, Device D>
 const DM& DM::operator+=(const ADM& A)
 {
-    EL_DEBUG_CSE
-    Axpy(T(1), A, *this);
+    EL_DEBUG_CSE;
+    Axpy(TypeTraits<T>::One(), A, *this);
     return *this;
 }
 
 template <typename T, Device D>
 const DM& DM::operator-=(const EM& A)
 {
-    EL_DEBUG_CSE
-    Axpy(T(-1), A, *this);
+    EL_DEBUG_CSE;
+    Axpy(-TypeTraits<T>::One(), A, *this);
     return *this;
 }
 
 template <typename T, Device D>
 const DM& DM::operator-=(const ADM& A)
 {
-    EL_DEBUG_CSE
-    Axpy(T(-1), A, *this);
+    EL_DEBUG_CSE;
+    Axpy(-TypeTraits<T>::One(), A, *this);
     return *this;
 }
 
@@ -453,17 +454,24 @@ EL_NO_RELEASE_EXCEPT
       if (!this->Grid().InGrid())
           LogicError("Get should only be called in-grid");
 #endif // !EL_RELEASE
-    SyncInfo<D> syncInfoA = SyncInfoFromMatrix(matrix_);
 
-    T value;
+    SyncInfo<D> syncInfoA = SyncInfoFromMatrix(matrix_);
+    Synchronize(syncInfoA); // Make sure values are up to date
+
+    // FIXME (trb): Need to think about this. If GetLocal synchronizes
+    // properly, we don't need this. But I'm not sure the cost of two
+    // syncs vs just one; the overhead might not be too bad.
+
+    SyncInfo<Device::CPU> cpu_si;
+    T value = TypeTraits<T>::Zero();;
     if (CrossRank() == this->Root())
     {
         const int owner = this->Owner(i, j);
         if (owner == DistRank())
             value = GetLocal(this->LocalRow(i), this->LocalCol(j));
-        mpi::Broadcast(value, owner, DistComm(), syncInfoA);
+        mpi::Broadcast(value, owner, DistComm(), cpu_si);
     }
-    mpi::Broadcast(value, this->Root(), CrossComm(), syncInfoA);
+    mpi::Broadcast(value, this->Root(), CrossComm(), cpu_si);
     return value;
 }
 
@@ -478,15 +486,18 @@ EL_NO_RELEASE_EXCEPT
           LogicError("Get should only be called in-grid");
 #endif // !EL_RELEASE
     SyncInfo<D> syncInfoA = SyncInfoFromMatrix(matrix_);
-    Base<T> value;
+    Synchronize(syncInfoA);
+
+    SyncInfo<Device::CPU> cpu_si;
+    Base<T> value = TypeTraits<Base<T>>::Zero();
     if (CrossRank() == this->Root())
     {
         const int owner = this->Owner(i, j);
         if (owner == DistRank())
             value = GetLocalRealPart(this->LocalRow(i), this->LocalCol(j));
-        mpi::Broadcast(value, owner, DistComm(), syncInfoA);
+        mpi::Broadcast(value, owner, DistComm(), cpu_si);
     }
-    mpi::Broadcast(value, this->Root(), CrossComm(), syncInfoA);
+    mpi::Broadcast(value, this->Root(), CrossComm(), cpu_si);
     return value;
 }
 
@@ -501,6 +512,10 @@ EL_NO_RELEASE_EXCEPT
         LogicError("Get should only be called in-grid");
 #endif // !EL_RELEASE
     SyncInfo<D> syncInfoA = SyncInfoFromMatrix(matrix_);
+    Synchronize(syncInfoA);
+
+    // Use this because "value" is a CPU value.
+    SyncInfo<Device::CPU> cpu_si;
     Base<T> value;
     if (IsComplex<T>::value)
     {
@@ -509,12 +524,12 @@ EL_NO_RELEASE_EXCEPT
             const int owner = this->Owner(i, j);
             if (owner == DistRank())
                 value = GetLocalRealPart(this->LocalRow(i), this->LocalCol(j));
-            mpi::Broadcast(value, owner, DistComm(), syncInfoA);
+            mpi::Broadcast(value, owner, DistComm(), cpu_si);
         }
-        mpi::Broadcast(value, this->Root(), CrossComm(), syncInfoA);
+        mpi::Broadcast(value, this->Root(), CrossComm(), cpu_si);
     }
     else
-        value = 0;
+        value = TypeTraits<Base<T>>::Zero();
     return value;
 }
 
@@ -671,7 +686,6 @@ void DM::ProcessQueues(bool includeViewers)
 
     // We will first push to redundant rank 0
     const int redundantRoot = 0;
-    SyncInfo<D> syncInfoA = SyncInfoFromMatrix(matrix_);
 
     // Compute the metadata
     // ====================
@@ -720,12 +734,13 @@ void DM::ProcessQueues(bool includeViewers)
 
     // Exchange and unpack the data
     // ============================
+    SyncInfo<Device::CPU> cpu_si;
     auto recvBuf = mpi::AllToAll(sendBuf, sendCounts, sendOffs, comm);
     Int recvBufSize = recvBuf.size();
-    mpi::Broadcast(recvBufSize, redundantRoot, RedundantComm(), syncInfoA);
+    mpi::Broadcast(recvBufSize, redundantRoot, RedundantComm(), cpu_si);
     recvBuf.resize(recvBufSize);
     mpi::Broadcast(
-        recvBuf.data(), recvBufSize, redundantRoot, RedundantComm(), syncInfoA);
+        recvBuf.data(), recvBufSize, redundantRoot, RedundantComm(), cpu_si);
     // TODO: Make this loop faster
     for(const auto& entry : recvBuf)
         UpdateLocal(this->LocalRow(entry.i), this->LocalCol(entry.j),

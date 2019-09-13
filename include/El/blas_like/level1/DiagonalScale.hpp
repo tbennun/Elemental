@@ -28,10 +28,15 @@ void DiagonalScale(
     if (orientation != NORMAL)
         LogicError("DiagonalScale: Only NORMAL mode supported on GPU");
 
-    cublas::Dgmm(side, m, n,
-                 A.LockedBuffer(), lda,
-                 d.LockedBuffer(), incd,
-                 A.Buffer(), lda);
+    auto master_sync = SyncInfoFromMatrix(A);
+    auto syncManager = MakeMultiSync(master_sync, SyncInfoFromMatrix(d));
+    gpu_blas::Dgmm(
+        (side == LEFT ? SideMode::LEFT : SideMode::RIGHT),
+        m, n,
+        A.LockedBuffer(), lda,
+        d.LockedBuffer(), incd,
+        A.Buffer(), lda,
+        master_sync);
 }
 
 template <typename T, typename, typename>

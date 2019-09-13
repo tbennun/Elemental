@@ -15,53 +15,57 @@ namespace El {
 
 template<typename Real>
 struct IsFixedPrecision
-{ static const bool value=true; };
+    : std::true_type {};
 #ifdef HYDROGEN_HAVE_MPC
 template<>
 struct IsFixedPrecision<BigFloat>
-{ static const bool value=false; };
+    : std::false_type {};
 #endif
 
 template<typename Real>
 struct MantissaBits;
 
 template<> struct MantissaBits<unsigned>
-{ static const unsigned value = 8*sizeof(unsigned); };
+    : std::integral_constant<unsigned, 8*sizeof(unsigned)> {};
 template<> struct MantissaBits<int>
-{ static const unsigned value = 8*sizeof(int)-1; };
+    : std::integral_constant<unsigned, 8*sizeof(int)-1> {};
 
 template<> struct MantissaBits<unsigned long>
-{ static const unsigned value = 8*sizeof(unsigned long); };
+    : std::integral_constant<unsigned, 8*sizeof(unsigned long)> {};
 template<> struct MantissaBits<long int>
-{ static const unsigned value = 8*sizeof(long int)-1; };
+    : std::integral_constant<unsigned, 8*sizeof(long int)-1> {};
 
 template<> struct MantissaBits<unsigned long long>
-{ static const unsigned value = 8*sizeof(unsigned long long); };
+    : std::integral_constant<unsigned, 8*sizeof(unsigned long long)> {};
 template<> struct MantissaBits<long long int>
-{ static const unsigned value = 8*sizeof(long long int)-1; };
+    : std::integral_constant<unsigned, 8*sizeof(long long int)-1> {};
 
 template<> struct MantissaBits<float>
-{ static const unsigned value = 24; };
+    : std::integral_constant<unsigned, 24> {};
 template<> struct MantissaBits<double>
-{ static const unsigned value = 53; };
+    : std::integral_constant<unsigned, 53> {};
 
 #ifdef HYDROGEN_HAVE_QD
 template<> struct MantissaBits<DoubleDouble>
-{ static const unsigned value = 106; };
+    : std::integral_constant<unsigned, 106> {};
 template<> struct MantissaBits<QuadDouble>
-{ static const unsigned value = 212; };
+    : std::integral_constant<unsigned, 212> {};
 #endif
 
 #ifdef HYDROGEN_HAVE_QUADMATH
 template<> struct MantissaBits<Quad>
-{ static const unsigned value = 113; };
+    : std::integral_constant<unsigned, 113> {};
 #endif
 
 #ifdef HYDROGEN_HAVE_HALF
 template<> struct MantissaBits<cpu_half_type>
-{ static const unsigned value = 11; };
+    : std::integral_constant<unsigned, 11> {};
 #endif
 
+#ifdef HYDROGEN_GPU_USE_FP16
+template<> struct MantissaBits<gpu_half_type>
+    : std::integral_constant<unsigned, 11> {};
+#endif
 // NOTE: The 'Num' is only prepended to avoid a symbol conflict
 template<typename T>
 Int NumMantissaBits( const T& alpha=T() )
@@ -83,10 +87,10 @@ struct MantissaIsLonger
 #ifdef HYDROGEN_HAVE_MPC
 // While this isn't necessarily always true, it would be a capitally bad
 // idea to use MPFR without using higher than the available fixed precision
-template<typename Real2> struct MantissaIsLonger<BigFloat,Real2>
-{ static const bool value = true; };
-template<> struct MantissaIsLonger<BigFloat,BigFloat>
-{ static const bool value = false; };
+template<typename Real2>
+struct MantissaIsLonger<BigFloat,Real2> : std::true_type {};
+template<>
+struct MantissaIsLonger<BigFloat,BigFloat> : std::false_type {};
 #endif
 
 namespace limits {

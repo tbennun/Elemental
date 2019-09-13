@@ -2493,6 +2493,12 @@ EL_NO_RELEASE_EXCEPT
     MPI_PROTO_DEVICELESS_COMPLEX(T) \
     MPI_PROTO_COMPLEX_DEV(T, Device::CPU) \
     MPI_PROTO_COMPLEX_DEV(T, Device::GPU)
+
+#ifdef HYDROGEN_GPU_USE_FP16
+MPI_PROTO(gpu_half_type)
+MPI_PROTO(Entry<gpu_half_type>)
+#endif
+
 #else
 #define MPI_PROTO(T) \
     MPI_PROTO_DEVICELESS(T) \

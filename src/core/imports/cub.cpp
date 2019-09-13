@@ -1,5 +1,6 @@
-#include "El-lite.hpp"
-#include "El/core/imports/cub.hpp"
+#include <hydrogen/device/gpu/cuda/CUB.hpp>
+
+#include <memory>
 
 namespace
 {
@@ -7,7 +8,7 @@ namespace
 std::unique_ptr<::cub::CachingDeviceAllocator> memoryPool_;
 } // namespace <anon>
 
-namespace El
+namespace hydrogen
 {
 namespace cub
 {
@@ -23,4 +24,4 @@ void DestroyMemoryPool()
 { memoryPool_.reset(); }
 
 } // namespace CUBMemoryPool
-} // namespace El
+} // namespace hydrogen

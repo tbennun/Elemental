@@ -57,6 +57,11 @@ template<>
 string TypeName<cpu_half_type>()
 { return string("cpu_half_type"); }
 #endif
+#ifdef HYDROGEN_GPU_USE_FP16
+template<>
+string TypeName<gpu_half_type>()
+{ return string("gpu_half_type"); }
+#endif
 #ifdef HYDROGEN_HAVE_QD
 template<>
 string TypeName<DoubleDouble>()

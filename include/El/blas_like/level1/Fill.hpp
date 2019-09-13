@@ -10,7 +10,7 @@
 #define EL_BLAS_FILL_HPP
 
 #ifdef HYDROGEN_HAVE_CUDA
-#include "GPU/Fill.hpp"
+#include <hydrogen/blas/gpu/Fill.hpp>
 #endif
 
 namespace El
@@ -51,7 +51,10 @@ void Fill( AbstractMatrix<T>& A, T alpha )
         break;
 #ifdef HYDROGEN_HAVE_CUDA
     case Device::GPU:
-        Fill_GPU_impl(m, n, alpha, ABuf, ALDim);
+        hydrogen::Fill_GPU_impl(
+            m, n, alpha, ABuf, ALDim,
+            SyncInfoFromMatrix(
+                static_cast<Matrix<T,Device::GPU>&>(A)).stream_);
         break;
 #endif // HYDROGEN_HAVE_CUDA
     default:

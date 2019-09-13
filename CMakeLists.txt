@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.12)
 
 project(Hydrogen CXX)
 
@@ -125,7 +125,16 @@ option(CMAKE_POSITION_INDEPENDENT_CODE
 option(CMAKE_INTERPROCEDURAL_OPTIMIZATION
   "Build Hydrogen with interprocedural optimization enabled" OFF)
 
-option(Hydrogen_ENABLE_TESTING "Build the test suite." ON)
+option(Hydrogen_ENABLE_BOUNDS_CHECKING
+  "Do bounds checking in various routines."
+  OFF)
+set(HYDROGEN_DO_BOUNDS_CHECKING ${Hydrogen_ENABLE_BOUNDS_CHECKING})
+
+option(Hydrogen_ENABLE_TESTING
+  "Build the test suite in the tests directory." ON)
+
+option(Hydrogen_ENABLE_UNIT_TESTS
+  "Build the Catch2-based unit tests." OFF)
 
 option(Hydrogen_ENABLE_QUADMATH
   "Search for quadmath library and enable related features if found." OFF)
@@ -148,6 +157,14 @@ option(Hydrogen_ENABLE_CUDA
 if (Hydrogen_ENABLE_CUDA)
   option(Hydrogen_ENABLE_CUB
     "Search for CUB support and enable related features if found."
+    ON)
+
+  option(Hydrogen_ENABLE_CUBLAS_TENSOR_MATH
+    "Use the cuBLAS tensor operation math."
+    OFF)
+
+  option(Hydrogen_ENABLE_GPU_FP16
+    "Enable FP16 arithmetic in GPU code."
     ON)
 endif ()
 
@@ -317,6 +334,14 @@ if (Hydrogen_ENABLE_CUDA)
     find_package(CUDA REQUIRED) # Enable all the macros
     find_package(NVML REQUIRED)
 
+    if (Hydrogen_ENABLE_CUBLAS_TENSOR_MATH)
+      set(HYDROGEN_CUBLAS_USE_TENSOR_OP_MATH TRUE)
+    endif ()
+
+    if (Hydrogen_ENABLE_GPU_FP16)
+      set(HYDROGEN_GPU_USE_FP16 TRUE)
+    endif ()
+
     if (Hydrogen_ENABLE_CUB)
       find_package(CUB REQUIRED)
       set(HYDROGEN_HAVE_CUB TRUE)
@@ -348,13 +373,12 @@ if (Hydrogen_ENABLE_CUDA)
         INTERFACE_LINK_LIBRARIES "${_CUDA_TOOLKIT_LIBS}")
 
       set_property(TARGET cuda::toolkit PROPERTY
-        INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CUDA>:-arch=sm_30>)
+        INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CUDA>:-arch=sm_60>)
 
       set_property(TARGET cuda::toolkit PROPERTY
         INTERFACE_INCLUDE_DIRECTORIES "${CUDA_INCLUDE_DIRS}")
     endif ()
     set(HYDROGEN_HAVE_CUDA TRUE)
-
   else ()
 
     message(FATAL_ERROR
@@ -366,14 +390,16 @@ if (Hydrogen_ENABLE_CUDA)
 
 endif (Hydrogen_ENABLE_CUDA)
 
+set(HYDROGEN_HAVE_GPU ${HYDROGEN_HAVE_CUDA})
+
 if (Hydrogen_ENABLE_ALUMINUM)
-  find_package(Aluminum 0.2.0 NO_MODULE QUIET
+  find_package(Aluminum 0.3.0 NO_MODULE
     HINTS ${Aluminum_DIR} ${ALUMINUM_DIR} ${AL_DIR}
     $ENV{Aluminum_DIR} $ENV{ALUMINUM_DIR} $ENV{AL_DIR}
     PATH_SUFFIXES lib64/cmake/aluminum lib/cmake/aluminum
     NO_DEFAULT_PATH)
   if (NOT Aluminum_FOUND)
-    find_package(Aluminum 0.2.0 NO_MODULE QUIET)
+    find_package(Aluminum 0.3.0 NO_MODULE)
   endif ()
 
   if (Aluminum_FOUND)
@@ -433,6 +459,20 @@ include(FindAndVerifyMPI)
 include(FindAndVerifyLAPACK)
 include(FindAndVerifyExtendedPrecision)
 
+# Catch2
+if (Hydrogen_ENABLE_UNIT_TESTS)
+  find_package(Catch2 2.0.0 CONFIG QUIET
+    HINTS ${CATCH2_DIR} $ENV{CATCH2_DIR} ${CATCH_DIR} $ENV{CATCH_DIR}
+    PATH_SUFFIXES lib64/cmake/Catch2 lib/cmake/Catch2
+    NO_DEFAULT_PATH)
+  if (NOT Catch2_FOUND)
+    find_package(Catch2 2.0.0 CONFIG QUIET REQUIRED)
+  endif ()
+  message(STATUS "Found Catch2: ${Catch2_DIR}")
+
+  include(Catch)
+endif ()
+
 # Macro for setting up full paths
 macro(set_full_path VAR)
   unset(__tmp_names)
@@ -457,42 +497,66 @@ configure_file("${PROJECT_SOURCE_DIR}/cmake/configure_files/hydrogen_config.h.in
 configure_file("${PROJECT_SOURCE_DIR}/doxy/Doxyfile.in"
   "${PROJECT_BINARY_DIR}/doxy/Doxyfile")
 
-add_library(Hydrogen "${HYDROGEN_SOURCES}" "${HYDROGEN_HEADERS}")
-target_include_directories(Hydrogen PUBLIC
+add_library(Hydrogen_CXX "${HYDROGEN_SOURCES}" "${HYDROGEN_HEADERS}")
+target_include_directories(Hydrogen_CXX PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/El>
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-# These flags don't need to be propagated. Just because Hydrogen is
+# These flags don't need to be propagated. Just because Hydrogen_CXX is
 # built with "-Werror", for instance, doesn't mean downstreams should
 # be forced to build with that (even though they maybe should)...
-target_compile_options(Hydrogen PRIVATE ${EXTRA_CXX_FLAGS})
+target_compile_options(Hydrogen_CXX PRIVATE ${EXTRA_CXX_FLAGS})
 
-target_link_libraries(Hydrogen PUBLIC ${Aluminum_LIBRARIES})
-target_link_libraries(Hydrogen PUBLIC ${HALF_LIBRARIES})
+target_link_libraries(Hydrogen_CXX PUBLIC ${Aluminum_LIBRARIES})
+target_link_libraries(Hydrogen_CXX PUBLIC ${HALF_LIBRARIES})
 
 if (TARGET OpenMP::OpenMP_CXX)
-  target_link_libraries(Hydrogen PUBLIC OpenMP::OpenMP_CXX)
+  target_link_libraries(Hydrogen_CXX PUBLIC OpenMP::OpenMP_CXX)
 endif ()
-target_link_libraries(Hydrogen PUBLIC MPI::MPI_CXX)
-target_link_libraries(Hydrogen PUBLIC LAPACK::lapack)
-target_link_libraries(Hydrogen PUBLIC EP::extended_precision)
+target_link_libraries(Hydrogen_CXX PUBLIC MPI::MPI_CXX)
+target_link_libraries(Hydrogen_CXX PUBLIC LAPACK::lapack)
+target_link_libraries(Hydrogen_CXX PUBLIC EP::extended_precision)
 
-target_link_libraries(Hydrogen PUBLIC ${VTUNE_LIBRARIES})
-target_link_libraries(Hydrogen PUBLIC ${NVTX_LIBRARIES})
+target_link_libraries(Hydrogen_CXX PUBLIC ${VTUNE_LIBRARIES})
+target_link_libraries(Hydrogen_CXX PUBLIC ${NVTX_LIBRARIES})
 if (HYDROGEN_HAVE_CUDA)
-  target_link_libraries(Hydrogen PUBLIC cuda::toolkit)
+  target_link_libraries(Hydrogen_CXX PUBLIC cuda::toolkit)
+endif ()
+
+# Add the CXX library to "Hydrogen"
+set(HYDROGEN_LIBRARIES Hydrogen_CXX)
+
+if (HYDROGEN_HAVE_CUDA)
+  add_library(Hydrogen_CUDA "${HYDROGEN_CUDA_SOURCES}")
+  target_include_directories(Hydrogen_CUDA PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
+
+  target_link_libraries(Hydrogen_CUDA PUBLIC ${HALF_LIBRARIES})
+  target_link_libraries(Hydrogen_CUDA PUBLIC ${NVTX_LIBRARIES})
+  target_link_libraries(Hydrogen_CUDA PUBLIC cuda::toolkit)
+
+  list(APPEND HYDROGEN_LIBRARIES Hydrogen_CUDA)
 endif ()
 
 # Setup the tests
+if (Hydrogen_ENABLE_TESTING OR Hydrogen_ENABLE_UNIT_TESTS)
+  include(CTest)
+endif ()
+
 if (Hydrogen_ENABLE_TESTING)
-  enable_testing()
   add_subdirectory(tests)
 endif ()
 
+if (Hydrogen_ENABLE_UNIT_TESTS)
+  add_subdirectory(unit_test)
+endif ()
+
 # Setup the library install
-install(TARGETS Hydrogen
+install(TARGETS ${HYDROGEN_LIBRARIES}
   EXPORT HydrogenTargets
   RUNTIME DESTINATION bin
   ARCHIVE DESTINATION lib

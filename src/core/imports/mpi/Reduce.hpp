@@ -15,7 +15,7 @@ void Reduce(T const* sbuf, T* rbuf, int count, Op op,
 
     using Backend = BestBackend<T,D,Collective::REDUCE>;
     Al::Reduce<Backend>(
-        sbuf, rbuf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
+        sbuf, rbuf, count, MPI_Op2ReductionOperator(AlNativeOp<T>(op)),
         root, comm.template GetComm<Backend>(syncInfo));
 }
 #endif // HYDROGEN_HAVE_ALUMINUM
@@ -158,7 +158,7 @@ void Reduce(T* buf, int count, Op op,
 
     using Backend = BestBackend<T,D,Collective::REDUCE>;
     Al::Reduce<Backend>(
-        buf, count, MPI_Op2ReductionOperator(NativeOp<T>(op)),
+        buf, count, MPI_Op2ReductionOperator(AlNativeOp<T>(op)),
         root, comm.template GetComm<Backend>(syncInfo));
 }
 #endif // HYDROGEN_HAVE_ALUMINUM
@@ -315,74 +315,77 @@ void Reduce(T* buf, int count, int root, Comm const& comm,
         T const*, T*, int, int, Comm const&, SyncInfo<D> const&);              \
     template T Reduce(T, Op, int, Comm const&, SyncInfo<D> const&);            \
     template T Reduce(T, int, Comm const&, SyncInfo<D> const&);                \
-    template void Reduce(T*, int, int, Comm const&, SyncInfo<D> const&);
+    template void Reduce(T*, int, int, Comm const&, SyncInfo<D> const&)
 
 #ifndef HYDROGEN_HAVE_CUDA
 #define MPI_REDUCE_PROTO(T)                     \
     MPI_REDUCE_PROTO_DEV(T,Device::CPU)
 #else
 #define MPI_REDUCE_PROTO(T)                     \
-    MPI_REDUCE_PROTO_DEV(T,Device::CPU)         \
+    MPI_REDUCE_PROTO_DEV(T,Device::CPU);        \
     MPI_REDUCE_PROTO_DEV(T,Device::GPU)
 #endif // HYDROGEN_HAVE_CUDA
 
-MPI_REDUCE_PROTO(byte)
-MPI_REDUCE_PROTO(int)
-MPI_REDUCE_PROTO(unsigned)
-MPI_REDUCE_PROTO(long int)
-MPI_REDUCE_PROTO(unsigned long)
-MPI_REDUCE_PROTO(float)
-MPI_REDUCE_PROTO(double)
-MPI_REDUCE_PROTO(long long int)
-MPI_REDUCE_PROTO(unsigned long long)
-MPI_REDUCE_PROTO(ValueInt<Int>)
-MPI_REDUCE_PROTO(Entry<Int>)
-MPI_REDUCE_PROTO(Complex<float>)
-MPI_REDUCE_PROTO(ValueInt<float>)
-MPI_REDUCE_PROTO(ValueInt<Complex<float>>)
-MPI_REDUCE_PROTO(Entry<float>)
-MPI_REDUCE_PROTO(Entry<Complex<float>>)
-MPI_REDUCE_PROTO(Complex<double>)
-MPI_REDUCE_PROTO(ValueInt<double>)
-MPI_REDUCE_PROTO(ValueInt<Complex<double>>)
-MPI_REDUCE_PROTO(Entry<double>)
-MPI_REDUCE_PROTO(Entry<Complex<double>>)
+MPI_REDUCE_PROTO(byte);
+MPI_REDUCE_PROTO(int);
+MPI_REDUCE_PROTO(unsigned);
+MPI_REDUCE_PROTO(long int);
+MPI_REDUCE_PROTO(unsigned long);
+MPI_REDUCE_PROTO(float);
+MPI_REDUCE_PROTO(double);
+MPI_REDUCE_PROTO(long long int);
+MPI_REDUCE_PROTO(unsigned long long);
+MPI_REDUCE_PROTO(ValueInt<Int>);
+MPI_REDUCE_PROTO(Entry<Int>);
+MPI_REDUCE_PROTO(Complex<float>);
+MPI_REDUCE_PROTO(ValueInt<float>);
+MPI_REDUCE_PROTO(ValueInt<Complex<float>>);
+MPI_REDUCE_PROTO(Entry<float>);
+MPI_REDUCE_PROTO(Entry<Complex<float>>);
+MPI_REDUCE_PROTO(Complex<double>);
+MPI_REDUCE_PROTO(ValueInt<double>);
+MPI_REDUCE_PROTO(ValueInt<Complex<double>>);
+MPI_REDUCE_PROTO(Entry<double>);
+MPI_REDUCE_PROTO(Entry<Complex<double>>);
 #ifdef HYDROGEN_HAVE_HALF
-MPI_REDUCE_PROTO(cpu_half_type)
-MPI_REDUCE_PROTO(Entry<cpu_half_type>)
+MPI_REDUCE_PROTO(cpu_half_type);
+MPI_REDUCE_PROTO(Entry<cpu_half_type>);
+#endif
+#ifdef HYDROGEN_GPU_USE_FP16
+MPI_REDUCE_PROTO(gpu_half_type);
 #endif
 #ifdef HYDROGEN_HAVE_QD
-MPI_REDUCE_PROTO(DoubleDouble)
-MPI_REDUCE_PROTO(QuadDouble)
-MPI_REDUCE_PROTO(Complex<DoubleDouble>)
-MPI_REDUCE_PROTO(Complex<QuadDouble>)
-MPI_REDUCE_PROTO(ValueInt<DoubleDouble>)
-MPI_REDUCE_PROTO(ValueInt<QuadDouble>)
-MPI_REDUCE_PROTO(ValueInt<Complex<DoubleDouble>>)
-MPI_REDUCE_PROTO(ValueInt<Complex<QuadDouble>>)
-MPI_REDUCE_PROTO(Entry<DoubleDouble>)
-MPI_REDUCE_PROTO(Entry<QuadDouble>)
-MPI_REDUCE_PROTO(Entry<Complex<DoubleDouble>>)
-MPI_REDUCE_PROTO(Entry<Complex<QuadDouble>>)
+MPI_REDUCE_PROTO(DoubleDouble);
+MPI_REDUCE_PROTO(QuadDouble);
+MPI_REDUCE_PROTO(Complex<DoubleDouble>);
+MPI_REDUCE_PROTO(Complex<QuadDouble>);
+MPI_REDUCE_PROTO(ValueInt<DoubleDouble>);
+MPI_REDUCE_PROTO(ValueInt<QuadDouble>);
+MPI_REDUCE_PROTO(ValueInt<Complex<DoubleDouble>>);
+MPI_REDUCE_PROTO(ValueInt<Complex<QuadDouble>>);
+MPI_REDUCE_PROTO(Entry<DoubleDouble>);
+MPI_REDUCE_PROTO(Entry<QuadDouble>);
+MPI_REDUCE_PROTO(Entry<Complex<DoubleDouble>>);
+MPI_REDUCE_PROTO(Entry<Complex<QuadDouble>>);
 #endif
 #ifdef HYDROGEN_HAVE_QUADMATH
-MPI_REDUCE_PROTO(Quad)
-MPI_REDUCE_PROTO(Complex<Quad>)
-MPI_REDUCE_PROTO(ValueInt<Quad>)
-MPI_REDUCE_PROTO(ValueInt<Complex<Quad>>)
-MPI_REDUCE_PROTO(Entry<Quad>)
-MPI_REDUCE_PROTO(Entry<Complex<Quad>>)
+MPI_REDUCE_PROTO(Quad);
+MPI_REDUCE_PROTO(Complex<Quad>);
+MPI_REDUCE_PROTO(ValueInt<Quad>);
+MPI_REDUCE_PROTO(ValueInt<Complex<Quad>>);
+MPI_REDUCE_PROTO(Entry<Quad>);
+MPI_REDUCE_PROTO(Entry<Complex<Quad>>);
 #endif
 #ifdef HYDROGEN_HAVE_MPC
-MPI_REDUCE_PROTO(BigInt)
-MPI_REDUCE_PROTO(BigFloat)
-MPI_REDUCE_PROTO(Complex<BigFloat>)
-MPI_REDUCE_PROTO(ValueInt<BigInt>)
-MPI_REDUCE_PROTO(ValueInt<BigFloat>)
-MPI_REDUCE_PROTO(ValueInt<Complex<BigFloat>>)
-MPI_REDUCE_PROTO(Entry<BigInt>)
-MPI_REDUCE_PROTO(Entry<BigFloat>)
-MPI_REDUCE_PROTO(Entry<Complex<BigFloat>>)
+MPI_REDUCE_PROTO(BigInt);
+MPI_REDUCE_PROTO(BigFloat);
+MPI_REDUCE_PROTO(Complex<BigFloat>);
+MPI_REDUCE_PROTO(ValueInt<BigInt>);
+MPI_REDUCE_PROTO(ValueInt<BigFloat>);
+MPI_REDUCE_PROTO(ValueInt<Complex<BigFloat>>);
+MPI_REDUCE_PROTO(Entry<BigInt>);
+MPI_REDUCE_PROTO(Entry<BigFloat>);
+MPI_REDUCE_PROTO(Entry<Complex<BigFloat>>);
 #endif
 
 }// namespace mpi

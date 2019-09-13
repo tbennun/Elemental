@@ -280,6 +280,10 @@ int DM::PartialUnionRowRank() const EL_NO_EXCEPT
 
 #ifdef HYDROGEN_HAVE_CUDA
 // Inter-device copy ctors
+#ifdef HYDROGEN_GPU_USE_FP16
+template DistMatrix<gpu_half_type,COLDIST,ROWDIST,ELEMENT,Device::CPU>::DistMatrix(
+    const DistMatrix<gpu_half_type,COLDIST,ROWDIST,ELEMENT,Device::GPU>&);
+#endif // HYDROGEN_GPU_USE_FP16
 template DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::CPU>::DistMatrix(
     const DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>&);
 template DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::CPU>::DistMatrix(
@@ -299,6 +303,32 @@ template DistMatrix<double,COLDIST,ROWDIST,ELEMENT,Device::CPU>::DistMatrix(
     template DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::CPU>&         \
     DistMatrix<T,COLDIST,ROWDIST,ELEMENT,Device::CPU>::operator=        \
     (DistMatrix<T,U,V,ELEMENT,Device::GPU> const&)
+
+#ifdef HYDROGEN_GPU_USE_FP16
+PROTO(gpu_half_type)
+template class DistMatrix<gpu_half_type,COLDIST,ROWDIST,ELEMENT,Device::GPU>;
+INSTGPU(gpu_half_type,CIRC,CIRC);
+INSTGPU(gpu_half_type,MC,  STAR);
+INSTGPU(gpu_half_type,MD,  STAR);
+INSTGPU(gpu_half_type,MR,  MC  );
+INSTGPU(gpu_half_type,MR,  STAR);
+INSTGPU(gpu_half_type,STAR,MC  );
+INSTGPU(gpu_half_type,STAR,MD  );
+INSTGPU(gpu_half_type,STAR,MR  );
+INSTGPU(gpu_half_type,STAR,STAR);
+INSTGPU(gpu_half_type,STAR,VC  );
+INSTGPU(gpu_half_type,STAR,VR  );
+INSTGPU(gpu_half_type,VC,  STAR);
+INSTGPU(gpu_half_type,VR,  STAR);
+template DistMatrix<gpu_half_type,COLDIST,ROWDIST,ELEMENT,Device::GPU>::DistMatrix(
+    DistMatrix<gpu_half_type,COLDIST,ROWDIST,ELEMENT,Device::CPU> const&);
+template DistMatrix<gpu_half_type,COLDIST,ROWDIST,ELEMENT,Device::GPU>&
+DistMatrix<gpu_half_type,COLDIST,ROWDIST,ELEMENT,Device::GPU>::operator=(
+    DistMatrix<gpu_half_type,COLDIST,ROWDIST,ELEMENT,Device::CPU> const&);
+template DistMatrix<gpu_half_type,COLDIST,ROWDIST,ELEMENT,Device::CPU>&
+DistMatrix<gpu_half_type,COLDIST,ROWDIST,ELEMENT,Device::CPU>::operator=(
+    DistMatrix<gpu_half_type,COLDIST,ROWDIST,ELEMENT,Device::GPU> const&);
+#endif // HYDROGEN_GPU_USE_FP16
 
 template class DistMatrix<float,COLDIST,ROWDIST,ELEMENT,Device::GPU>;
 INSTGPU(float,CIRC,CIRC);
