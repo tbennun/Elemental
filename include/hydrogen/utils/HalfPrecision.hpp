@@ -13,10 +13,10 @@
  *  this file.
  */
 
-#ifdef HYDROGEN_HAVE_HALF
-
 #include <El/hydrogen_config.h>
 #include <hydrogen/meta/TypeTraits.hpp>
+
+#ifdef HYDROGEN_HAVE_HALF
 
 // Forward-declare things so I can start specializing templates.
 namespace half_float
