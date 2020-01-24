@@ -16,6 +16,8 @@
 #include <El/hydrogen_config.h>
 #include <hydrogen/meta/TypeTraits.hpp>
 
+#include <iostream>
+
 #ifdef HYDROGEN_HAVE_HALF
 
 // Forward-declare things so I can start specializing templates.
