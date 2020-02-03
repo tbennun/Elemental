@@ -24,7 +24,7 @@ class BaseDistMatrix
 {
 public:
     /** @brief Destructor */
-    virtual ~BaseDistMatrix() override = default;
+    virtual ~BaseDistMatrix() = default;
     /** @brief The dimension of the range space */
     virtual Int Height() const noexcept = 0;
     /** @brief The dimension of the domain space */
