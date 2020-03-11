@@ -28,17 +28,38 @@ size_t GetDefaultSyncPoolSize()
         return 1;
 }
 
+template <
+    El::Collective C, hydrogen::Device D,
+    typename=El::EnableIf<El::IsAluminumSupported<float,D,C>>
+    >
+void InitGrid(El::Grid const& g, hydrogen::SyncInfo<D> const& syncInfo)
+{
+    using Backend = El::BestBackend<float, hydrogen::Device::GPU, C>;
+
+    g.MCComm().template GetComm<Backend>(syncInfo);
+    g.VCComm().template GetComm<Backend>(syncInfo);
+
+    g.MRComm().template GetComm<Backend>(syncInfo);
+    g.VRComm().template GetComm<Backend>(syncInfo);
+
+    g.MDComm().template GetComm<Backend>(syncInfo);
+    g.MDPerpComm().template GetComm<Backend>(syncInfo);
+}
+
+template <
+    El::Collective C, hydrogen::Device D,
+    typename=El::DisableIf<El::IsAluminumSupported<float,D,C>>,
+    typename=void
+    >
+void InitGrid(El::Grid const&, hydrogen::SyncInfo<D> const&)
+{
+}
+
 hydrogen::SyncInfoPool<hydrogen::Device::GPU> const&
 InitializeComms(El::Grid const& g,
                 hydrogen::SyncInfoPool<hydrogen::Device::GPU> const& pool)
 {
     static std::forward_list<El::Grid const*> initialized_grids_;
-    using BackendOne = El::BestBackend<float,
-                                       hydrogen::Device::GPU,
-                                       El::Collective::ALLTOALL>;
-    using BackendTwo = El::BestBackend<float,
-                                       hydrogen::Device::GPU,
-                                       El::Collective::ALLGATHER>;
 
     if (std::find(initialized_grids_.cbegin(),
                   initialized_grids_.cend(),
@@ -48,24 +69,8 @@ InitializeComms(El::Grid const& g,
         for (size_t ii = 0; ii < pool.Size(); ++ii)
         {
             auto& syncInfo = pool.Next();
-
-            g.MCComm().template GetComm<BackendOne>(syncInfo);
-            g.MCComm().template GetComm<BackendTwo>(syncInfo);
-
-            g.VCComm().template GetComm<BackendOne>(syncInfo);
-            g.VCComm().template GetComm<BackendTwo>(syncInfo);
-
-            g.MRComm().template GetComm<BackendOne>(syncInfo);
-            g.MRComm().template GetComm<BackendTwo>(syncInfo);
-
-            g.VRComm().template GetComm<BackendOne>(syncInfo);
-            g.VRComm().template GetComm<BackendTwo>(syncInfo);
-
-            g.MDComm().template GetComm<BackendOne>(syncInfo);
-            g.MDComm().template GetComm<BackendTwo>(syncInfo);
-
-            g.MDPerpComm().template GetComm<BackendOne>(syncInfo);
-            g.MDPerpComm().template GetComm<BackendTwo>(syncInfo);
+            InitGrid<El::Collective::ALLTOALL>(g, syncInfo);
+            InitGrid<El::Collective::ALLGATHER>(g, syncInfo);
         }
         H_CHECK_CUDA(cudaDeviceSynchronize());
         initialized_grids_.push_front(&g);
