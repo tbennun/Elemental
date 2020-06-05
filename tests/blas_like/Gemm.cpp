@@ -7,6 +7,9 @@
   http://opensource.org/licenses/BSD-2-Clause
 */
 #include <El.hpp>
+
+#include "GemmHelpers/SyncTimer.hpp"
+
 using namespace El;
 
 template<typename T, Device D>
@@ -45,35 +48,6 @@ void TestAssociativity
          EFrobNorm, "/", YFrobNorm, "=", EFrobNorm/YFrobNorm);
 }
 
-#ifdef HYDROGEN_HAVE_CUDA
-#define START_CUDA_TIMER                                  \
-    if (D == Device::GPU)                                 \
-        cudaEventRecord(start, GPUManager::Stream());
-
-#define STOP_CUDA_TIMER                                 \
-    if (D == Device::GPU)                               \
-    {                                                   \
-        cudaEventRecord(stop, GPUManager::Stream());    \
-        cudaEventSynchronize(stop);                     \
-        cudaEventElapsedTime(&cudaTime, start, stop);   \
-    }
-
-#define SUMMARIZE_CUDA_TIMER                                            \
-    if (D == Device::GPU)                                               \
-    {                                                                   \
-        runTime = cudaTime * 1e-3;                                      \
-        realGFlops = 2.*double(m)*double(n)*double(k)/(1.e9*runTime);   \
-        gFlops = (IsComplex<T>::value ? 4*realGFlops : realGFlops);     \
-        OutputFromRoot(g.Comm(),"Finished in ",runTime,                 \
-                     " seconds (",gFlops," GFlop/s)");                  \
-    }
-
-#else
-#define START_CUDA_TIMER do {} while (false)
-#define STOP_CUDA_TIMER do {} while (false)
-#define SUMMARIZE_CUDA_TIMER do {} while (false)
-#endif
-
 template<typename T, Device D>
 void TestGemm
 (Orientation orientA,
@@ -106,9 +80,9 @@ void TestGemm
         Gaussian(B, n, k);
     Gaussian(COrig, m, n);
 
-#ifdef HYDROGEN_HAVE_CUDA
-    H_CHECK_CUDA(cudaDeviceSynchronize());
-#endif // HYDROGEN_HAVE_CUDA
+#ifdef HYDROGEN_HAVE_GPU
+    El::gpu::SynchronizeDevice();
+#endif // HYDROGEN_HAVE_GPU
 
     if (print)
     {
@@ -117,14 +91,11 @@ void TestGemm
         Print(COrig, "COrig");
     }
 
-    Timer timer;
-#ifdef HYDROGEN_HAVE_CUDA
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
+    helpers::SyncTimer<D> timer(SyncInfoFromMatrix(C.LockedMatrix()));
     float cudaTime;
 
     // Warmup run -- doesn't matter in CPU land
+#ifdef HYDROGEN_HAVE_GPU
     if (D == Device::GPU)
     {
         C = COrig;
@@ -139,27 +110,26 @@ void TestGemm
         C = COrig;
         OutputFromRoot(g.Comm(),"Stationary A algorithm:");
         PushIndent();
+        timer.Reset();
         mpi::Barrier(g.Comm());
         timer.Start();
-        START_CUDA_TIMER;
-        Gemm(orientA, orientB, alpha, A, B, beta, C, GEMM_SUMMA_A_MS);
-        STOP_CUDA_TIMER;
-
+        Gemm(orientA, orientB, alpha, A, B, beta, C, GEMM_SUMMA_A);
         mpi::Barrier(g.Comm());
-        runTime = timer.Stop();
+        timer.Stop();
+        runTime = timer.GetTime();
         realGFlops = 2.*double(m)*double(n)*double(k)/(1.e9*runTime);
         gFlops = (IsComplex<T>::value ? 4*realGFlops : realGFlops);
-        if (D == Device::CPU)
-            OutputFromRoot
-                (g.Comm(),"Finished in ",runTime," seconds (",gFlops," GFlop/s)");
-        SUMMARIZE_CUDA_TIMER;
+        OutputFromRoot(
+            g.Comm(),"Finished in ",runTime," seconds (",gFlops," GFlop/s)");
 
         flush(std::cout);
 
         if (print)
             Print(C, BuildString("C := ",alpha," A B + ",beta," C"));
         if (correctness)
-            TestAssociativity(orientA, orientB, alpha, A, B, beta, COrig, C, print);
+            TestAssociativity(orientA, orientB,
+                              alpha, A, B, beta, COrig, C,
+                              print);
         PopIndent();
 
         flush(std::cout);
@@ -171,28 +141,25 @@ void TestGemm
         C = COrig;
         OutputFromRoot(g.Comm(),"Stationary B Algorithm:");
         PushIndent();
+        timer.Reset();
         mpi::Barrier(g.Comm());
         timer.Start();
-        Synchronize(SyncInfoFromMatrix(C.Matrix()));
-        START_CUDA_TIMER;
-        Gemm(orientA, orientB, alpha, A, B, beta, C, GEMM_SUMMA_B_MS);
-        Synchronize(SyncInfoFromMatrix(C.Matrix()));
-        STOP_CUDA_TIMER;
-
+        Gemm(orientA, orientB, alpha, A, B, beta, C, GEMM_SUMMA_B);
         mpi::Barrier(g.Comm());
-        runTime = timer.Stop();
+        timer.Stop();
+        runTime = timer.GetTime();
         realGFlops = 2.*double(m)*double(n)*double(k)/(1.e9*runTime);
         gFlops = (IsComplex<T>::value ? 4*realGFlops : realGFlops);
 
-        if (D == Device::CPU)
-            OutputFromRoot
-                (g.Comm(),"Finished in ",runTime," seconds (",gFlops," GFlop/s)");
-        SUMMARIZE_CUDA_TIMER;
+        OutputFromRoot(
+            g.Comm(),"Finished in ",runTime, " seconds (",gFlops," GFlop/s)");
 
         if (print)
             Print(C, BuildString("C := ",alpha," A B + ",beta," C"));
         if (correctness)
-            TestAssociativity(orientA, orientB, alpha, A, B, beta, COrig, C, print);
+            TestAssociativity(orientA, orientB,
+                              alpha, A, B, beta, COrig, C,
+                              print);
         PopIndent();
 
         flush(std::cout);
@@ -204,20 +171,19 @@ void TestGemm
         C = COrig;
         OutputFromRoot(g.Comm(),"Stationary C Algorithm:");
         PushIndent();
+        timer.Reset();
         mpi::Barrier(g.Comm());
         timer.Start();
-        START_CUDA_TIMER;
-        Gemm(orientA, orientB, alpha, A, B, beta, C, GEMM_SUMMA_C_MS);
-        STOP_CUDA_TIMER;
-
+        Gemm(orientA, orientB, alpha, A, B, beta, C, GEMM_SUMMA_C);
         mpi::Barrier(g.Comm());
-        runTime = timer.Stop();
+        timer.Stop();
+        runTime = timer.GetTime();
         realGFlops = 2.*double(m)*double(n)*double(k)/(1.e9*runTime);
         gFlops = (IsComplex<T>::value ? 4*realGFlops : realGFlops);
-        if (D == Device::CPU)
-            OutputFromRoot
-                (g.Comm(),"Finished in ",runTime," seconds (",gFlops," GFlop/s)");
-        SUMMARIZE_CUDA_TIMER;
+
+        OutputFromRoot(
+            g.Comm(),"Finished in ",runTime," seconds (",gFlops," GFlop/s)");
+
         if (print)
             Print(C, BuildString("C := ",alpha," A B + ",beta," C"));
         if (correctness)
@@ -236,37 +202,32 @@ void TestGemm
             OutputFromRoot(g.Comm(),"Dot Product Algorithm:");
             PushIndent();
             C = COrig;
+            timer.Reset();
             mpi::Barrier(g.Comm());
             timer.Start();
-            START_CUDA_TIMER;
             Gemm(NORMAL, NORMAL, alpha, A, B, beta, C, GEMM_SUMMA_DOT);
-            STOP_CUDA_TIMER;
-
             mpi::Barrier(g.Comm());
-            runTime = timer.Stop();
+            timer.Stop();
+            runTime = timer.GetTime();
             realGFlops = 2.*double(m)*double(n)*double(k)/(1.e9*runTime);
             gFlops = (IsComplex<T>::value ? 4*realGFlops : realGFlops);
-            if (D == Device::CPU)
-                OutputFromRoot
-                    (g.Comm(),"Finished in ",runTime," seconds (",gFlops,
-                     " GFlop/s)");
-            SUMMARIZE_CUDA_TIMER;
+            OutputFromRoot(
+                g.Comm(),"Finished in ",runTime," seconds (",gFlops,
+                " GFlop/s)");
 
             if (print)
                 Print(C, BuildString("C := ",alpha," A B + ",beta," C"));
             if (correctness)
                 TestAssociativity
                     (orientA, orientB, alpha, A, B, beta, COrig, C, print);
+
             PopIndent();
             flush(std::cout);
         }
     }
     PopIndent();
 
-#ifdef HYDROGEN_HAVE_CUDA
-    cudaEventDestroy(start);
-    cudaEventDestroy(stop);
-#endif
+    flush(std::cout);
 }
 
 int
@@ -310,10 +271,10 @@ main(int argc, char* argv[])
         ComplainIfDebug();
         OutputFromRoot(g.Comm(),"Will test Gemm",transA,transB);
 
-#ifdef HYDROGEN_HAVE_CUDA
+#ifdef HYDROGEN_HAVE_GPU
         if (testGPU)
         {
-#ifdef HYDROGEN_GPU_USE_FP16
+#if defined HYDROGEN_HAVE_HALF && defined HYDROGEN_GPU_USE_FP16
             TestGemm<gpu_half_type,Device::GPU>
                 (orientA, orientB,
                  m, n, k,
@@ -323,7 +284,7 @@ main(int argc, char* argv[])
                  colAlignA, rowAlignA,
                  colAlignB, rowAlignB,
                  colAlignC, rowAlignC);
-#endif // HYDROGEN_GPU_USE_FP16
+#endif // defined HYDROGEN_HAVE_HALF && defined HYDROGEN_GPU_USE_FP16
             TestGemm<float,Device::GPU>
                 (orientA, orientB,
                  m, n, k,

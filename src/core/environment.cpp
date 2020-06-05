@@ -9,6 +9,12 @@
 */
 #include <El-lite.hpp>
 
+#include <El/hydrogen_config.h>
+
+#ifdef HYDROGEN_HAVE_GPU
+#include <hydrogen/device/GPU.hpp>
+#endif // HYDROGEN_HAVE_GPU
+
 #include <algorithm>
 #include <set>
 
@@ -216,9 +222,9 @@ void Initialize( int& argc, char**& argv )
 
     ::args = new Args( argc, argv, mpi::COMM_WORLD, std::cerr );
 
-#ifdef HYDROGEN_HAVE_CUDA
-    InitializeCUDA(argc, argv);
-#endif // HYDROGEN_HAVE_CUDA
+#ifdef HYDROGEN_HAVE_GPU
+    gpu::Initialize();
+#endif // HYDROGEN_HAVE_GPU
 
     ::numElemInits = 1;
     if( !mpi::Initialized() )
@@ -296,6 +302,9 @@ void Initialize( int& argc, char**& argv )
 #ifdef HYDROGEN_HAVE_CUDA
     cublas::Initialize();
 #endif
+#ifdef HYDROGEN_HAVE_ROCM
+    hydrogen::rocblas::Initialize();
+#endif
 
 #ifdef EL_HAVE_QT5
     InitializeQt5( argc, argv );
@@ -358,8 +367,8 @@ void Finalize()
         FinalizeRandom();
     }
 
-#ifdef HYDROGEN_HAVE_CUDA
-    FinalizeCUDA();
+#ifdef HYDROGEN_HAVE_GPU
+    gpu::Finalize();
 #endif
 
     EL_DEBUG_ONLY( CloseLog() )

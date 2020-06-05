@@ -135,7 +135,7 @@ struct BackendsForDeviceT<Device::CPU>
 };// struct BackendsForDeviceT<Device::CPU>
 
 // Prefer the NCCL2 backend
-#ifdef HYDROGEN_HAVE_CUDA
+#ifdef HYDROGEN_HAVE_GPU
 template <>
 struct BackendsForDeviceT<Device::GPU>
 {
@@ -151,18 +151,18 @@ struct BackendsForDeviceT<Device::GPU>
 #endif // HYDROGEN_HAVE_AL_MPI_CUDA
         >;
 };// struct BackendsForDeviceT<Device::GPU>
-#endif // HYDROGEN_HAVE_CUDA
+#endif // HYDROGEN_HAVE_GPU
 
 // Helper using statement
 template <Device D>
 using BackendsForDevice = typename BackendsForDeviceT<D>::type;
 
-#ifdef HYDROGEN_HAVE_CUDA
+#ifdef HYDROGEN_HAVE_GPU
 using AllAluminumBackends = Join<BackendsForDevice<Device::CPU>,
                                  BackendsForDevice<Device::GPU>>;
 #else
 using AllAluminumBackends = BackendsForDevice<Device::CPU>;
-#endif // HYDROGEN_HAVE_CUDA
+#endif // HYDROGEN_HAVE_GPU
 
 template <typename BackendT>
 struct DeviceForBackendT;
@@ -173,7 +173,7 @@ struct DeviceForBackendT<Al::MPIBackend>
     constexpr static Device value = Device::CPU;
 };
 
-#ifdef HYDROGEN_HAVE_CUDA
+#ifdef HYDROGEN_HAVE_GPU
 #ifdef HYDROGEN_HAVE_NCCL2
 template <>
 struct DeviceForBackendT<Al::NCCLBackend>
@@ -188,7 +188,7 @@ struct DeviceForBackendT<Al::MPICUDABackend>
     constexpr static Device value = Device::GPU;
 };
 #endif // HYDROGEN_HAVE_AL_MPI_CUDA
-#endif // HYDROGEN_HAVE_CUDA
+#endif // HYDROGEN_HAVE_GPU
 
 template <typename BackendT>
 constexpr Device DeviceForBackend()
@@ -262,16 +262,13 @@ template <>
 struct SyncInfoManager<Device::GPU>
 {
     SyncInfoManager(std::string const& backend_name)
+        : si_{CreateNewSyncInfo<Device::GPU>()}
     {
-        H_CHECK_CUDA(
-            cudaEventCreateWithFlags(&si_.event_, cudaEventDisableTiming));
-        H_CHECK_CUDA(
-            cudaStreamCreateWithFlags(&si_.stream_, cudaStreamNonBlocking));
 #ifdef HYDROGEN_HAVE_NVPROF
         // Name the stream for debugging purposes
         std::string const stream_name
             = "H: Comm (" + backend_name + ")";
-        nvtxNameCudaStreamA(si_.stream_, stream_name.c_str());
+        nvtxNameCudaStreamA(si_.Stream(), stream_name.c_str());
 #else
         (void) backend_name;
 #endif // HYDROGEN_HAVE_NVPROF
@@ -280,10 +277,7 @@ struct SyncInfoManager<Device::GPU>
     {
         try
         {
-            H_CHECK_CUDA(
-                cudaEventDestroy(si_.event_));
-            H_CHECK_CUDA(
-                cudaStreamDestroy(si_.stream_));
+            DestroySyncInfo(si_);
         }
         catch (std::exception const& e)
         {

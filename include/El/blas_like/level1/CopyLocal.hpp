@@ -129,8 +129,7 @@ void CopyImpl(Matrix<T, Device::GPU> const& A, Matrix<U, Device::GPU>& B)
                    syncInfoB);
 }
 
-#ifdef HYDROGEN_HAVE_CUDA
-// If using CUDA, prefer the cudaMemcpy2D implementation. This is
+// If using GPU, prefer the (cuda|hip)Memcpy2D implementation. This is
 // ASYNCHRONOUS with respect to the host.
 // (Case 1, GPU)
 //
@@ -153,14 +152,11 @@ void CopyImpl(Matrix<T, Device::GPU> const& A, Matrix<T, Device::GPU>& B)
     auto syncHelper = MakeMultiSync(syncInfoB, syncInfoA);
 
     // Launch the copy
-    H_CHECK_CUDA(
-        cudaMemcpy2DAsync(BBuf, ldB*sizeof(T),
-                          ABuf, ldA*sizeof(T),
-                          height*sizeof(T), width,
-                          cudaMemcpyDeviceToDevice,
-                          syncInfoB.stream_));
+    gpu::Copy2DIntraDevice(ABuf, ldA,
+                           BBuf, ldB,
+                           height, width,
+                           syncInfoB);
 }
-#endif // HYDROGEN_HAVE_CUDA
 
 namespace details
 {
@@ -177,6 +173,29 @@ struct InterdeviceSync
     {}
 
     SyncInfo<Device::GPU> gpu_sync_;
+};
+
+template <Device D1, Device D2>
+struct InterdeviceCopy;
+
+template <>
+struct InterdeviceCopy<Device::CPU, Device::GPU>
+{
+    template <typename... Args>
+    static void Copy2DAsync(Args&&... args)
+    {
+        gpu::Copy2DToDevice(std::forward<Args>(args)...);
+    }
+};
+
+template <>
+struct InterdeviceCopy<Device::GPU, Device::CPU>
+{
+    template <typename... Args>
+    static void Copy2DAsync(Args&&... args)
+    {
+        gpu::Copy2DToHost(std::forward<Args>(args)...);
+    }
 };
 }
 
@@ -200,8 +219,8 @@ void CopyImpl(Matrix<T, D1> const& A, Matrix<T, D2>& B)
     details::InterdeviceSync isync(SyncInfoFromMatrix(A),
                                    SyncInfoFromMatrix(B));
 
-    InterDeviceCopy<D1, D2>::MemCopy2DAsync(
-        BBuf, ldB, ABuf, ldA, height, width, isync.gpu_sync_.stream_);
+    details::InterdeviceCopy<D1, D2>::Copy2DAsync(
+        ABuf, ldA, BBuf, ldB, height, width, isync.gpu_sync_);
     Synchronize(isync.gpu_sync_); // Is this necessary??
 }
 
@@ -225,8 +244,8 @@ void CopyImpl(Matrix<T, D1> const& A,
 
     details::InterdeviceSync isync(SyncInfoFromMatrix(A),
                                    SyncInfoFromMatrix(B));
-    InterDeviceCopy<D1, D2>::MemCopy2DAsync(
-        BBuf, ldB, ABuf, ldA, height, width, isync.gpu_sync_.stream_);
+    details::InterdeviceCopy<D1, D2>::Copy2DAsync(
+        ABuf, ldA, BBuf, ldB, height, width, isync.gpu_sync_);
     Synchronize(isync.gpu_sync_); // Is this necessary??
 }
 

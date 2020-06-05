@@ -61,13 +61,15 @@ Matrix<T, Device::GPU>::Matrix(Matrix<T, Device::CPU> const& A)
     : Matrix{A.Height(), A.Width(), A.LDim()}
 {
     EL_DEBUG_CSE;
-    auto stream = this->Stream();
-    H_CHECK_CUDA(cudaMemcpy2DAsync(data_, this->LDim()*sizeof(T),
-                                    A.LockedBuffer(), A.LDim()*sizeof(T),
-                                    A.Height()*sizeof(T), A.Width(),
-                                    cudaMemcpyHostToDevice,
-                                    stream));
-    H_CHECK_CUDA(cudaStreamSynchronize(stream));
+    auto syncinfo = SyncInfoFromMatrix(*this);
+
+    gpu::Copy2DToDevice(
+        A.LockedBuffer(), A.LDim(),
+        data_, this->LDim(),
+        A.Height(), A.Width(),
+        syncinfo);
+
+    Synchronize(syncinfo);
 }
 
 template <typename T>
@@ -274,12 +276,10 @@ T Matrix<T, Device::GPU>::Get(Int i, Int j) const
 #endif
     if (i == END) i = this->Height() - 1;
     if (j == END) j = this->Width() - 1;
-    auto stream = this->Stream();
+    auto syncinfo = SyncInfoFromMatrix(*this);
     T val;
-    H_CHECK_CUDA(cudaMemcpyAsync( &val, &data_[i+j*this->LDim()],
-                                   sizeof(T), cudaMemcpyDeviceToHost,
-                                   stream ));
-    H_CHECK_CUDA(cudaStreamSynchronize(stream));
+    gpu::Copy1DToHost(&data_[i+j*this->LDim()], &val, 1, syncinfo);
+    Synchronize(syncinfo);
     return val;
 }
 
@@ -319,10 +319,10 @@ void Matrix<T, Device::GPU>::Set(Int i, Int j, T const& alpha)
 #endif
     if (i == END) i = this->Height() - 1;
     if (j == END) j = this->Width() - 1;
-    H_CHECK_CUDA(cudaMemcpyAsync(&data_[i+j*this->LDim()], &alpha,
-                                  sizeof(T), cudaMemcpyHostToDevice,
-                                  stream_ ));
-    H_CHECK_CUDA(cudaStreamSynchronize(stream_));
+
+    auto syncinfo = SyncInfoFromMatrix(*this);
+    gpu::Copy1DToDevice(&alpha, &data_[i+j*this->LDim()], 1, syncinfo);
+    Synchronize(syncinfo);
 }
 
 template <typename T>
@@ -500,27 +500,16 @@ T& Matrix<T, Device::GPU>::operator()(Int i, Int j)
 }
 
 template <typename T>
-cudaStream_t Matrix<T, Device::GPU>::Stream() const EL_NO_EXCEPT
+SyncInfo<Device::GPU> Matrix<T, Device::GPU>::GetSyncInfo() const EL_NO_EXCEPT
 {
-    return stream_;
+    return sync_info_;
 }
 
 template <typename T>
-cudaEvent_t Matrix<T, Device::GPU>::Event() const EL_NO_EXCEPT
+void Matrix<T, Device::GPU>::SetSyncInfo(
+    SyncInfo<Device::GPU> const& si) EL_NO_EXCEPT
 {
-    return event_;
-}
-
-template <typename T>
-void Matrix<T, Device::GPU>::SetStream(cudaStream_t stream) EL_NO_EXCEPT
-{
-    stream_ = stream;
-}
-
-template <typename T>
-void Matrix<T, Device::GPU>::SetEvent(cudaEvent_t event) EL_NO_EXCEPT
-{
-    event_ = event;
+    sync_info_.Merge(si);
 }
 
 #ifdef EL_INSTANTIATE_CORE

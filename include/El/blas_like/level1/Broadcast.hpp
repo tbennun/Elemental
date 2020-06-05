@@ -60,12 +60,12 @@ void Broadcast( AbstractMatrix<T>& A, mpi::Comm const& comm, int rank )
         Broadcast_impl(static_cast<Matrix<T,Device::CPU>&>(A),
                        std::move(comm), rank);
         break;
-#ifdef HYDROGEN_HAVE_CUDA
+#ifdef HYDROGEN_HAVE_GPU
     case Device::GPU:
         Broadcast_impl(static_cast<Matrix<T,Device::GPU>&>(A),
                        std::move(comm), rank);
         break;
-#endif // HYROGEN_HAVE_CUDA
+#endif // HYROGEN_HAVE_GPU
     default:
         LogicError("Unsupported device type.");
     }
@@ -125,11 +125,11 @@ void Broadcast( AbstractDistMatrix<T>& A, mpi::Comm const& comm, int rank )
     case Device::CPU:
         Broadcast_impl<Device::CPU>(A, std::move(comm), rank);
         break;
-#ifdef HYDROGEN_HAVE_CUDA
+#ifdef HYDROGEN_HAVE_GPU
     case Device::GPU:
         Broadcast_impl<Device::GPU>(A, std::move(comm), rank);
         break;
-#endif // HYDROGEN_HAVE_CUDA
+#endif // HYDROGEN_HAVE_GPU
     default:
         LogicError("Broadcast: Bad device.");
     }

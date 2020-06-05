@@ -145,17 +145,21 @@ void swap(SyncInfoPool<D>& a, SyncInfoPool<D>& b) noexcept
 template <>
 SyncInfoPool<Device::GPU>::~SyncInfoPool()
 {
+#ifdef HYDROGEN_HAVE_CUDA
+    using GPUErrorType = CUDAError;
+#elif defined(HYDROGEN_HAVE_ROCM)
+    using GPUErrorType = HIPError;
+#endif
     try
     {
         for (auto& si : pool_)
         {
-            H_CHECK_CUDA(cudaEventDestroy(si.event_));
-            H_CHECK_CUDA(cudaStreamDestroy(si.stream_));
+            DestroySyncInfo(si);
         }
     }
-    catch (CudaError const& e)
+    catch (GPUErrorType const& e)
     {
-        std::cerr << "Warning: CUDA error detected:\n\ne.what(): "
+        std::cerr << "Warning: GPU runtime error detected:\n\ne.what(): "
                   << e.what()
                   << std::endl;
     }
@@ -176,21 +180,14 @@ void SyncInfoPool<Device::GPU>::EnsureSize(size_t pool_size)
     size_t const new_elements = pool_size - start_size;
     for (auto ii = 0UL; ii < new_elements; ++ii)
     {
-        cudaStream_t stream;
-        cudaEvent_t event;
-        H_CHECK_CUDA(
-            cudaStreamCreateWithFlags(
-                &stream, cudaStreamNonBlocking));
-        H_CHECK_CUDA(
-            cudaEventCreateWithFlags(
-                &event, cudaEventDisableTiming));
+        auto si = CreateNewSyncInfo<Device::GPU>();
 #ifdef HYDROGEN_HAVE_NVPROF
         // Name the stream for debugging purposes
         std::string const stream_name
             = "H: SP (" + std::to_string(start_size + ii) + ")";
-        nvtxNameCudaStreamA(stream, stream_name.c_str());
+        nvtxNameCudaStreamA(si.Stream(), stream_name.c_str());
 #endif // HYDROGEN_HAVE_NVPROF
-        pool_.emplace_back(stream, event);
+        pool_.emplace_back(std::move(si));
     }
 
     // Handle iterators:

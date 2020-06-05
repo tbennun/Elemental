@@ -13,10 +13,16 @@
 #include <omp.h>
 #endif
 
+#include <El/hydrogen_config.h>
+
 #include <El/core/Grid.hpp>
 #include <El/blas_like/level1/Copy/internal_decl.hpp>
 #include <El/blas_like/level1/Copy/GeneralPurpose.hpp>
 #include <El/blas_like/level1/Copy/util.hpp>
+
+#ifdef HYDROGEN_HAVE_GPU
+#include <hydrogen/device/gpu/BasicCopy.hpp>
+#endif
 
 #include <hydrogen/meta/MetaUtilities.hpp>
 

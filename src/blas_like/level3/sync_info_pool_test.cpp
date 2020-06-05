@@ -65,8 +65,8 @@ TEST_CASE(
             for (auto const& si : tmp)
             {
                 auto const& pool_si = pool.Next();
-                CHECK(si.stream_ == pool_si.stream_);
-                CHECK(si.event_ == pool_si.event_);
+                CHECK(si.Stream() == pool_si.Stream());
+                CHECK(si.Event() == pool_si.Event());
             }
 
             SECTION("Moving the pool preserves iterators")
@@ -79,8 +79,8 @@ TEST_CASE(
 
                 auto const& pool_si = pool_mv.Next();
                 auto const& si = tmp[1];
-                CHECK(si.stream_ == pool_si.stream_);
-                CHECK(si.event_ == pool_si.event_);
+                CHECK(si.Stream() == pool_si.Stream());
+                CHECK(si.Event() == pool_si.Event());
             }
 
             SECTION("Growing the pool preserves iterators")
@@ -95,8 +95,8 @@ TEST_CASE(
 
                 auto const& pool_si = pool.Next();
                 auto const& si = tmp[1];
-                CHECK(si.stream_ == pool_si.stream_);
-                CHECK(si.event_ == pool_si.event_);
+                CHECK(si.Stream() == pool_si.Stream());
+                CHECK(si.Event() == pool_si.Event());
             }
         }
         SECTION("Resetting the pool returns to the same point")
@@ -104,8 +104,8 @@ TEST_CASE(
             auto const& first = pool.Next();
             pool.Reset();
             auto const& after_reset = pool.Next();
-            CHECK(first.event_ == after_reset.event_);
-            CHECK(first.stream_ == after_reset.stream_);
+            CHECK(first.Event() == after_reset.Event());
+            CHECK(first.Stream() == after_reset.Stream());
         }
     }
 

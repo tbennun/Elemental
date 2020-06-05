@@ -72,7 +72,7 @@ InitializeComms(El::Grid const& g,
             InitGrid<El::Collective::ALLTOALL>(g, syncInfo);
             InitGrid<El::Collective::ALLGATHER>(g, syncInfo);
         }
-        H_CHECK_CUDA(cudaDeviceSynchronize());
+        hydrogen::gpu::SynchronizeDevice();
         initialized_grids_.push_front(&g);
     }
     return pool;
@@ -114,7 +114,7 @@ void Gemm(Orientation orientA, Orientation orientB,
              beta,
              static_cast<Matrix<T,Device::CPU>&>(C));
         break;
-#ifdef HYDROGEN_HAVE_CUDA
+#ifdef HYDROGEN_HAVE_GPU
     case Device::GPU:
         Gemm(orientA, orientB, alpha,
              static_cast<Matrix<T,Device::GPU> const&>(A),
@@ -122,7 +122,7 @@ void Gemm(Orientation orientA, Orientation orientB,
              beta,
              static_cast<Matrix<T,Device::GPU>&>(C));
         break;
-#endif // HYDROGEN_HAVE_CUDA
+#endif // HYDROGEN_HAVE_GPU
     default:
         LogicError("Bad device type.");
     }
@@ -159,7 +159,7 @@ void Gemm_impl(
                beta, C.Buffer(), C.LDim());
 }
 
-#ifdef HYDROGEN_HAVE_CUDA
+#ifdef HYDROGEN_HAVE_GPU
 template <typename T>
 void Gemm_impl(
     Orientation orientA, Orientation orientB,
@@ -185,7 +185,7 @@ void Gemm_impl(
                    beta, C.Buffer(), C.LDim(), master_sync);
 }
 
-#endif // HYDROGEN_HAVE_CUDA
+#endif // HYDROGEN_HAVE_GPU
 
 }// namespace <anon>
 
@@ -439,7 +439,7 @@ void LocalGemm
     LocalGemm(orientA, orientB, alpha, A, B, TypeTraits<T>::Zero(), C);
 }
 
-#ifdef HYDROGEN_HAVE_CUDA
+#ifdef HYDROGEN_HAVE_GPU
 template void Gemm(Orientation orientA, Orientation orientB,
                    float alpha,
                    Matrix<float,Device::GPU> const& A,
@@ -460,7 +460,7 @@ template void Gemm(Orientation orientA, Orientation orientB,
                    gpu_half_type beta,
                    Matrix<gpu_half_type,Device::GPU>& C);
 #endif // HYDROGEN_GPU_USE_FP16
-#endif // HYDROGEN_HAVE_CUDA
+#endif // HYDROGEN_HAVE_GPU
 
 #define ABSTRACT_PROTO(T)                                               \
     template void Gemm(                                                 \

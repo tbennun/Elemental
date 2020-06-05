@@ -53,8 +53,8 @@ void CopyAsyncImpl(Matrix<T, Device::CPU> const& A,
     const T* EL_RESTRICT ABuf = A.LockedBuffer();
     T* EL_RESTRICT BBuf = B.Buffer();
 
-    InterDeviceCopy<Device::CPU, Device::GPU>::MemCopy2DAsync(
-        BBuf, ldB, ABuf, ldA, height, width, B.Stream());
+    details::InterdeviceCopy<Device::CPU, Device::GPU>::Copy2DAsync(
+        ABuf, ldA, BBuf, ldB, height, width, SyncInfoFromMatrix(B));
 }
 
 template <typename T,
@@ -72,8 +72,8 @@ void CopyAsyncImpl(Matrix<T, Device::GPU> const& A,
     const T* EL_RESTRICT ABuf = A.LockedBuffer();
     T* EL_RESTRICT BBuf = B.Buffer();
 
-    InterDeviceCopy<Device::GPU, Device::CPU>::MemCopy2DAsync(
-        BBuf, ldB, ABuf, ldA, height, width, A.Stream());
+    details::InterdeviceCopy<Device::GPU, Device::CPU>::Copy2DAsync(
+        ABuf, ldA, BBuf, ldB, height, width, SyncInfoFromMatrix(A));
 }
 #endif // HYDROGEN_HAVE_GPU
 

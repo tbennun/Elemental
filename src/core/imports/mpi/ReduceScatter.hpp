@@ -1,4 +1,7 @@
 // ReduceScatter
+#ifdef HYDROGEN_HAVE_GPU
+#include "hydrogen/device/gpu/BasicCopy.hpp"
+#endif // HYDROGEN_HAVE_GPU
 
 namespace El
 {
@@ -15,18 +18,16 @@ void LocalCopy(T const* EL_RESTRICT src,
     return std::copy_n(src, size, dest);
 }
 
-#ifdef HYDROGEN_HAVE_CUDA
+#ifdef HYDROGEN_HAVE_GPU
 template <typename T>
 void LocalCopy(T const* EL_RESTRICT src,
                T* EL_RESTRICT dest,
                size_t size,
                SyncInfo<Device::GPU> const& si)
 {
-    H_CHECK_CUDA(cudaMemcpyAsync(dest, src, sizeof(T)*size,
-                                 cudaMemcpyDeviceToDevice,
-                                 si.stream_));
+    gpu::Copy1DIntraDevice(src, dest, size, si);
 }
-#endif // HYDROGEN_HAVE_CUDA
+#endif // HYDROGEN_HAVE_GPU
 }
 
 // IsValidAluminumDeviceType should mean both that the device/type
@@ -290,14 +291,14 @@ void ReduceScatter(T* buf, int rc, Comm const& comm, SyncInfo<D> const& syncInfo
     template T ReduceScatter(T, Comm const&, SyncInfo<D> const&);              \
     template void ReduceScatter(T*, int, Comm const&, SyncInfo<D> const&)
 
-#ifndef HYDROGEN_HAVE_CUDA
+#ifndef HYDROGEN_HAVE_GPU
 #define MPI_REDUCESCATTER_PROTO(T)             \
     MPI_REDUCESCATTER_PROTO_DEV(T,Device::CPU)
 #else
 #define MPI_REDUCESCATTER_PROTO(T)             \
     MPI_REDUCESCATTER_PROTO_DEV(T,Device::CPU); \
     MPI_REDUCESCATTER_PROTO_DEV(T,Device::GPU)
-#endif // HYDROGEN_HAVE_CUDA
+#endif // HYDROGEN_HAVE_GPU
 
 MPI_REDUCESCATTER_PROTO(byte);
 MPI_REDUCESCATTER_PROTO(int);

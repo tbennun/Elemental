@@ -9,7 +9,7 @@
 #ifndef EL_BLAS_COPY_UTIL_HPP
 #define EL_BLAS_COPY_UTIL_HPP
 
-#ifdef HYDROGEN_HAVE_CUDA
+#ifdef HYDROGEN_HAVE_GPU
 #include <hydrogen/blas/gpu/Copy.hpp>
 #endif
 
@@ -229,7 +229,7 @@ void PartialRowStridedUnpack(
     }
 }
 
-#ifdef HYDROGEN_HAVE_CUDA
+#ifdef HYDROGEN_HAVE_GPU
 template <typename T,
           typename=EnableIf<IsStorageType<T,Device::GPU>>>
 void DeviceStridedMemCopy(
@@ -250,19 +250,17 @@ void InterleaveMatrix(
 {
     if (colStrideA == 1 && colStrideB == 1)
     {
-        H_CHECK_CUDA(
-            cudaMemcpy2DAsync(B, rowStrideB*sizeof(T),
-                              A, rowStrideA*sizeof(T),
-                              height*sizeof(T), width,
-                              cudaMemcpyDeviceToDevice,
-                              syncInfo.stream_));
+        gpu::Copy2DIntraDevice(A, rowStrideA,
+                               B, rowStrideB,
+                               height, width,
+                               syncInfo);
     }
     else
     {
         hydrogen::Copy_GPU_impl(height, width,
                                 A, colStrideA, rowStrideA,
                                 B, colStrideB, rowStrideB,
-                                syncInfo.stream_);
+                                syncInfo);
     }
 }
 
@@ -278,12 +276,12 @@ void RowStridedPack(
     {
         const Int rowShift = Shift_(k, rowAlign, rowStride);
         const Int localWidth = Length_(width, rowShift, rowStride);
-        H_CHECK_CUDA(
-            cudaMemcpy2DAsync(BPortions + k*portionSize, height*sizeof(T),
-                              A+rowShift*ALDim, rowStride*ALDim*sizeof(T),
-                              height*sizeof(T), localWidth,
-                              cudaMemcpyDeviceToDevice,
-                              syncInfo.stream_));
+
+        gpu::Copy2DIntraDevice(
+            A+rowShift*ALDim, rowStride*ALDim,
+            BPortions + k*portionSize, height,
+            height, localWidth,
+            syncInfo);
     }
 }
 
@@ -299,12 +297,11 @@ void RowStridedUnpack(
     {
         const Int rowShift = Shift_(k, rowAlign, rowStride);
         const Int localWidth = Length_(width, rowShift, rowStride);
-        H_CHECK_CUDA(
-            cudaMemcpy2DAsync(B+rowShift*BLDim, rowStride*BLDim*sizeof(T),
-                              APortions+k*portionSize, height*sizeof(T),
-                              height*sizeof(T), localWidth,
-                              cudaMemcpyDeviceToDevice,
-                              syncInfo.stream_));
+        gpu::Copy2DIntraDevice(
+            APortions+k*portionSize, height,
+            B+rowShift*BLDim, rowStride*BLDim,
+            height, localWidth,
+            syncInfo);
     }
 }
 
@@ -324,12 +321,12 @@ void PartialRowStridedPack(
                                     rowAlign, rowStride);
         const Int rowOffset = (rowShift-rowShiftA) / rowStridePart;
         const Int localWidth = Length_(width, rowShift, rowStride);
-        H_CHECK_CUDA(cudaMemcpy2DAsync(
-                          BPortions + k*portionSize, height*sizeof(T),
-                          A + rowOffset*ALDim, rowStrideUnion*ALDim*sizeof(T),
-                          height*sizeof(T), localWidth,
-                          cudaMemcpyDeviceToDevice,
-                          syncInfo.stream_));
+
+        gpu::Copy2DIntraDevice(
+            A + rowOffset*ALDim, rowStrideUnion*ALDim,
+            BPortions + k*portionSize, height,
+            height, localWidth,
+            syncInfo);
     }
 }
 
@@ -349,16 +346,15 @@ void PartialRowStridedUnpack(
                                     rowAlign, rowStride);
         const Int rowOffset = (rowShift-rowShiftB) / rowStridePart;
         const Int localWidth = Length_(width, rowShift, rowStride);
-        H_CHECK_CUDA(cudaMemcpy2DAsync(
-                          B + rowOffset*BLDim, rowStrideUnion*BLDim*sizeof(T),
-                          APortions + k*portionSize, height*sizeof(T),
-                          height*sizeof(T), localWidth,
-                          cudaMemcpyDeviceToDevice,
-                          syncInfo.stream_));
+        gpu::Copy2DIntraDevice(
+            APortions + k*portionSize, height,
+            B + rowOffset*BLDim, rowStrideUnion*BLDim,
+            height, localWidth,
+            syncInfo);
     }
 }
 
-#endif // HYDROGEN_HAVE_CUDA
+#endif // HYDROGEN_HAVE_GPU
 
 template <typename T, Device D, typename>
 void ColStridedPack(

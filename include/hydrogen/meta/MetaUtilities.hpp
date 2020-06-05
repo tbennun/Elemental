@@ -112,6 +112,10 @@ using MakePointer = typename std::add_pointer<T>::type;
 template <typename T>
 using MakePointerToConst = MakePointer<MakeConst<T>>;
 
+/** @brief Convenience type predicate to check if two types are the same. */
+template <typename T, typename U>
+using IsSame = std::is_same<T,U>;
+
 // Wrapper around std::conditional
 template <typename B, typename T, typename U>
 using Select = typename std::conditional<B::value, T, U>::type;
@@ -127,6 +131,5 @@ template <typename EnumT, EnumT A>
 struct EnumSame<EnumT,A,A> : std::true_type {};
 
 ///@}
-
 }// namespace hydrogen
 #endif // HYDROGEN_META_METAUTILITIES_HPP_
