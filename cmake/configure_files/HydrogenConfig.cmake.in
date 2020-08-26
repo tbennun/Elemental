@@ -53,7 +53,7 @@ if (_HYDROGEN_HAVE_ALUMINUM)
       "Hydrogen expects NCCL2 support "
       "but Aluminum does not have NCCL2 support.")
   endif ()
-  if (_HYDROGEN_HAVE_AL_MPI_CUDA AND NOT AL_HAS_HOST_TRANSFER)
+  if (_HYDROGEN_HAVE_AL_HOST_XFER AND NOT AL_HAS_HOST_TRANSFER)
     message(FATAL_ERROR
       "Hydrogen expects HostTransfer support "
       "but Aluminum does not have HostTransfer support.")
