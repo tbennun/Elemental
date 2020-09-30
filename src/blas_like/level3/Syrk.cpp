@@ -53,6 +53,7 @@ void SyrkImpl_(
     RuntimeError("Function not implemented for type on CPU.");
 }
 
+#if defined HYDROGEN_HAVE_GPU
 template <typename T, typename=EnableWhen<IsComputeType<T,Device::GPU>>>
 void SyrkImpl_(
     UpperOrLower uplo_in, Orientation orientation,
@@ -92,7 +93,7 @@ void SyrkImpl_(
 {
     RuntimeError("Function not implemented for type on GPU.");
 }
-
+#endif // defined HYDROGEN_HAVE_GPU
 }// namespace
 
 template <typename T, Device D>
@@ -227,12 +228,6 @@ void Syrk(
     Zero(C);
     Syrk(uplo, orientation, alpha, A, T(0), C, conjugate);
 }
-
-#ifdef HYDROGEN_HAVE_GPU
-
-#else
-
-#endif // HYDROGEN_HAVE_GPU
 
 #define PROTO(T)                                                        \
     template void Syrk(                                                 \
