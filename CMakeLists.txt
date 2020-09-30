@@ -386,7 +386,9 @@ if (Hydrogen_ENABLE_CUDA)
         INTERFACE_LINK_LIBRARIES "${_CUDA_TOOLKIT_LIBS}")
 
       set_property(TARGET cuda::toolkit PROPERTY
-        INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CUDA>:-arch=sm_60>)
+        INTERFACE_COMPILE_OPTIONS
+        $<$<COMPILE_LANGUAGE:CUDA>:-arch=sm_60>
+        $<$<COMPILE_LANGUAGE:CUDA>:--expt-extended-lambda>)
 
       set_property(TARGET cuda::toolkit PROPERTY
         INTERFACE_INCLUDE_DIRECTORIES "${CUDA_INCLUDE_DIRS}")
@@ -421,6 +423,7 @@ if (Hydrogen_ENABLE_ROCM)
     set(CMAKE_CXX_EXTENSIONS FALSE)
     find_package(rocblas CONFIG REQUIRED)
     find_package(rocsolver CONFIG REQUIRED)
+    find_package(rocthrust REQUIRED)
     set(HYDROGEN_HAVE_ROCM TRUE)
     message(STATUS "Found ROCm/HIP toolchain. Using HIP/ROCm.")
   else ()
@@ -576,6 +579,7 @@ target_link_libraries(
   $<TARGET_NAME_IF_EXISTS:hip::hipcub>
   $<TARGET_NAME_IF_EXISTS:roc::rocblas>
   $<TARGET_NAME_IF_EXISTS:roc::rocsolver>
+  $<TARGET_NAME_IF_EXISTS:roc::rocthrust>
   )
 
 # Add the CXX library to "Hydrogen"
