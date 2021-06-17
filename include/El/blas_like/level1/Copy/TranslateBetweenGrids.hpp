@@ -349,7 +349,7 @@ void TranslateBetweenGridsAllreduceBasic
         }
         else
         {
-            T val = 0;
+            T val = El::To<T>(0);
             hydrogen::details::setBufferToValue(sendBuf, maxSendSize, val,syncGeneral);
         }
 
