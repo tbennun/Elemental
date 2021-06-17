@@ -3543,9 +3543,9 @@ PROTO_DIFF(float)
 PROTO_DIFF(double)
 
 #ifdef HYDROGEN_HAVE_HALF
-PROTO(cpu_half_type);
+PROTO_DIFF_CPU(cpu_half_type);
 #ifdef HYDROGEN_GPU_USE_FP16
-PROTO(gpu_half_type);
+PROTO_DIFF_GPU(gpu_half_type);
 #endif
 #endif
 
