@@ -341,6 +341,7 @@ if (Hydrogen_ENABLE_CUDA)
   endif ()
 
   find_package(CUDA REQUIRED) # Enable all the macros
+  find_package(CUDAToolkit REQUIRED)
   find_package(NVML REQUIRED)
 
   if (Hydrogen_ENABLE_GPU_TENSOR_MATH)
