@@ -605,7 +605,8 @@ target_link_libraries(
   $<TARGET_NAME_IF_EXISTS:MPI::MPI_CXX>
   $<TARGET_NAME_IF_EXISTS:LAPACK::lapack>
   $<TARGET_NAME_IF_EXISTS:EP::extended_precision>
-  $<TARGET_NAME_IF_EXISTS:cuda::toolkit>
+  $<TARGET_NAME_IF_EXISTS:CUDA::cublas>
+  $<TARGET_NAME_IF_EXISTS:CUDA::toolkit>
   $<TARGET_NAME_IF_EXISTS:hip::rocprim_hip>
   $<TARGET_NAME_IF_EXISTS:hip::hipcub>
   $<TARGET_NAME_IF_EXISTS:roc::rocblas>
