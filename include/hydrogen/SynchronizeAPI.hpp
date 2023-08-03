@@ -27,7 +27,7 @@ void AddSynchronizationPoint(SyncInfo<D> const &master,
 #endif // HYDROGEN_HAVE_GPU
 
     AddSynchronizationPoint(master);
-    int dummy[] = {(details::AddSyncPoint(master, b),
+    int dummy[] = {(details::AddSyncPoint(master, other),
                     details::AddSyncPoint(master, others), 0)...};
     (void)dummy;
 }
